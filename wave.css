@@ -1,0 +1,13 @@
+#waveform {
+    margin: 0 28px; /* waveform */
+    height: 148px; /* Set a height for the waveform */
+    cursor: crosshair; /* Change cursor to indicate clickable area */
+}
+.blink {
+    animation: blinker 1s linear infinite;
+    color: yellow;
+}
+
+@keyframes blinker {
+    50% { opacity: 0; }
+}
