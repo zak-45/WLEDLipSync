@@ -87,6 +87,9 @@ class RhubarbWrapper:
             raise RuntimeError("An instance of Rhubarb is already running.")
         self.input_file = file_name
         self.output_file = output + self.file_extension
-        threading.Thread(target=self.run_command_in_subprocess).start()
         self._instance_running = True  # Set the instance as running
         self.return_code = 999  # set default return code, if all Ok will be set to 0 after process finished
+        run_thread = threading.Thread(target=self.run_command_in_subprocess)
+        run_thread.daemon = True
+        run_thread.start()
+

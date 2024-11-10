@@ -13,11 +13,61 @@ import re
 import socket
 import traceback
 
+# Set up logging
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
-def check_ip_alive(ip_address, port=80, timeout=2):
+
+async def check_udp_port(ip_address, port=80, timeout=2):
     """
-    efficiently check if an IP address is alive or not by testing connection on specified port
-     e.g. WLED allow port 80
+    Check if a UDP port is open on a given IP address by sending a UDP packet.
+    Since UDP is connectionless, the function considers the port reachable if
+    the packet is sent without an error.
+
+    Args:
+        ip_address (str): The IP address to check.
+        port (int, optional): The port to check on the IP address. Default is 80.
+        timeout (int, optional): The timeout duration in seconds for the operation. Default is 2 seconds.
+
+    Returns:
+        bool: True if the UDP port is reachable (i.e., the packet was sent without error), False otherwise.
+    """
+
+    sock = None
+    try:
+        # Create a new socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Set a timeout for the socket operation
+        sock.settimeout(timeout)
+        # Send a dummy packet to the UDP port
+        sock.sendto(b'', (ip_address, port))
+        return True  # If sendto doesn't raise an exception, consider the port reachable
+    except socket.timeout:
+        logger.error(f"No response from {ip_address}:{port}, but packet was sent.")
+        return True  # Port is likely reachable but no response was received
+    except Exception as error:
+        logger.error(traceback.format_exc())
+        logger.error(f'Error on checking UDP port: {error}')
+        return False
+    finally:
+        if sock:
+            # Close the socket
+            sock.close()
+
+
+async def check_ip_alive(ip_address, port=80, timeout=2):
+    """
+    Efficiently check if an IP address is alive or not by testing connection on the specified port.
+    e.g., WLED uses port 80.
+    this use TCP connection SOCK_STREAM, so not for UDP
+
+    Args:
+        ip_address (str): The IP address to check.
+        port (int, optional): The port to check on the IP address. Default is 80.
+        timeout (int, optional): The timeout duration in seconds for the connection attempt. Default is 2 seconds.
+
+    Returns:
+        bool: True if the IP address is reachable on the specified port, False otherwise.
     """
 
     sock = None
@@ -32,21 +82,24 @@ def check_ip_alive(ip_address, port=80, timeout=2):
         if result == 0:
             return True  # Host is reachable
         else:
+            logger.error(f"Failed to connect to {ip_address}:{port}. Error code: {result}")
             return False  # Host is not reachable
     except Exception as error:
         logger.error(traceback.format_exc())
-        logger.error(f'Error on check IP : {error}')
+        logger.error(f'Error on check IP: {error}')
         return False
     finally:
-        # Close the socket
-        sock.close()
-
+        if sock:
+            # Close the socket
+            sock.close()
 
 def validate_ip_address(ip_string):
     """
     Check if the given string is a valid IP address format or a reachable hostname.
+
     Args:
         ip_string (str): The IP address or hostname to validate.
+
     Returns:
         bool: True if the input is a valid IP address or a reachable hostname, False otherwise.
     """
@@ -56,9 +109,9 @@ def validate_ip_address(ip_string):
         if len(hostname) > 255:
             return False
         if hostname[-1] == ".":
-            hostname = hostname[:-1]
-        allowed = re.compile(r"(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
-        return all(allowed.match(x) for x in hostname.split("."))
+            hostname = hostname[:-1]  # Strip the trailing dot if present
+        allowed = re.compile(r"^(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+        return all(allowed.match(part) for part in hostname.split("."))
 
     # Check if it's a valid IP address
     try:
@@ -77,7 +130,6 @@ def validate_ip_address(ip_string):
             return False
 
     return False
-
 
 def read_config():
     # load config file
