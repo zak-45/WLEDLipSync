@@ -1,3 +1,19 @@
+# Compilation mode, standalone everywhere, except on macOS there app bundle
+# nuitka-project-if: {OS} in ("Windows", "Linux", "FreeBSD"):
+#    nuitka-project: --onefile
+# nuitka-project-if: {OS} == "Darwin":
+#    nuitka-project: --standalone
+#    nuitka-project: --macos-create-app-bundle
+# nuitka-project-if: {OS} == "Windows":
+#   nuitka-project: --onefile-windows-splash-screen-image={MAIN_DIRECTORY}/splash-screen.png
+# nuitka-project-if: os.getenv("DEBUG_COMPILATION", "no") == "yes":
+#   nuitka-project: --force-stdout-spec=WLEDVideoSync.out.txt
+#   nuitka-project: --force-stderr-spec=WLEDVideoSync.err.txt
+# nuitka-project-if: {OS} == "Linux":
+#   nuitka-project: --include-module=gi
+#   nuitka-project: --include-module=qtpy
+# nuitka-project: --nofollow-import-to=doctest
+# nuitka-project: --noinclude-default-mode=error
 """
 a: zak-45
 d: 09/10/2024
