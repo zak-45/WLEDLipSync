@@ -156,8 +156,8 @@ class LipAPI:
     scroll_graphic: bool = True
     mouth_times_buffer = {}  # buffer dict contains result from rhubarb
     mouth_times_selected = []  # list contain time selected
-    mouth_images_buffer: List[cv2.Mat] = []  # list contains mouth images from a model
-    mouths_buffer_thumb: List[cv2.Mat] = []  # contains thumb mouth images
+    mouth_images_buffer: List = []  # list contains mouth images from a model
+    mouths_buffer_thumb: List = []  # contains thumb mouth images
     thumbnail_width: int = 64  # thumb image width
     # mouth_carousel: ui.carousel = None  # carousel object
     mouth_carousel = None  # carousel object
