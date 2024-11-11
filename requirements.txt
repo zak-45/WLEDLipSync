@@ -23,3 +23,5 @@ websocket-client
 python-osc
 musicbrainzngs
 concurrent-log-handler
+cfg-load
+ipaddress
