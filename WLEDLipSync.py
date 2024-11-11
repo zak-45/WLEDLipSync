@@ -7,8 +7,8 @@
 # nuitka-project-if: {OS} == "Windows":
 #   nuitka-project: --onefile-windows-splash-screen-image={MAIN_DIRECTORY}/splash-screen.png
 # nuitka-project-if: os.getenv("DEBUG_COMPILATION", "no") == "yes":
-#   nuitka-project: --force-stdout-spec=WLEDVideoSync.out.txt
-#   nuitka-project: --force-stderr-spec=WLEDVideoSync.err.txt
+#   nuitka-project: --force-stdout-spec=WLEDLipSync.out.txt
+#   nuitka-project: --force-stderr-spec=WLEDLipSync.err.txt
 # nuitka-project-if: {OS} == "Linux":
 #   nuitka-project: --include-module=gi
 #   nuitka-project: --include-module=qtpy
