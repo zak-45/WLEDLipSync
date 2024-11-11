@@ -1,9 +1,7 @@
 import av
 import base64
 import io
-from PIL import Image
 import os
-from str2bool import str2bool
 import logging
 import logging.config
 import concurrent_log_handler
@@ -13,10 +11,9 @@ import re
 import socket
 import traceback
 
-# Set up logging
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-
+from str2bool import str2bool
+from PIL import Image
+from nicegui import ui
 
 async def check_udp_port(ip_address, port=80, timeout=2):
     """
@@ -133,17 +130,14 @@ def validate_ip_address(ip_string):
 
 def read_config():
     # load config file
-    cast_config = cfg.load('config/WLEDLipSync.ini')
+    lip_config = cfg.load('config/WLEDLipSync.ini')
     # config keys
-    server_config = cast_config.get('server')
-    app_config = cast_config.get('app')
-    colors_config = cast_config.get('colors')
-    custom_config = cast_config.get('custom')
-    preset_config = cast_config.get('presets')
-    desktop_config = cast_config.get('desktop')
-    ws_config = cast_config.get('ws')
+    server_config = lip_config.get('server')
+    app_config = lip_config.get('app')
+    colors_config = lip_config.get('colors')
+    custom_config = lip_config.get('custom')
 
-    return server_config, app_config, colors_config, custom_config, preset_config, desktop_config, ws_config
+    return server_config, app_config, colors_config, custom_config
 
 
 def setup_logging(config_path='logging_config.ini', handler_name: str = None):
@@ -232,5 +226,47 @@ def image_array_to_base64(nparray):
     return img_str
 
 
-# create logger
-logger = setup_logging('config/logging.ini', 'WLEDLogger.utils')
+def apply_custom():
+    """
+    Layout Colors come from config file
+    bg image can be customized
+    :return:
+    """
+    ui.colors(primary=color_config['primary'],
+              secondary=color_config['secondary'],
+              accent=color_config['accent'],
+              dark=color_config['dark'],
+              positive=color_config['positive'],
+              negative=color_config['negative'],
+              info=color_config['info'],
+              warning=color_config['warning']
+              )
+
+    ui.query('body').style(f'background-image: url({custom_config["bg-image"]}); '
+                           'background-size: cover;'
+                           'background-repeat: no-repeat;'
+                           'background-position: center;')
+
+
+
+"""
+When this env var exist, this mean run from the one-file compressed executable.
+Load of the config is not possible, folder config should not exist.
+This avoid FileNotFoundError.
+This env not exist when run from the extracted program.
+Expected way to work.
+"""
+if "NUITKA_ONEFILE_PARENT" not in os.environ:
+    # read config
+    # create logger
+    logger = setup_logging('config/logging.ini', 'WLEDLogger.utils')
+
+    lip_config = read_config()
+
+    # config keys
+    server_config = lip_config[0]  # server key
+    app_config = lip_config[1]  # app key
+    color_config = lip_config[2]  # colors key
+    custom_config = lip_config[3]  # custom key
+
+

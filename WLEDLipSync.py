@@ -54,20 +54,18 @@ This is one of reason why actual letter and future one are sent on same message 
 """
 import json
 import time
-
-from PIL import Image
 import cv2
 import os
 import sys
 import asyncio
-
 import utils
 
+from str2bool import str2bool
 from OSCClient import OSCClient
 from WSClient import WebSocketClient
 from pathlib import Path
-
-from nicegui import ui, app
+from PIL import Image
+from nicegui import ui, app, native
 from rhubarb import RhubarbWrapper
 from niceutils import LocalFilePicker
 from typing import List, Union
@@ -78,6 +76,45 @@ if sys.platform.lower() == 'win32':
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
 rub = RhubarbWrapper()
+
+
+"""
+When this env var exist, this mean run from the one-file executable (compressed file).
+Load of the config is not possible, folder config should not exist.
+This avoid FileNotFoundError.
+This env not exist when running from the decompressed program.
+Expected way to work.
+"""
+if "NUITKA_ONEFILE_PARENT" not in os.environ:
+    # read config
+    # create logger
+    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger')
+
+    # load config file
+    lip_config = utils.read_config()
+
+    # config keys
+    server_config = lip_config[0]  # server key
+    app_config = lip_config[1]  # app key
+    color_config = lip_config[2]  # colors key
+    custom_config = lip_config[3]  # custom key
+
+    #  validate network config
+    server_ip = server_config['server_ip']
+    if not utils.validate_ip_address(server_ip):
+        logger.error(f'Bad server IP: {server_ip}')
+        sys.exit(1)
+
+    server_port = server_config['server_port']
+
+    if server_port == 'auto':
+        server_port = native.find_open_port()
+    else:
+        server_port = int(server_config['server_port'])
+
+    if server_port not in range(1, 65536):
+        logger.error(f'Bad server Port: {server_port}')
+        sys.exit(2)
 
 
 class LipAPI:
@@ -1279,7 +1316,8 @@ async def main_page():
     #
     # Main UI generation
     #
-
+    utils.apply_custom()
+    #
     card_top_preview = ui.card(align_items='center').tight().classes('no-shadow no-border w-full h-1/3')
     card_top_preview.set_visibility(False)
 
@@ -1312,7 +1350,7 @@ async def main_page():
                 add_markers = ui.chip('Add', icon='add', color='red', on_click=lambda :add_all_markers())
                 add_markers.tooltip('Add all markers')
                 add_markers.bind_visibility(LipAPI,'wave_show')
-                ui.chip('Audio Editor', icon='edit', on_click=lambda: audio_edit())
+                ui.chip('Audio Editor', icon='edit', text_color='yellow', on_click=lambda: audio_edit())
                 ui.label('').bind_text_from(LipAPI,'file_to_analyse')
 
             waveform = ui.html('''
@@ -1537,17 +1575,20 @@ async def main_page():
 
 @ui.page('/edit')
 async def edit_cue_buffer():
+    utils.apply_custom()
     await edit_mouth_time_buffer()
 
 
 @ui.page('/preview')
 async def preview_page():
+    utils.apply_custom()
     with ui.card(align_items='center').classes('w-full'):
         await create_mouth_model()
 
 
 @ui.page('/audiomass')
 async def audio_editor():
+    utils.apply_custom()
     audiomass_file = LipAPI.file_to_analyse.replace('.wav', '.mp3')
     audiomass_file = audiomass_file.replace('./', '/')
     ui.navigate.to(f'/audiomass/src/index.html?WLEDLipSyncFilePath={audiomass_file}')
