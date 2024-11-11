@@ -106,7 +106,6 @@ jobs:
           include-package-data: nicegui
           include-module: |
             av.opaque
-            concurrent_log_handler
           include-data-dir: |
             tmp=tmp
             log=log

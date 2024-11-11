@@ -22,3 +22,4 @@ str2bool
 websocket-client
 python-osc
 musicbrainzngs
+concurrent-log-handler
