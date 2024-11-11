@@ -187,7 +187,7 @@ class LipAPI:
     }
 
 
-async def load_image_async(img_path: str) -> cv2.Mat:
+async def load_image_async(img_path: str):
     """
     Loads an image asynchronously from the specified file path.
 
@@ -198,7 +198,7 @@ async def load_image_async(img_path: str) -> cv2.Mat:
         img_path (str): The file path of the image to be loaded.
 
     Returns:
-        cv2.Mat: The loaded image in RGB format, or None if the image could not be loaded.
+        cv2: The loaded image in RGB format, or None if the image could not be loaded.
     """
 
     loop = asyncio.get_event_loop()
