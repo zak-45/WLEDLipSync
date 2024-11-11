@@ -105,6 +105,7 @@ jobs:
           output-file: WLEDLipSync-${{runner.os}}
           include-package-data: nicegui
           include-module: |
+            pygments.formatters.html
             av.opaque
           include-data-dir: |
             tmp=tmp
