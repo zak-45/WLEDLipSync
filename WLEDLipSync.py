@@ -223,7 +223,7 @@ async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
     LipAPI.mouth_images_buffer = []
     LipAPI.mouths_buffer_thumb = []
 
-    print(mouth_folder)
+    logger.debug(mouth_folder)
     folder_path = Path(mouth_folder)
     supported_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff')
 
@@ -239,12 +239,12 @@ async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
         if img is not None:
             LipAPI.mouth_images_buffer.append(img)
         else:
-            print(f"Could not open image {img_path.name}: Image is None")
+            logger.debug(f"Could not open image {img_path.name}: Image is None")
 
     if len(LipAPI.mouth_images_buffer) < 9:
-        print(f'ERROR not enough images loaded into buffer: {len(LipAPI.mouth_images_buffer)}')
+        logger.debug(f'ERROR not enough images loaded into buffer: {len(LipAPI.mouth_images_buffer)}')
     else:
-        print(f'Images loaded into buffer: {len(LipAPI.mouth_images_buffer)}')
+        logger.debug(f'Images loaded into buffer: {len(LipAPI.mouth_images_buffer)}')
         await create_carousel()
 
 
@@ -519,7 +519,7 @@ async def main_page():
             None
         """
 
-        print('net check status')
+        logger.debug('net check status')
 
         if LipAPI.osc_client is not None:
             # check net status UDP port, can provide false positive
@@ -566,7 +566,7 @@ async def main_page():
             None
         """
 
-        print('WVS activation')
+        logger.debug('WVS activation')
 
         if wvs_activate.value is True:
             # we need to create a client if not exist
@@ -579,7 +579,7 @@ async def main_page():
                 while LipAPI.wvs_client.get_status() != 'connected':
                     await asyncio.sleep(0.1)
                     if nb > 9:
-                        print('error to connect to ws')
+                        logger.debug('error to connect to ws')
                         return
                     nb += 1
             # send init message
@@ -604,7 +604,7 @@ async def main_page():
             link_wvs.props(remove="color=yellow")
             # if timer is active, stop it or not
             if LipAPI.net_status_timer.active is True and osc_activate.value is False:
-                print('stop timer')
+                logger.debug('stop timer')
                 LipAPI.net_status_timer.active = False
 
     async def manage_osc_client():
@@ -620,7 +620,7 @@ async def main_page():
             None
         """
 
-        print('OSC activation')
+        logger.debug('OSC activation')
 
         if osc_activate.value is True:
             # we need to create a client if not exist
@@ -647,7 +647,7 @@ async def main_page():
             link_osc.props(remove="color=yellow")
             # if timer is active, stop it or not
             if LipAPI.net_status_timer.active is True and wvs_activate.value is False:
-                print('stop timer')
+                logger.debug('stop timer')
                 LipAPI.net_status_timer.active = False
 
     def validate_file(file_name):
@@ -922,7 +922,7 @@ async def main_page():
                     LipAPI.mouth_carousel.move(target_container=LipAPI.preview_area)
 
             else:
-                print('you need to select folder')
+                logger.debug('you need to select folder')
 
     def find_actual_nearest_cue_point(time_cue, cue_points):
         """ find mouth card near provided time """
@@ -981,7 +981,7 @@ async def main_page():
                     cue['value'] = new_letter
                     letter_lbl.style(add='color:orange')
                     LipAPI.data_changed = True
-                    print(f'new letter set {new_letter}')
+                    logger.debug(f'new letter set {new_letter}')
                     break
 
             letter_lbl.text = new_letter
@@ -1011,7 +1011,7 @@ async def main_page():
         """Generate graphical view of json file, could be time-consuming if display thumbs."""
 
         async def select_letter(start_time: float, letter_lbl: ui.label):
-            print(start_time, letter_lbl)
+            logger.debug(start_time, letter_lbl)
             await modify_letter(start_time, letter_lbl)
 
         def position_player(seek_time: float, card: ui.card, rem: ui.icon, marker: str = 'X'):
@@ -1038,7 +1038,7 @@ async def main_page():
                 await asyncio.sleep(0.001)
 
             player_vocals.pause()
-            print('End of play_until loop.')
+            logger.debug('End of play_until loop.')
 
         def set_default(seek_time: float, card: ui.card, rem: ui.icon):
             """Reset time card to default color."""
@@ -1047,7 +1047,7 @@ async def main_page():
             card.classes(add='bg-cyan-700')
             rem.set_visibility(False)
             card.update()
-            print(LipAPI.mouth_times_selected)
+            logger.debug(LipAPI.mouth_times_selected)
 
         # Scroll area with timeline/images
         LipAPI.mouth_area_h = ui.scroll_area().classes('bg-cyan-700 w-400 h-40')
@@ -1189,7 +1189,7 @@ async def main_page():
                 edit_mouth_button.enable()
                 load_mouth_button.enable()
                 ok_button.enable()
-                print('Analysis Finished')
+                logger.debug('Analysis Finished')
 
     async def sync_player(action):
         """ sync players """
