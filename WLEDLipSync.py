@@ -22,10 +22,11 @@ v: 1.0.0.0
 Application to generate automatic Lip sync from a mp3 file.
 
 File need to be split into two different audio files:
-    1) vocals.mp3  (will be automatically converted to wav for Rhubarb)
-    2) accompaniment.mp3 for music only
+    1) vocals.mp3  (contains vocal part  only, will be automatically converted to wav for Rhubarb)
+    2) accompaniment.mp3 for music only (optional)
     This can be done by using SpleeterGUI: https://github.com/zak-45/SpleeterGUI-Chataigne-Module
-    or any other tool able to split music into stems
+    or any other tool able to split music into stems.
+    'vocals.mp3' can be also some self-recording voice done in any other way
 
 Input files needs to be under ./media folder.
 The structure is like that for song name e.g.: Mytest of all-time.mp3
@@ -47,7 +48,7 @@ see: https://github.com/DanielSWolf/rhubarb-lip-sync
 Send mouth cues to OSC and WS ...
 Depend on how many mouth cues defined and if short interval, in some rare case, could miss letter during audio playback
     --> timeupdate frequency depend on several external factor , see HTML5 audio element doc
-This is one of reason why actual letter and future one are sent on same message.
+This is one of reason why actual letter and future one are sent on same message record.
 
 09/10/2024 : there is a problem playing  file when refresh the browser : need investigation
 """
