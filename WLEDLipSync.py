@@ -1600,9 +1600,10 @@ app specific param
 """
 
 app.add_media_files('/media', 'media')
-app.add_static_files('/assets', 'assets')
 app.add_static_files('/output', 'output')
 app.add_static_files('/audiomass', 'audiomass')
+app.add_static_files('/assets', 'assets')
+app.add_static_files('/config', 'config')
 
 """
 run niceGUI

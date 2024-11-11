@@ -92,4 +92,3 @@ class RhubarbWrapper:
         run_thread = threading.Thread(target=self.run_command_in_subprocess)
         run_thread.daemon = True
         run_thread.start()
-
