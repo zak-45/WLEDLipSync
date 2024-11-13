@@ -4,19 +4,17 @@
 # nuitka-project-if: {OS} == "Darwin":
 #    nuitka-project: --standalone
 #    nuitka-project: --macos-create-app-bundle
-#    nuitka-project: --include-raw-dir=rhubarb/mac=rhubarb/mac
 # nuitka-project-if: {OS} == "Windows":
 #    nuitka-project: --onefile-windows-splash-screen-image={MAIN_DIRECTORY}/splash-screen.png
-#    nuitka-project: --include-raw-dir=rhubarb/win=rhubarb/win
 # nuitka-project-if: os.getenv("DEBUG_COMPILATION", "no") == "yes":
 #    nuitka-project: --force-stdout-spec=WLEDLipSync.out.txt
 #    nuitka-project: --force-stderr-spec=WLEDLipSync.err.txt
 # nuitka-project-if: {OS} == "Linux":
 #    nuitka-project: --include-module=gi
 #    nuitka-project: --include-module=qtpy
-#    nuitka-project: --include-raw-dir=rhubarb/linux=rhubarb/linux
 # nuitka-project: --nofollow-import-to=doctest
 # nuitka-project: --noinclude-default-mode=error
+# nuitka-project: --include-raw-dir=rhubarb=rhubarb
 """
 a: zak-45
 d: 09/10/2024
