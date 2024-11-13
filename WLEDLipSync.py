@@ -15,6 +15,7 @@
 # nuitka-project: --nofollow-import-to=doctest
 # nuitka-project: --noinclude-default-mode=error
 # nuitka-project: --user-package-configuration-file=WLEDLipSync-Nuitka-Package-config.yml
+# nuitka-project: --include-raw-dir=rhubarb=rhubarb
 """
 a: zak-45
 d: 09/10/2024

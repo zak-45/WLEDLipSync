@@ -3,13 +3,14 @@
 # yamllint disable rule:comments-indentation
 # too many spelling things, spell-checker: disable
 
-- module-name: 'WLEDLipSync.py'
+- module-name: 'WLEDLipSync'
   data-files:
     - dirs:
-        - './rhubarb/win'
-        - './rhubarb/win/res'
-        - './rhubarb/win/res/sphinx'
-        - './rhubarb/win/res/sphinx/acoustic-model'
+        - 'rhubarb'
+        - 'rhubarb/win'
+        - 'rhubarb/win/res'
+        - 'rhubarb/win/res/sphinx'
+        - 'rhubarb/win/res/sphinx/acoustic-model'
       patterns:
         - '**'
       when: 'win32'
