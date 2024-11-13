@@ -1,0 +1,40 @@
+# yamllint disable rule:line-length
+# yamllint disable rule:indentation
+# yamllint disable rule:comments-indentation
+# too many spelling things, spell-checker: disable
+
+- module-name: 'WLEDLipSync'
+  data-files:
+    dirs:
+      - 'rhubarb/win'
+    patterns:
+      - '*.*'
+  dlls:
+    from_filenames:
+      relative_path: 'rhubarb/win'
+      executable: 'yes'
+  when: 'win32'
+
+- module-name: 'WLEDLipSync'
+  data-files:
+    dirs:
+      - 'rhubarb/linux'
+    patterns:
+      - '*.*'
+  dlls:
+    from_filenames:
+      relative_path: 'rhubarb/linux'
+      executable: 'yes'
+  when: 'linux'
+
+- module-name: 'WLEDLipSync'
+  data-files:
+    dirs:
+      - 'rhubarb/mac'
+    patterns:
+      - '*.*'
+  dlls:
+    from_filenames:
+      relative_path: 'rhubarb/mac'
+      executable: 'yes'
+  when: 'macos'

@@ -14,6 +14,7 @@
 #   nuitka-project: --include-module=qtpy
 # nuitka-project: --nofollow-import-to=doctest
 # nuitka-project: --noinclude-default-mode=error
+# nuitka-project: --user-package-configuration-file=WLEDLipSync-Nuitka-Package-config.yml
 """
 a: zak-45
 d: 09/10/2024
