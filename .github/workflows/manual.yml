@@ -115,7 +115,6 @@ jobs:
             config=config
             media=media
             audiomass=audiomass
-            rhubarb=rhubarb
             output=output
 
           include-data-files: |
