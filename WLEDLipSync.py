@@ -702,9 +702,9 @@ async def main_page():
         def file_alone():
             """ no stems """
             ui.notify(f'Analysis done from audio source file {file_name}.')
-            out = 'output/' + file + '.json'
+            out = app_config['output_folder'] + file + '/' + 'rhubarb.json'
             if os.path.isfile(out):
-                ui.notify(f'Found an already analysis file ...  {out}.')
+                ui.notify(f'Found an existing analysis file ...  {out}.')
             # convert mp3 to wav
             utils.convert_audio(file_path, file_folder + file + '.wav')
             player_vocals.set_source(file_path)
@@ -735,7 +735,7 @@ async def main_page():
             file_name = os.path.basename(file_path)
             file_info = os.path.splitext(file_name)
             file = file_info[0]
-            file_folder = './media/audio/' + file + '/'
+            file_folder = app_config['audio_folder'] + file + '/'
 
             # check if folder not exist
             if not os.path.isdir(file_folder):
@@ -776,7 +776,7 @@ async def main_page():
 
             # set params
             LipAPI.source_file = audio_input.value
-            LipAPI.output_file = 'output/' + file
+            LipAPI.output_file = app_config['output_folder'] + file + '/' + 'rhubarb'
             edit_mouth_button.enable()
             load_mouth_button.enable()
             ui.timer(1, set_audio_duration, once=True)
