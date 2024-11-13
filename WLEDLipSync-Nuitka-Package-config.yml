@@ -6,10 +6,10 @@
 - module-name: 'WLEDLipSync'
   data-files:
     - dirs:
-        - 'rhubarb/win'
-        - 'rhubarb/win/res'
-        - 'rhubarb/win/res/sphinx'
-        - 'rhubarb/win/res/sphinx/acoustic-model'
+        - './rhubarb/win'
+        - './rhubarb/win/res'
+        - './rhubarb/win/res/sphinx'
+        - './rhubarb/win/res/sphinx/acoustic-model'
       patterns:
         - '**'
       when: 'win32'
@@ -31,7 +31,7 @@
       when: 'macos'
   dlls:
     - from_filenames:
-      relative_path: 'rhubarb/win'
+      relative_path: './rhubarb/win'
       prefixes: '**'
       executable: 'yes'
       when: 'win32'

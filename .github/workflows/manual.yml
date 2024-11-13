@@ -107,6 +107,7 @@ jobs:
           include-module: |
             pygments.formatters.html
             av.opaque
+
           include-data-dir: |
             tmp=tmp
             log=log
@@ -116,6 +117,7 @@ jobs:
             audiomass=audiomass
             rhubarb=rhubarb
             output=output
+
           include-data-files: |
             favicon.ico=favicon.ico
             splash-screen.png=splash-screen.png
