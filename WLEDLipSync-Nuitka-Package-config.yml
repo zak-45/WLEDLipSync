@@ -24,6 +24,7 @@
     - from_filenames:
       relative_path: 'rhubarb/win'
       executable: 'yes'
+      when: 'win32'
     - from_filenames:
       relative_path: 'rhubarb/mac'
       executable: 'yes'
