@@ -252,7 +252,6 @@ async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
         await create_carousel()
 
 
-
 async def create_carousel():
     """
     Creates a carousel UI component for displaying mouth images.
@@ -924,6 +923,10 @@ async def main_page():
                     await create_mouth_model(result)
                     # move it to selected container
                     LipAPI.mouth_carousel.move(target_container=LipAPI.preview_area)
+                    # refresh central time image
+                    img = Image.fromarray(LipAPI.mouths_buffer_thumb[0])
+                    model_thumb.set_source(img)
+                    model_thumb.update()
 
             else:
                 logger.debug('you need to select folder')
@@ -932,11 +935,11 @@ async def main_page():
         """ find mouth card near provided time """
 
         if not cue_points or 'mouthCues' not in cue_points:
-            return [{"start": None, "end": None, "value": None},{"start": None, "end": None, "value": None}]
+            return [{"start": "None", "end": "None", "value": "None"},{"start": "None", "end": "None", "value": "None"}]
 
         threshold = 5
-        actual_cue = {"start": None, "end": None, "value": None}
-        nearest_cue = {"start": None, "end": None, "value": None}
+        actual_cue = {"start": "None", "end": "None", "value": "None"}
+        nearest_cue = {"start": "None", "end": "None", "value": "None"}
         smallest_diff = float('inf')
 
         for cue in cue_points['mouthCues']:
@@ -1142,7 +1145,7 @@ async def main_page():
         time_label.set_text(new_label)
 
         # send osc message on seek
-        if osc_activate.value is True and LipAPI.player_status == 'pause' and send_seek.value is True:
+        if osc_activate.value is True and LipAPI.player_status != 'play' and send_seek.value is True:
             LipAPI.osc_client.send_message(osc_address.value + '/mouthCue/',
                                            ["{:.3f}".format(LipAPI.player_time),
                                             actual_cue_record['value'],
@@ -1150,13 +1153,13 @@ async def main_page():
                                             next_cue_record['end'], letter])
 
         # send wvs message on seek
-        if wvs_activate.value is True and LipAPI.player_status == 'pause' and send_seek.value is True:
+        if wvs_activate.value is True and LipAPI.player_status != 'play' and send_seek.value is True:
             ws_msg = {"action":{"type":"cast_image",
                                 "param":{"image_number":get_index_from_letter(actual_cue_record['value']),
                                          "device_number":0,
                                          "class_name":"Media",
-                                         "fps_number":100,
-                                         "duration_number":10}}}
+                                         "fps_number":50,
+                                         "duration_number":1}}}
 
             LipAPI.wvs_client.send_message(ws_msg)
 
@@ -1317,8 +1320,7 @@ async def main_page():
 
 
     def loop_mouth_cue():
-        triggered_values = set()  # Track triggered values
-        while not LipAPI.player_status != 'play':
+        def to_do():
             actual_cue_record, next_cue_record = find_actual_nearest_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
             start = str(actual_cue_record['start'])
             value = actual_cue_record['value']
@@ -1329,28 +1331,36 @@ async def main_page():
                 # set the index image in carousel (letter)
                 if LipAPI.mouth_carousel is not None:
                     LipAPI.mouth_carousel.set_value(str(get_index_from_letter(actual_cue_record['value'])))
-                # send osc message on seek
+                # send osc message
                 if osc_activate.value is True:
                     LipAPI.osc_client.send_message(osc_address.value + '/mouthCue/',
                                                    ["{:.3f}".format(LipAPI.player_time),
                                                     actual_cue_record['value'],
                                                     next_cue_record['start'],
                                                     next_cue_record['end'], value])
-                # send wvs message on seek
+                # send wvs message
                 if wvs_activate.value is True:
                     ws_msg = {"action": {"type": "cast_image",
                                          "param": {"image_number": get_index_from_letter(actual_cue_record['value']),
                                                    "device_number": 0,
                                                    "class_name": "Media",
-                                                   "fps_number": 100,
-                                                   "duration_number": 10}}}
+                                                   "fps_number": 50,
+                                                   "duration_number": 1}}}
 
                     LipAPI.wvs_client.send_message(ws_msg)
                 print(player_2digit, value, round(time.time() * 1000))
-                triggered_values.add(cue_to_test)
+                if str2bool(app_config['send_only_once']):
+                    triggered_values.add(cue_to_test)
 
             time.sleep(0.01)
             LipAPI.player_time += 0.01
+
+        triggered_values = set()  # Track triggered values
+        while not LipAPI.player_status != 'play':
+            to_do()
+
+        if LipAPI.player_status == 'end' and str2bool(app_config['send_end']):
+            to_do()
 
     # reset to default at init
     LipAPI.data_changed = False
@@ -1432,7 +1442,9 @@ async def main_page():
 
                 if len(LipAPI.mouths_buffer_thumb) > 0:
                     model_img = Image.fromarray(LipAPI.mouths_buffer_thumb[0])
-                    ui.image(model_img).classes('w-6')
+                    model_thumb = ui.image(model_img).classes('w-6')
+                else:
+                    model_thumb = ui.image('./media/image/model/default/x.png').classes('w-6')
 
             with ui.row().classes('self-center'):
                 ui.separator()
@@ -1633,8 +1645,7 @@ async def edit_cue_buffer():
 async def preview_page():
     utils.apply_custom()
     with ui.card(align_items='center').classes('w-full'):
-        await create_mouth_model()
-
+        await create_carousel()
 
 @ui.page('/audiomass')
 async def audio_editor():
