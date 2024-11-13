@@ -58,6 +58,7 @@ import cv2
 import os
 import sys
 import asyncio
+
 import utils
 import logging
 import concurrent_log_handler
@@ -67,10 +68,11 @@ from OSCClient import OSCClient
 from WSClient import WebSocketClient
 from pathlib import Path
 from PIL import Image
-from nicegui import ui, app, native
+from nicegui import ui, app, native, run
 from rhubarb import RhubarbWrapper
 from niceutils import LocalFilePicker
 from typing import List, Union
+from math import trunc
 
 if sys.platform.lower() == 'win32':
     from asyncio import WindowsSelectorEventLoopPolicy, set_event_loop_policy
@@ -153,6 +155,7 @@ class LipAPI:
     """
 
     player_status = ''
+    player_time:float = 0
     scroll_graphic: bool = True
     mouth_times_buffer = {}  # buffer dict contains result from rhubarb
     mouth_times_selected = []  # list contain time selected
@@ -168,6 +171,7 @@ class LipAPI:
     file_to_analyse = ''
     wave_show = True
     mouth_cue_show = True
+    mouth_cue_timer = None
     net_status_timer = None
     osc_client = None
     wvs_client = None
@@ -1108,39 +1112,28 @@ async def main_page():
         Send WVS / OSC msg
         """
 
-        play_time = await get_player_time()
+        LipAPI.player_time = await get_player_time()
 
-        actual_cue_record, next_cue_record = find_actual_nearest_cue_point(play_time, LipAPI.mouth_times_buffer)
+        actual_cue_record, next_cue_record = find_actual_nearest_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
         letter = next_cue_record['value']
 
         # if time zero hide spinner
-        if play_time == 0:
+        if LipAPI.player_time == 0:
             spinner_vocals.set_visibility(False)
         else:
             if LipAPI.player_status == 'play':
                 spinner_vocals.set_visibility(True)
 
-        # send osc message
-        if osc_activate.value is True and (LipAPI.player_status == 'play' or send_seek.value is True):
-            LipAPI.osc_client.send_message(osc_address.value + '/mouthCue/',
-                                           ["{:.3f}".format(play_time),
-                                            actual_cue_record['value'],
-                                            next_cue_record['start'],
-                                            next_cue_record['end'], letter])
-
-        # send wvs message
-        if wvs_activate.value is True and (LipAPI.player_status == 'play' or send_seek.value is True):
-            ws_msg = {"action":{"type":"cast_image",
-                                "param":{"image_number":get_index_from_letter(actual_cue_record['value']),
-                                         "device_number":0,
-                                         "class_name":"Media",
-                                         "fps_number":100,
-                                         "duration_number":10}}}
-        
-            LipAPI.wvs_client.send_message(ws_msg)
+        # scroll central mouth cues
+        if LipAPI.player_status == 'play' and LipAPI.scroll_graphic is True:
+            if LipAPI.audio_duration is None:
+                LipAPI.audio_duration = await get_audio_duration('player_vocals')
+            if LipAPI.mouth_area_h is not None:
+                LipAPI.mouth_area_h.scroll_to(percent=((LipAPI.player_time * 100) / LipAPI.audio_duration) / 100,
+                                              axis='horizontal')
 
         # set new value to central label
-        new_label = (str(play_time) + ' | ' +
+        new_label = (str(LipAPI.player_time) + ' | ' +
                      str(actual_cue_record['value'])+
                      ' | ' +
                      str(letter) +
@@ -1148,17 +1141,25 @@ async def main_page():
                      str(get_index_from_letter(letter)))
         time_label.set_text(new_label)
 
-        # set the index image in carousel (letter)
-        if LipAPI.mouth_carousel is not None:
-            LipAPI.mouth_carousel.set_value(str(get_index_from_letter(actual_cue_record['value'])))
+        # send osc message on seek
+        if osc_activate.value is True and LipAPI.player_status == 'pause' and send_seek.value is True:
+            LipAPI.osc_client.send_message(osc_address.value + '/mouthCue/',
+                                           ["{:.3f}".format(LipAPI.player_time),
+                                            actual_cue_record['value'],
+                                            next_cue_record['start'],
+                                            next_cue_record['end'], letter])
 
-        # scroll central mouth cues
-        if LipAPI.player_status == 'play' and LipAPI.scroll_graphic is True:
-            if LipAPI.audio_duration is None:
-                LipAPI.audio_duration = await get_audio_duration('player_vocals')
-            if LipAPI.mouth_area_h is not None:
-                LipAPI.mouth_area_h.scroll_to(percent=((play_time * 100) / LipAPI.audio_duration) / 100,
-                                              axis='horizontal')
+        # send wvs message on seek
+        if wvs_activate.value is True and LipAPI.player_status == 'pause' and send_seek.value is True:
+            ws_msg = {"action":{"type":"cast_image",
+                                "param":{"image_number":get_index_from_letter(actual_cue_record['value']),
+                                         "device_number":0,
+                                         "class_name":"Media",
+                                         "fps_number":100,
+                                         "duration_number":10}}}
+
+            LipAPI.wvs_client.send_message(ws_msg)
+
 
     def update_progress(data, is_stderr):
         """
@@ -1204,7 +1205,7 @@ async def main_page():
             play_time = await get_player_time()
             player_accompaniment.seek(play_time)
 
-    def event_player_vocals(event):
+    async def event_player_vocals(event):
         """ store player status to class attribute """
 
         if event == 'end':
@@ -1221,6 +1222,8 @@ async def main_page():
             # ui.notify('Player on pause')
             if rub._instance_running is False:
                 spinner_vocals.set_visibility(True)
+
+        await mouth_cue_action()
 
     def event_player_accompaniment(event):
         """ action from player accompanied """
@@ -1308,12 +1311,57 @@ async def main_page():
                         close.tooltip('Close editor')
 
 
+    async def mouth_cue_action():
+        LipAPI.player_time  = await get_player_time()
+        await run.io_bound(loop_mouth_cue)
+
+
+    def loop_mouth_cue():
+        triggered_values = set()  # Track triggered values
+        while not LipAPI.player_status != 'play':
+            actual_cue_record, next_cue_record = find_actual_nearest_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
+            start = str(actual_cue_record['start'])
+            value = actual_cue_record['value']
+            cue_to_test = start + value
+            player_2digit = trunc(LipAPI.player_time*100)/100
+
+            if cue_to_test not in triggered_values:
+                # set the index image in carousel (letter)
+                if LipAPI.mouth_carousel is not None:
+                    LipAPI.mouth_carousel.set_value(str(get_index_from_letter(actual_cue_record['value'])))
+                # send osc message on seek
+                if osc_activate.value is True:
+                    LipAPI.osc_client.send_message(osc_address.value + '/mouthCue/',
+                                                   ["{:.3f}".format(LipAPI.player_time),
+                                                    actual_cue_record['value'],
+                                                    next_cue_record['start'],
+                                                    next_cue_record['end'], value])
+                # send wvs message on seek
+                if wvs_activate.value is True:
+                    ws_msg = {"action": {"type": "cast_image",
+                                         "param": {"image_number": get_index_from_letter(actual_cue_record['value']),
+                                                   "device_number": 0,
+                                                   "class_name": "Media",
+                                                   "fps_number": 100,
+                                                   "duration_number": 10}}}
+
+                    LipAPI.wvs_client.send_message(ws_msg)
+                print(player_2digit, value, round(time.time() * 1000))
+                triggered_values.add(cue_to_test)
+
+            time.sleep(0.01)
+            LipAPI.player_time += 0.01
+
     # reset to default at init
     LipAPI.data_changed = False
     #
     # Rhubarb instance, callback will send back two values: data and is_stderr (for STDErr capture)
     #
     rub.callback = update_progress
+
+    # mouth cue timer
+    # LipAPI.mouth_cue_timer = ui.timer(0.01,loop_mouth_cue)
+    # LipAPI.mouth_cue_timer.active = False
 
     #
     # Main UI generation
@@ -1609,4 +1657,4 @@ app.add_static_files('/config', 'config')
 run niceGUI
 reconnect_timeout: need big value if load thumbs
 """
-ui.run(native=False, reload=False, reconnect_timeout=30)
+ui.run(native=False, reload=False, reconnect_timeout=3)
