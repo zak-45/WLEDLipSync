@@ -4,17 +4,27 @@
 # nuitka-project-if: {OS} == "Darwin":
 #    nuitka-project: --standalone
 #    nuitka-project: --macos-create-app-bundle
+#    nuitka-project: --include-raw-dir=rhubarb/mac=rhubarb/mac
 # nuitka-project-if: {OS} == "Windows":
 #    nuitka-project: --onefile-windows-splash-screen-image={MAIN_DIRECTORY}/splash-screen.png
+#    nuitka-project: --include-raw-dir=rhubarb/win=rhubarb/win
 # nuitka-project-if: os.getenv("DEBUG_COMPILATION", "no") == "yes":
 #    nuitka-project: --force-stdout-spec=WLEDLipSync.out.txt
 #    nuitka-project: --force-stderr-spec=WLEDLipSync.err.txt
 # nuitka-project-if: {OS} == "Linux":
+#    nuitka-project: --include-raw-dir=rhubarb/linux=rhubarb/linux
 #    nuitka-project: --include-module=gi
 #    nuitka-project: --include-module=qtpy
 # nuitka-project: --nofollow-import-to=doctest
 # nuitka-project: --noinclude-default-mode=error
-# nuitka-project: --include-raw-dir=rhubarb=rhubarb
+# nuitka-project: --include-raw-dir=tmp=tmp
+# nuitka-project: --include-raw-dir=log=log
+# nuitka-project: --include-raw-dir=assets=assets
+# nuitka-project: --include-raw-dir=config=config
+# nuitka-project: --include-raw-dir=media=media
+# nuitka-project: --include-raw-dir=audiomass=audiomass
+# nuitka-project: --include-raw-dir=output=output
+
 """
 a: zak-45
 d: 09/10/2024
@@ -172,7 +182,6 @@ class LipAPI:
     file_to_analyse = ''
     wave_show = True
     mouth_cue_show = True
-    mouth_cue_timer = None
     net_status_timer = None
     osc_client = None
     wvs_client = None
@@ -1369,10 +1378,6 @@ async def main_page():
     # Rhubarb instance, callback will send back two values: data and is_stderr (for STDErr capture)
     #
     rub.callback = update_progress
-
-    # mouth cue timer
-    # LipAPI.mouth_cue_timer = ui.timer(0.01,loop_mouth_cue)
-    # LipAPI.mouth_cue_timer.active = False
 
     #
     # Main UI generation
