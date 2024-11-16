@@ -102,7 +102,10 @@ jobs:
           macos-create-app-bundle: true
           onefile-tempdir-spec: ./WLEDLipSync
           output-file: WLEDLipSync-${{runner.os}}
-          include-package-data: nicegui
+          include-package-data: |
+            nicegui
+            ytmusicapi
+
           include-module: |
             pygments.formatters.html
             av.opaque
