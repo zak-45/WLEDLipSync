@@ -100,7 +100,6 @@ jobs:
           windows-icon-from-ico: assets/favicon.ico
           macos-app-icon: assets/favicon.ico
           macos-create-app-bundle: true
-          onefile: true
           onefile-tempdir-spec: ./WLEDLipSync
           output-file: WLEDLipSync-${{runner.os}}
           include-package-data: nicegui
