@@ -21,7 +21,6 @@
 # nuitka-project: --include-raw-dir=media=media
 # nuitka-project: --include-raw-dir=audiomass=audiomass
 # nuitka-project: --include-raw-dir=output=output
-
 """
 a: zak-45
 d: 09/10/2024
@@ -494,6 +493,259 @@ async def wavesurfer():
     ''')
 
 
+async def set_audio_duration():
+    """
+    Updates the audio duration for the vocal player.
+
+    This function loads the audio element for the vocal player and retrieves
+    its current duration, storing it in the LipAPI's audio_duration attribute.
+
+    Returns:
+        None
+    """
+
+    LipAPI.audio_duration = await get_audio_duration('player_vocals')
+
+
+async def get_player_time():
+    """
+    get player current playing time
+    """
+
+    return round(
+        await ui.run_javascript(
+            "document.getElementById('player_vocals').currentTime;", timeout=3
+        ),
+        2,
+    )
+
+
+def find_actual_nearest_cue_point(time_cue, cue_points):
+    """ find mouth card near provided time """
+
+    if not cue_points or 'mouthCues' not in cue_points:
+        return [{"start": "None", "end": "None", "value": "None"},{"start": "None", "end": "None", "value": "None"}]
+
+    threshold = 5
+    actual_cue = {"start": "None", "end": "None", "value": "None"}
+    nearest_cue = {"start": "None", "end": "None", "value": "None"}
+    smallest_diff = float('inf')
+
+    for cue in cue_points['mouthCues']:
+        # find actual cue
+        if cue['start'] <= time_cue < cue['end']:
+            actual_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
+        # find nearest cue
+        diff = abs(time_cue - cue['start'])
+        if diff < smallest_diff and diff < threshold:
+            smallest_diff = diff
+            nearest_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
+
+    return actual_cue, nearest_cue
+
+
+async def run_gencuedata():
+    """
+    execute javascript function to generate
+    data when click on waveform for focus on the mouth card
+    """
+    await ui.run_javascript('genCueData();', timeout=5)
+
+
+def create_marker(position, value):
+    """ run java to add marker on the waveform """
+
+    ui.run_javascript(f'add_marker({position},"{value}");', timeout=5)
+
+def clear_markers():
+    """ run java to clear all markers """
+
+    ui.run_javascript('clear_markers();', timeout=5)
+
+def add_all_markers():
+    """ run java to add all markers """
+
+    ui.run_javascript(f'LoadMouthCues("{LipAPI.output_file}.json");', timeout=5)
+
+
+async def mouth_cue_action(osc_address):
+    LipAPI.player_time  = await get_player_time()
+    await run.io_bound(loop_mouth_cue, osc_address)
+
+
+def loop_mouth_cue(osc_address):
+    def to_do():
+        actual_cue_record, next_cue_record = find_actual_nearest_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
+        start = str(actual_cue_record['start'])
+        value = actual_cue_record['value']
+        cue_to_test = start + value
+        player_2digit = trunc(LipAPI.player_time*100)/100
+
+        if cue_to_test not in triggered_values:
+            # set the index image in carousel (letter)
+            if LipAPI.mouth_carousel is not None:
+                LipAPI.mouth_carousel.set_value(str(get_index_from_letter(actual_cue_record['value'])))
+            # send osc message
+            if LipAPI.osc_client is not None:
+                LipAPI.osc_client.send_message(
+                    f'{osc_address}/mouthCue/',
+                    [
+                        "{:.3f}".format(LipAPI.player_time),
+                        actual_cue_record['value'],
+                        next_cue_record['start'],
+                        next_cue_record['end'],
+                        value,
+                    ],
+                )
+            # send wvs message
+            if LipAPI.wvs_client  is not None:
+                ws_msg = {"action": {"type": "cast_image",
+                                     "param": {"image_number": get_index_from_letter(actual_cue_record['value']),
+                                               "device_number": 0,
+                                               "class_name": "Media",
+                                               "fps_number": 50,
+                                               "duration_number": 1}}}
+
+                LipAPI.wvs_client.send_message(ws_msg)
+            print(player_2digit, value, round(time.time() * 1000))
+            if str2bool(app_config['send_only_once']):
+                triggered_values.add(cue_to_test)
+
+        time.sleep(0.01)
+        LipAPI.player_time += 0.01
+
+    triggered_values = set()  # Track triggered values
+    while LipAPI.player_status == 'play':
+        to_do()
+
+    if LipAPI.player_status == 'end' and str2bool(app_config['send_end']):
+        to_do()
+
+async def audio_edit():
+    """
+    Opens an audio editing dialog with an embedded editor.
+
+    This function prepares the audio file path for editing and displays a dialog
+    containing an iframe that loads the audio editing interface. It also provides
+    buttons for opening the editor in a new tab or closing the dialog.
+    Will load the iframe by passing the working audio file (mp3 format) as URL parameter.
+
+    Args:
+    Returns:
+        None
+    """
+
+    audiomass_file = LipAPI.file_to_analyse.replace('.wav','.mp3')
+    audiomass_file = audiomass_file.replace('./','/')
+    # http://yourdomain.com/index.html?yourParam=exampleValue
+
+    audio_dialog = ui.dialog() \
+            .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
+
+    with audio_dialog:
+        audio_dialog.open()
+        editor_card = ui.card().classes('w-full')
+        with editor_card:
+            ui.html(
+            f'''                
+            <iframe src="audiomass/src/index.html?WLEDLipSyncFilePath={audiomass_file}" frameborder="0" 
+            style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;
+                    height:100%;width:100%;
+                    position:absolute;top:0px;left:0px;right:0px;bottom:0px" 
+            height="100%" width="100%">
+            </iframe>
+            ''')
+            with ui.page_sticky(position='top-right', x_offset=25, y_offset=25):
+                with ui.row():
+                    new_editor = ui.button(icon='edit',color='yellow')
+                    new_editor.on('click', lambda :ui.navigate.to('/audiomass', new_tab=True))
+                    new_editor.props(add='round outline size="8px"')
+                    new_editor.tooltip('Open editor in new tab')
+                    close = ui.button(icon='close',color='red')
+                    close.on('click', lambda :audio_dialog.close())
+                    close.props(add='round outline size="8px"')
+                    close.tooltip('Close editor')
+
+
+async def mouth_time_buffer_edit():
+
+    buffer_dialog = ui.dialog() \
+            .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
+
+    with buffer_dialog:
+        buffer_dialog.open()
+        editor_card = ui.card().classes('w-full')
+        with editor_card:
+            ui.html(
+            '''                
+            <iframe src="/edit" frameborder="0" 
+            style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;
+                    height:100%;width:100%;
+                    position:absolute;top:0px;left:0px;right:0px;bottom:0px" 
+            height="100%" width="100%">
+            </iframe>
+            '''
+            )
+            with ui.page_sticky(position='top-right', x_offset=25, y_offset=25):
+                with ui.row():
+                    new_editor = ui.button(icon='edit',color='yellow')
+                    new_editor.on('click', lambda :ui.navigate.to('/edit', new_tab=True))
+                    new_editor.props(add='round outline size="8px"')
+                    new_editor.tooltip('Open editor in new tab')
+                    close = ui.button(icon='close',color='red')
+                    close.on('click', lambda :buffer_dialog.close())
+                    close.props(add='round outline size="8px"')
+                    close.tooltip('Close editor')
+
+
+async def modify_letter(start_time, letter_lbl):
+    """ create letter modification dialog and update """
+
+    def upd_letter(new_letter):
+        """ update label and buffer """
+        for cue in LipAPI.mouth_times_buffer['mouthCues']:
+            if cue['start'] == start_time:
+                cue['value'] = new_letter
+                letter_lbl.style(add='color:orange')
+                LipAPI.data_changed = True
+                logger.debug(f'new letter set {new_letter}')
+                break
+
+        letter_lbl.text = new_letter
+        dialog_l.close()
+
+    with ui.dialog() as dialog_l, ui.card():
+        """ dialog for letter update """
+
+        dialog_l.open()
+        ui.label(f'Modify letter : {letter_lbl.text}')
+        # retrieve thumb image from ndx
+        ui.image(Image.fromarray(LipAPI.mouths_buffer_thumb[get_index_from_letter(letter_lbl.text)]))
+
+        # read thumb array, images from 0  to x...(usually 9)
+        i = 0
+        for img_array in LipAPI.mouths_buffer_thumb:
+            img = Image.fromarray(img_array)
+            with ui.row():
+                ui.interactive_image(img).classes('w-10')
+                # retrieve letter from index
+                img_letter = get_letter_from_index(i)
+                # create corresponding checkbox
+                ui.checkbox(img_letter, on_change=lambda e=img_letter: upd_letter(e))
+                i += 1
+
+def show_lyrics(lyrics):
+    with ui.dialog() as lyrics_dialog:
+        lyrics_dialog.open()
+        ui.editor(value=lyrics)
+
+
+def show_tags(tags):
+    with ui.dialog() as tags_dialog:
+        tags_dialog.open()
+        ui.json_editor({'content': {'json': tags}})
+
+
 @ui.page('/')
 async def main_page():
     """
@@ -506,19 +758,6 @@ async def main_page():
     Returns:
         None
     """
-
-    async def set_audio_duration():
-        """
-        Updates the audio duration for the vocal player.
-
-        This function loads the audio element for the vocal player and retrieves
-        its current duration, storing it in the LipAPI's audio_duration attribute.
-
-        Returns:
-            None
-        """
-
-        LipAPI.audio_duration = await get_audio_duration('player_vocals')
 
     async def check_net_status():
         """
@@ -943,89 +1182,6 @@ async def main_page():
             else:
                 logger.debug('you need to select folder')
 
-    def find_actual_nearest_cue_point(time_cue, cue_points):
-        """ find mouth card near provided time """
-
-        if not cue_points or 'mouthCues' not in cue_points:
-            return [{"start": "None", "end": "None", "value": "None"},{"start": "None", "end": "None", "value": "None"}]
-
-        threshold = 5
-        actual_cue = {"start": "None", "end": "None", "value": "None"}
-        nearest_cue = {"start": "None", "end": "None", "value": "None"}
-        smallest_diff = float('inf')
-
-        for cue in cue_points['mouthCues']:
-            # find actual cue
-            if cue['start'] <= time_cue < cue['end']:
-                actual_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
-            # find nearest cue
-            diff = abs(time_cue - cue['start'])
-            if diff < smallest_diff and diff < threshold:
-                smallest_diff = diff
-                nearest_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
-
-        return actual_cue, nearest_cue
-
-    async def run_gencuedata():
-        """
-        execute javascript function to generate
-        data when click on waveform for focus on the mouth card
-        """
-        await ui.run_javascript('genCueData();', timeout=5)
-
-
-    def create_marker(position, value):
-        """ run java to add marker on the waveform """
-
-        ui.run_javascript(f'add_marker({position},"{value}");', timeout=5)
-
-    def clear_markers():
-        """ run java to clear all markers """
-
-        ui.run_javascript('clear_markers();', timeout=5)
-
-    def add_all_markers():
-        """ run java to add all markers """
-
-        ui.run_javascript(f'LoadMouthCues("{LipAPI.output_file}.json");', timeout=5)
-
-
-    async def modify_letter(start_time, letter_lbl):
-        """ create letter modification dialog and update """
-
-        def upd_letter(new_letter):
-            """ update label and buffer """
-            for cue in LipAPI.mouth_times_buffer['mouthCues']:
-                if cue['start'] == start_time:
-                    cue['value'] = new_letter
-                    letter_lbl.style(add='color:orange')
-                    LipAPI.data_changed = True
-                    logger.debug(f'new letter set {new_letter}')
-                    break
-
-            letter_lbl.text = new_letter
-            dialog.close()
-
-        with ui.dialog() as dialog, ui.card():
-            """ dialog for letter update """
-
-            dialog.open()
-            ui.label(f'Modify letter : {letter_lbl.text}')
-            # retrieve thumb image from ndx
-            ui.image(Image.fromarray(LipAPI.mouths_buffer_thumb[get_index_from_letter(letter_lbl.text)]))
-
-            # read thumb array, images from 0  to x...(usually 9)
-            i = 0
-            for img_array in LipAPI.mouths_buffer_thumb:
-                img = Image.fromarray(img_array)
-                with ui.row():
-                    ui.interactive_image(img).classes('w-10')
-                    # retrieve letter from index
-                    img_letter = get_letter_from_index(i)
-                    # create corresponding checkbox
-                    ui.checkbox(img_letter, on_change=lambda e=img_letter: upd_letter(e))
-                    i += 1
-
     async def generate_mouth_cue():
         """Generate graphical view of json file, could be time-consuming if display thumbs."""
 
@@ -1111,15 +1267,6 @@ async def main_page():
         LipAPI.data_changed = False
         edit_mouth_button.enable()
         load_mouth_button.enable()
-
-    async def get_player_time():
-        """
-        get player current playing time
-        """
-
-        current_play_time = round(await ui.run_javascript("document.getElementById('player_vocals').currentTime;", timeout=3),2)
-
-        return current_play_time
 
     async def player_time_action():
         """
@@ -1241,150 +1388,23 @@ async def main_page():
             if rub._instance_running is False:
                 spinner_vocals.set_visibility(True)
 
-        await mouth_cue_action()
+        await mouth_cue_action(osc_address.value)
 
     def event_player_accompaniment(event):
         """ action from player accompanied """
 
-        if event == 'end':
+        if event == 'end' or event == 'pause':
             spinner_accompaniment.set_visibility(False)
 
         elif event == 'play':
             spinner_accompaniment.set_visibility(True)
 
-        elif event == 'pause':
-            spinner_accompaniment.set_visibility(False)
-
-    async def audio_edit():
-        """
-        Opens an audio editing dialog with an embedded editor.
-
-        This function prepares the audio file path for editing and displays a dialog
-        containing an iframe that loads the audio editing interface. It also provides
-        buttons for opening the editor in a new tab or closing the dialog.
-        Will load the iframe by passing the working audio file (mp3 format) as URL parameter.
-
-        Args:
-        Returns:
-            None
-        """
-
-        audiomass_file = LipAPI.file_to_analyse.replace('.wav','.mp3')
-        audiomass_file = audiomass_file.replace('./','/')
-        # http://yourdomain.com/index.html?yourParam=exampleValue
-
-        dialog = ui.dialog() \
-                .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
-
-        with dialog:
-            dialog.open()
-            editor_card = ui.card().classes('w-full')
-            with editor_card:
-                ui.html(f'''                
-                <iframe src="audiomass/src/index.html?WLEDLipSyncFilePath={audiomass_file}" frameborder="0" 
-                style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;
-                        height:100%;width:100%;
-                        position:absolute;top:0px;left:0px;right:0px;bottom:0px" 
-                height="100%" width="100%">
-                </iframe>
-                ''')
-                with ui.page_sticky(position='top-right', x_offset=25, y_offset=25):
-                    with ui.row():
-                        new_editor = ui.button(icon='edit',color='yellow')
-                        new_editor.on('click', lambda :ui.navigate.to('/audiomass', new_tab=True))
-                        new_editor.props(add='round outline size="8px"')
-                        new_editor.tooltip('Open editor in new tab')
-                        close = ui.button(icon='close',color='red')
-                        close.on('click', lambda :dialog.close())
-                        close.props(add='round outline size="8px"')
-                        close.tooltip('Close editor')
-
-
-    async def mouth_time_buffer_edit():
-
-        dialog = ui.dialog() \
-                .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
-
-        with dialog:
-            dialog.open()
-            editor_card = ui.card().classes('w-full')
-            with editor_card:
-                ui.html(f'''                
-                <iframe src="/edit" frameborder="0" 
-                style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;
-                        height:100%;width:100%;
-                        position:absolute;top:0px;left:0px;right:0px;bottom:0px" 
-                height="100%" width="100%">
-                </iframe>
-                ''')
-                with ui.page_sticky(position='top-right', x_offset=25, y_offset=25):
-                    with ui.row():
-                        new_editor = ui.button(icon='edit',color='yellow')
-                        new_editor.on('click', lambda :ui.navigate.to('/edit', new_tab=True))
-                        new_editor.props(add='round outline size="8px"')
-                        new_editor.tooltip('Open editor in new tab')
-                        close = ui.button(icon='close',color='red')
-                        close.on('click', lambda :dialog.close())
-                        close.props(add='round outline size="8px"')
-                        close.tooltip('Close editor')
-
-
-    async def mouth_cue_action():
-        LipAPI.player_time  = await get_player_time()
-        await run.io_bound(loop_mouth_cue)
-
-
-    def loop_mouth_cue():
-        def to_do():
-            actual_cue_record, next_cue_record = find_actual_nearest_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
-            start = str(actual_cue_record['start'])
-            value = actual_cue_record['value']
-            cue_to_test = start + value
-            player_2digit = trunc(LipAPI.player_time*100)/100
-
-            if cue_to_test not in triggered_values:
-                # set the index image in carousel (letter)
-                if LipAPI.mouth_carousel is not None:
-                    LipAPI.mouth_carousel.set_value(str(get_index_from_letter(actual_cue_record['value'])))
-                # send osc message
-                if osc_activate.value is True:
-                    LipAPI.osc_client.send_message(osc_address.value + '/mouthCue/',
-                                                   ["{:.3f}".format(LipAPI.player_time),
-                                                    actual_cue_record['value'],
-                                                    next_cue_record['start'],
-                                                    next_cue_record['end'], value])
-                # send wvs message
-                if wvs_activate.value is True:
-                    ws_msg = {"action": {"type": "cast_image",
-                                         "param": {"image_number": get_index_from_letter(actual_cue_record['value']),
-                                                   "device_number": 0,
-                                                   "class_name": "Media",
-                                                   "fps_number": 50,
-                                                   "duration_number": 1}}}
-
-                    LipAPI.wvs_client.send_message(ws_msg)
-                print(player_2digit, value, round(time.time() * 1000))
-                if str2bool(app_config['send_only_once']):
-                    triggered_values.add(cue_to_test)
-
-            time.sleep(0.01)
-            LipAPI.player_time += 0.01
-
-        triggered_values = set()  # Track triggered values
-        while not LipAPI.player_status != 'play':
-            to_do()
-
-        if LipAPI.player_status == 'end' and str2bool(app_config['send_end']):
-            to_do()
 
     def song_info(file_name):
-        def show_lyrics():
-            with ui.dialog() as dialog:
-                dialog.open()
-                ui.editor(value=info_from_yt['lyrics']['lyrics'])
         # read tag data
         with taglib.File(file_name) as song:
             print(song.tags)
+            # set info from tags
             artist_tag = 'None'
             title_tag = 'None'
             album_tag = 'None'
@@ -1397,24 +1417,38 @@ async def main_page():
                 album_tag = song.tags['ALBUM'][0]
             if 'DATE' in song.tags:
                 year_tag = song.tags['DATE'][0]
-            retriever = MusicInfoRetriever()
-            info_from_yt = retriever.get_song_info_with_lyrics(title_tag, artist_tag)
-            songName.set_text('Name : '+ title_tag)
+            songName.set_text('Title : '+ title_tag)
             songYear.set_text('Year : ' + year_tag)
             songAlbum.set_text('Album : ' + album_tag)
             songArtist.set_text('Artist : ' + artist_tag)
+            songTags.on('click', lambda: show_tags(song.tags))
+
+            # get info from ytmusicapi
+            retriever = MusicInfoRetriever()
+            info_from_yt = retriever.get_song_info_with_lyrics(title_tag, artist_tag)
             print(info_from_yt)
-            if info_from_yt is not None:
-                if 'lyrics' in info_from_yt:
-                    songLyrics.on('click', lambda : show_lyrics())
-                    songLyrics.style(add='cursor: pointer')
-                if 'length' in info_from_yt:
-                    songLength.set_text('length : ' + info_from_yt['length'])
-                if 'thumbnails' in info_from_yt:
-                    albumImg.set_source(info_from_yt['thumbnails'][0]['url'])
-                if 'artistInfo' in info_from_yt:
-                    artistImg.set_source(info_from_yt['artistInfo']['thumbnails'][0]['url'])
-                    artistDesc.set_text(info_from_yt['artistInfo']['description'])
+            #
+            songLength.set_text('length : ')
+            artistDesc.set_text('info : ')
+            albumImg.set_source('')
+            artistImg.set_source('')
+            try:
+                if info_from_yt is not None:
+                    if 'lyrics' in info_from_yt:
+                        songLyrics.on('click', lambda : show_lyrics(info_from_yt['lyrics']['lyrics']))
+                    if 'length' in info_from_yt:
+                        songLength.set_text('length : ' + info_from_yt['length'])
+                    if 'thumbnails' in info_from_yt:
+                        albumImg.set_source(info_from_yt['thumbnails'][0]['url'])
+                    if 'artistInfo' in info_from_yt:
+                        artistImg.set_source(info_from_yt['artistInfo']['thumbnails'][0]['url'])
+                        artistDesc.set_text(info_from_yt['artistInfo']['description'])
+            except IndexError:
+                print('Error to retrieve info from ytmusicapi')
+            except Exception as e:
+                print(f'Error to retrieve info from ytmusicapi {e}')
+            finally:
+                pass
 
     # reset to default at init
     LipAPI.data_changed = False
@@ -1567,13 +1601,16 @@ async def main_page():
                     songInfo.bind_visibility_from(info,'value')
                     with ui.row():
                         with ui.column():
-                            songName = ui.label('Name: ')
-                            songAlbum = ui.label('Album: ')
+                            songName = ui.label('Title : ')
+                            songAlbum = ui.label('Album : ')
                             albumImg = ui.image('').classes('w-20')
                         with ui.column():
-                            songYear = ui.label('Year: ')
-                            songLength = ui.label('length: ')
+                            songLength = ui.label('length : ')
+                            songYear = ui.label('Year : ')
                             songLyrics = ui.icon('lyrics', size='sm')
+                            songLyrics.style(add='cursor: pointer')
+                            songTags = ui.icon('tag', size='sm')
+                            songTags.style(add='cursor: pointer')
                         with ui.column():
                             with ui.row():
                                 songArtist = ui.label('Artist: ')
