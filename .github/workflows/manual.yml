@@ -106,6 +106,7 @@ jobs:
           include-module: |
             pygments.formatters.html
             av.opaque
+            taglib
 
           include-data-files: |
             favicon.ico=favicon.ico

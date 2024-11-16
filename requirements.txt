@@ -8,6 +8,11 @@ pillow~=11.0.0
 opencv-python~=4.10.0.84
 nicegui~=2.5.0
 numpy~=2.1.3
+str2bool~=1.1
+websocket-client~=1.8.0
+python-osc~=1.9.0
+ipaddress~=1.0.23
+ytmusicapi~=1.8.2
 
 # Platform dependant
 pywebview==5.1 ; sys_platform != "linux"
@@ -18,12 +23,6 @@ qtpy ; sys_platform == "linux"
 
 # any version & Common to all OS
 imageio
-str2bool~=1.1
-websocket-client~=1.8.0
-python-osc~=1.9.0
-musicbrainzngs
 concurrent-log-handler
 cfg-load
-ipaddress~=1.0.23
-
-ytmusicapi~=1.8.2
+pytaglib
