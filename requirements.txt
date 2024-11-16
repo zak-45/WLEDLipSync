@@ -18,10 +18,12 @@ qtpy ; sys_platform == "linux"
 
 # any version & Common to all OS
 imageio
-str2bool
-websocket-client
-python-osc
+str2bool~=1.1
+websocket-client~=1.8.0
+python-osc~=1.9.0
 musicbrainzngs
 concurrent-log-handler
 cfg-load
-ipaddress
+ipaddress~=1.0.23
+
+ytmusicapi~=1.8.2

@@ -225,7 +225,7 @@ function initializeWavesurfer() {
                       style: {
                         fontSize: '10px',
                         color: 'yellow',
-                        background: '#164E63',
+                        background: '#0E7490',
                       },
                     }), regions],
         });

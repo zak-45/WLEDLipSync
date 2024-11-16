@@ -8,13 +8,13 @@
 # nuitka-project-if: {OS} == "Windows":
 #    nuitka-project: --onefile-windows-splash-screen-image={MAIN_DIRECTORY}/splash-screen.png
 #    nuitka-project: --include-raw-dir=rhubarb/win=rhubarb/win
-# nuitka-project-if: os.getenv("DEBUG_COMPILATION", "no") == "yes":
-#    nuitka-project: --force-stdout-spec=WLEDLipSync.out.txt
-#    nuitka-project: --force-stderr-spec=WLEDLipSync.err.txt
 # nuitka-project-if: {OS} == "Linux":
 #    nuitka-project: --include-raw-dir=rhubarb/linux=rhubarb/linux
 #    nuitka-project: --include-module=gi
 #    nuitka-project: --include-module=qtpy
+# nuitka-project-if: os.getenv("DEBUG_COMPILATION", "no") == "yes":
+#    nuitka-project: --force-stdout-spec=WLEDLipSync.out.txt
+#    nuitka-project: --force-stderr-spec=WLEDLipSync.err.txt
 # nuitka-project: --nofollow-import-to=doctest
 # nuitka-project: --noinclude-default-mode=error
 # nuitka-project: --include-raw-dir=tmp=tmp
@@ -60,6 +60,7 @@ Send mouth cues to OSC and WS ...
 Depend on how many mouth cues defined and if short interval, in some rare case, could miss letter during audio playback
     --> timeupdate frequency depend on several external factor , see HTML5 audio element doc
 This is one of reason why actual letter and future one are sent on same message record.
+On second, a mouth loop will occur during play time and executed every 10ms.
 
 09/10/2024 : there is a problem playing  file when refresh the browser : need investigation
 """
@@ -73,6 +74,7 @@ import asyncio
 import utils
 import logging
 import concurrent_log_handler
+import taglib
 
 from str2bool import str2bool
 from OSCClient import OSCClient
@@ -84,9 +86,10 @@ from rhubarb import RhubarbWrapper
 from niceutils import LocalFilePicker
 from typing import List, Union
 from math import trunc
+from ytmusic import MusicInfoRetriever
 
 if sys.platform.lower() == 'win32':
-    from asyncio import WindowsSelectorEventLoopPolicy, set_event_loop_policy
+    from asyncio import WindowsSelectorEventLoopPolicy, set_event_loop_policy, timeout
 
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
@@ -186,7 +189,7 @@ class LipAPI:
     osc_client = None
     wvs_client = None
     data_changed = False  # True if some data has been changed by end user
-    preview_area = None  # area where  display model
+    preview_area = None  # area where to display model
 
     mouth_to_image = {
         'A': 0,
@@ -663,7 +666,7 @@ async def main_page():
                 logger.debug('stop timer')
                 LipAPI.net_status_timer.active = False
 
-    def validate_file(file_name):
+    async def validate_file(file_name):
         """ file input validation """
 
         # disable button
@@ -680,6 +683,8 @@ async def main_page():
         elif not os.path.isfile(file_name):
             ui.notify(f'File {file_name} does not exist')
             return False
+
+        await run.io_bound(song_info,file_name)
 
         return True
 
@@ -739,7 +744,7 @@ async def main_page():
         if LipAPI.source_file != '' and audio_input.value == '':
             file_path = LipAPI.source_file
         # main file checks
-        if validate_file(file_path):
+        if await validate_file(file_path):
             # extract file name only
             file_name = os.path.basename(file_path)
             file_info = os.path.splitext(file_name)
@@ -805,7 +810,7 @@ async def main_page():
                 result = str(result[0]).replace('\\', '/')
             if len(result) > 0:
                 result = './' + result
-            if validate_file(result):
+            if await validate_file(result):
                 audio_input.value = result
 
     def analyse_audio():
@@ -1154,6 +1159,9 @@ async def main_page():
                      str(get_index_from_letter(letter)))
         time_label.set_text(new_label)
 
+        if LipAPI.player_status != 'play' and LipAPI.mouth_carousel is not None:
+            LipAPI.mouth_carousel.set_value(str(get_index_from_letter(actual_cue_record['value'])))
+
         # send osc message on seek
         if osc_activate.value is True and LipAPI.player_status != 'play' and send_seek.value is True:
             LipAPI.osc_client.send_message(osc_address.value + '/mouthCue/',
@@ -1372,6 +1380,45 @@ async def main_page():
         if LipAPI.player_status == 'end' and str2bool(app_config['send_end']):
             to_do()
 
+    def song_info(file_name):
+        def show_lyrics():
+            with ui.dialog() as dialog:
+                dialog.open()
+                ui.editor(value=info_from_yt['lyrics']['lyrics'])
+        # read tag data
+        with taglib.File(file_name) as song:
+            print(song.tags)
+            artist_tag = 'None'
+            title_tag = 'None'
+            album_tag = 'None'
+            year_tag = 'None'
+            if 'ARTIST' in song.tags:
+                artist_tag = song.tags['ARTIST'][0]
+            if 'TITLE' in song.tags:
+                title_tag = song.tags['TITLE'][0]
+            if 'ALBUM' in song.tags:
+                album_tag = song.tags['ALBUM'][0]
+            if 'DATE' in song.tags:
+                year_tag = song.tags['DATE'][0]
+            retriever = MusicInfoRetriever()
+            info_from_yt = retriever.get_song_info_with_lyrics(title_tag, artist_tag)
+            songName.set_text('Name : '+ title_tag)
+            songYear.set_text('Year : ' + year_tag)
+            songAlbum.set_text('Album : ' + album_tag)
+            songArtist.set_text('Artist : ' + artist_tag)
+            print(info_from_yt)
+            if info_from_yt is not None:
+                if 'lyrics' in info_from_yt:
+                    songLyrics.on('click', lambda : show_lyrics())
+                    songLyrics.style(add='cursor: pointer')
+                if 'length' in info_from_yt:
+                    songLength.set_text('length : ' + info_from_yt['length'])
+                if 'thumbnails' in info_from_yt:
+                    albumImg.set_source(info_from_yt['thumbnails'][0]['url'])
+                if 'artistInfo' in info_from_yt:
+                    artistImg.set_source(info_from_yt['artistInfo']['thumbnails'][0]['url'])
+                    artistDesc.set_text(info_from_yt['artistInfo']['description'])
+
     # reset to default at init
     LipAPI.data_changed = False
     #
@@ -1518,6 +1565,30 @@ async def main_page():
                 ok_button = ui.button('OK', on_click=approve_set_file_name)
                 ui.checkbox('Wave').bind_value(LipAPI, 'wave_show')
                 ui.checkbox('MouthCue').bind_value(LipAPI, 'mouth_cue_show')
+                info = ui.checkbox('Info', value=False)
+                with ui.card() as songInfo:
+                    songInfo.bind_visibility_from(info,'value')
+                    with ui.row():
+                        with ui.column():
+                            songName = ui.label('Name: ')
+                            songAlbum = ui.label('Album: ')
+                            albumImg = ui.image('').classes('w-20')
+                        with ui.column():
+                            songYear = ui.label('Year: ')
+                            songLength = ui.label('length: ')
+                            songLyrics = ui.icon('lyrics', size='sm')
+                        with ui.column():
+                            with ui.row():
+                                songArtist = ui.label('Artist: ')
+                                artistImg = ui.image('').classes('w-80')
+                            artistDesc = ui.label('info: ')
+                        with ui.column():
+                            artistTop5 = ui.label('Top 5: ')
+                        song1Name = ui.label('1')
+                        song2Name = ui.label('2')
+                        song3Name = ui.label('3')
+                        song4Name = ui.label('4')
+                        song5Name = ui.label('5')
 
             ui.label(' ')
 
@@ -1572,12 +1643,6 @@ async def main_page():
 
             prev_exp = ui.expansion('Preview').classes('bg-cyan-500')
             with prev_exp:
-                """
-                def tab_preview():
-                    my.disable()
-                    ui.navigate.to('/preview', new_tab=True)
-                """
-
                 def show_preview(prev):
                     card_left_preview.set_visibility(False)
                     card_top_preview.set_visibility(False)
@@ -1594,9 +1659,9 @@ async def main_page():
                 with ui.row().classes('self-center'):
                     ui.button(icon='add', on_click=lambda: LipAPI.mouth_carousel.next()).props('round dense')
                     ui.button(icon='remove', on_click=lambda: LipAPI.mouth_carousel.previous()).props('round dense')
-                prev_hide = ui.switch('Show', on_change=lambda v: show_preview(v.value), value=True)
-                prev_hide.classes('self-center')
-                prev_hide.set_value(False)
+                with ui.row().classes('self-center'):
+                    prev_hide = ui.switch('Show', on_change=lambda v: show_preview(v.value), value=False)
+
 
         with ui.card().tight().classes('bg-cyan-400'):
             ui.label(' ')
