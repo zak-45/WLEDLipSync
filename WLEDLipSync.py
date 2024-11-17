@@ -200,27 +200,6 @@ class LipAPI:
     }
 
 
-async def load_image_async(img_path: str):
-    """
-    Loads an image asynchronously from the specified file path.
-
-    This function reads an image file and converts its color format from BGR to RGB.
-    It is designed to be used in an asynchronous context to avoid blocking the main thread.
-
-    Args:
-        img_path (str): The file path of the image to be loaded.
-
-    Returns:
-        cv2: The loaded image in RGB format, or None if the image could not be loaded.
-    """
-
-    loop = asyncio.get_event_loop()
-    img = await loop.run_in_executor(None, cv2.imread, img_path, cv2.IMREAD_COLOR)
-    if img is not None:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return img
-
-
 async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
     """
     Loads mouth images from a specified folder into the LipAPI buffer.
@@ -241,7 +220,7 @@ async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
     supported_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff')
 
     tasks = [
-        load_image_async(str(img_path))
+        utils.load_image_async(str(img_path))
         for img_path in folder_path.iterdir()
         if img_path.suffix.lower() in supported_extensions and img_path.is_file()
     ]
@@ -329,16 +308,6 @@ async def create_thumbnail(index: int):
     new_height = int(LipAPI.thumbnail_width * aspect_ratio)
     resized_image = cv2.resize(image, (LipAPI.thumbnail_width, new_height))
     LipAPI.mouths_buffer_thumb.append(resized_image)
-
-
-async def get_audio_duration(player: str = ''):
-    """
-    Get audio duration
-    :param player: ID of the player object (str)
-    :return: duration
-    """
-
-    return await ui.run_javascript(f'document.getElementById("{player}").duration;',timeout=2)
 
 
 async def gen_thumbnails_from_array():
@@ -458,41 +427,6 @@ async def edit_mouth_time_buffer():
         ui.notification('Nothing to edit... Maybe load/reload mouth data cue', position='center', type='warning')
 
 
-async def wavesurfer():
-    """
-    Sets up the CSS and JavaScript for the wavesurfer component.
-
-    This function adds the necessary CSS styles for the waveform display and
-    includes the JavaScript module required for the wavesurfer functionality.
-    It ensures that the waveform is styled correctly and is interactive for user actions.
-
-    Returns:
-        None
-    """
-
-    ui.add_css('''
-    #waveform {
-    margin: 0 28px; /* waveform */
-    height: 192; /* Set a height for the waveform */
-    cursor: crosshair; /* Change cursor to indicate clickable area */
-    }
-    .blink {
-        animation: blinker 1s linear infinite;
-        color: yellow;
-    }
-    
-    @keyframes blinker {
-        50% { opacity: 0; }
-    }
-    ''')
-
-    ui.add_body_html('''    
-    <script type="module">
-        import "/assets/js/wledlipsync.js"
-    </script>    
-    ''')
-
-
 async def set_audio_duration():
     """
     Updates the audio duration for the vocal player.
@@ -504,63 +438,8 @@ async def set_audio_duration():
         None
     """
 
-    LipAPI.audio_duration = await get_audio_duration('player_vocals')
+    LipAPI.audio_duration = await utils.get_audio_duration('player_vocals')
 
-
-async def get_player_time():
-    """
-    get player current playing time
-    """
-
-    return round(
-        await ui.run_javascript(
-            "document.getElementById('player_vocals').currentTime;", timeout=3
-        ),
-        2,
-    )
-
-
-def find_actual_nearest_cue_point(time_cue, cue_points):
-    """ find mouth card near provided time """
-
-    if not cue_points or 'mouthCues' not in cue_points:
-        return [{"start": "None", "end": "None", "value": "None"},{"start": "None", "end": "None", "value": "None"}]
-
-    threshold = 5
-    actual_cue = {"start": "None", "end": "None", "value": "None"}
-    nearest_cue = {"start": "None", "end": "None", "value": "None"}
-    smallest_diff = float('inf')
-
-    for cue in cue_points['mouthCues']:
-        # find actual cue
-        if cue['start'] <= time_cue < cue['end']:
-            actual_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
-        # find nearest cue
-        diff = abs(time_cue - cue['start'])
-        if diff < smallest_diff and diff < threshold:
-            smallest_diff = diff
-            nearest_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
-
-    return actual_cue, nearest_cue
-
-
-async def run_gencuedata():
-    """
-    execute javascript function to generate
-    data when click on waveform for focus on the mouth card
-    """
-    await ui.run_javascript('genCueData();', timeout=5)
-
-
-def create_marker(position, value):
-    """ run java to add marker on the waveform """
-
-    ui.run_javascript(f'add_marker({position},"{value}");', timeout=5)
-
-def clear_markers():
-    """ run java to clear all markers """
-
-    ui.run_javascript('clear_markers();', timeout=5)
 
 def add_all_markers():
     """ run java to add all markers """
@@ -569,13 +448,13 @@ def add_all_markers():
 
 
 async def mouth_cue_action(osc_address):
-    LipAPI.player_time  = await get_player_time()
+    LipAPI.player_time  = await utils.get_player_time()
     await run.io_bound(loop_mouth_cue, osc_address)
 
 
 def loop_mouth_cue(osc_address):
     def to_do():
-        actual_cue_record, next_cue_record = find_actual_nearest_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
+        actual_cue_record, next_cue_record = utils.find_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
         start = str(actual_cue_record['start'])
         value = actual_cue_record['value']
         cue_to_test = start + value
@@ -667,37 +546,6 @@ async def audio_edit():
                     close.tooltip('Close editor')
 
 
-async def mouth_time_buffer_edit():
-
-    buffer_dialog = ui.dialog() \
-            .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
-
-    with buffer_dialog:
-        buffer_dialog.open()
-        editor_card = ui.card().classes('w-full')
-        with editor_card:
-            ui.html(
-            '''                
-            <iframe src="/edit" frameborder="0" 
-            style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;
-                    height:100%;width:100%;
-                    position:absolute;top:0px;left:0px;right:0px;bottom:0px" 
-            height="100%" width="100%">
-            </iframe>
-            '''
-            )
-            with ui.page_sticky(position='top-right', x_offset=25, y_offset=25):
-                with ui.row():
-                    new_editor = ui.button(icon='edit',color='yellow')
-                    new_editor.on('click', lambda :ui.navigate.to('/edit', new_tab=True))
-                    new_editor.props(add='round outline size="8px"')
-                    new_editor.tooltip('Open editor in new tab')
-                    close = ui.button(icon='close',color='red')
-                    close.on('click', lambda :buffer_dialog.close())
-                    close.props(add='round outline size="8px"')
-                    close.tooltip('Close editor')
-
-
 async def modify_letter(start_time, letter_lbl):
     """ create letter modification dialog and update """
 
@@ -734,16 +582,6 @@ async def modify_letter(start_time, letter_lbl):
                 ui.checkbox(img_letter, on_change=lambda e=img_letter: upd_letter(e))
                 i += 1
 
-def show_lyrics(lyrics):
-    with ui.dialog() as lyrics_dialog:
-        lyrics_dialog.open()
-        ui.editor(value=lyrics)
-
-
-def show_tags(tags):
-    with ui.dialog() as tags_dialog:
-        tags_dialog.open()
-        ui.json_editor({'content': {'json': tags}})
 
 
 @ui.page('/')
@@ -920,9 +758,14 @@ async def main_page():
             ui.notify(f'File {file_name} does not exist')
             return False
 
-        await run.io_bound(song_info,file_name)
-
         return True
+
+    async def check_audio_input(file_name):
+        """ check input and retrieve info from ytmusicapi """
+
+        if await validate_file(file_name):
+            await run.io_bound(song_info,file_name)
+
 
     async def approve_set_file_name():
         """ dialog to approve load new audio file """
@@ -1048,6 +891,7 @@ async def main_page():
                 result = './' + result
             if await validate_file(result):
                 audio_input.value = result
+                await check_audio_input(result)
 
     def analyse_audio():
         """
@@ -1196,7 +1040,7 @@ async def main_page():
             if seek_time not in LipAPI.mouth_times_selected:
                 LipAPI.mouth_times_selected.append(seek_time)
                 LipAPI.mouth_times_selected.sort()
-            create_marker(seek_time,marker)
+            utils.create_marker(seek_time,marker)
             card.classes(remove='bg-cyan-700')
             card.classes(add='bg-red-400')
             rem.set_visibility(True)
@@ -1262,7 +1106,7 @@ async def main_page():
         LipAPI.mouth_area_h.move(target_container=card_mouth)
 
         # This could take some time
-        ui.timer(1, run_gencuedata, once=True)
+        ui.timer(1, utils.run_gencuedata, once=True)
 
         LipAPI.data_changed = False
         edit_mouth_button.enable()
@@ -1274,9 +1118,9 @@ async def main_page():
         Send WVS / OSC msg
         """
 
-        LipAPI.player_time = await get_player_time()
+        LipAPI.player_time = await utils.get_player_time()
 
-        actual_cue_record, next_cue_record = find_actual_nearest_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
+        actual_cue_record, next_cue_record = utils.find_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
         letter = next_cue_record['value']
 
         # if time zero hide spinner
@@ -1289,7 +1133,7 @@ async def main_page():
         # scroll central mouth cues
         if LipAPI.player_status == 'play' and LipAPI.scroll_graphic is True:
             if LipAPI.audio_duration is None:
-                LipAPI.audio_duration = await get_audio_duration('player_vocals')
+                LipAPI.audio_duration = await utils.get_audio_duration('player_vocals')
             if LipAPI.mouth_area_h is not None:
                 LipAPI.mouth_area_h.scroll_to(percent=((LipAPI.player_time * 100) / LipAPI.audio_duration) / 100,
                                               axis='horizontal')
@@ -1367,7 +1211,7 @@ async def main_page():
             player_vocals.pause()
             player_accompaniment.pause()
         elif action == 'sync':
-            play_time = await get_player_time()
+            play_time = await utils.get_player_time()
             player_accompaniment.seek(play_time)
 
     async def event_player_vocals(event):
@@ -1400,7 +1244,25 @@ async def main_page():
             spinner_accompaniment.set_visibility(True)
 
 
+    def show_tags():
+        with ui.dialog() as tags_dialog, ui.card():
+            tags_dialog.open()
+            ui.json_editor({'content': {'json': tags_data.text}})
+            ui.button('close', on_click=tags_dialog.close)
+
+
+    def show_lyrics():
+        with (ui.dialog() as lyrics_dialog,ui.card(align_items='center').classes('w-full')) :
+            lyrics_dialog.open()
+            lyrics = ui.textarea('LYRICS', value=lyrics_data.text)
+            lyrics.classes('w-full')
+            lyrics.props(add='autogrow bg-color=blue-grey-4')
+            lyrics.style(add='text-align:center;')
+            ui.button('close', on_click=lyrics_dialog.close)
+
+
     def song_info(file_name):
+        song_spinner.set_visibility(True)
         # read tag data
         with taglib.File(file_name) as song:
             print(song.tags)
@@ -1417,38 +1279,41 @@ async def main_page():
                 album_tag = song.tags['ALBUM'][0]
             if 'DATE' in song.tags:
                 year_tag = song.tags['DATE'][0]
-            songName.set_text('Title : '+ title_tag)
-            songYear.set_text('Year : ' + year_tag)
-            songAlbum.set_text('Album : ' + album_tag)
-            songArtist.set_text('Artist : ' + artist_tag)
-            songTags.on('click', lambda: show_tags(song.tags))
+            song_name.set_text('Title : '+ title_tag)
+            song_year.set_text('Year : ' + year_tag)
+            song_album.set_text('Album : ' + album_tag)
+            song_artist.set_text('Artist : ' + artist_tag)
+        tags_data.set_text(song.tags)
 
-            # get info from ytmusicapi
-            retriever = MusicInfoRetriever()
-            info_from_yt = retriever.get_song_info_with_lyrics(title_tag, artist_tag)
-            print(info_from_yt)
-            #
-            songLength.set_text('length : ')
-            artistDesc.set_text('info : ')
-            albumImg.set_source('')
-            artistImg.set_source('')
-            try:
-                if info_from_yt is not None:
-                    if 'lyrics' in info_from_yt:
-                        songLyrics.on('click', lambda : show_lyrics(info_from_yt['lyrics']['lyrics']))
-                    if 'length' in info_from_yt:
-                        songLength.set_text('length : ' + info_from_yt['length'])
-                    if 'thumbnails' in info_from_yt:
-                        albumImg.set_source(info_from_yt['thumbnails'][0]['url'])
-                    if 'artistInfo' in info_from_yt:
-                        artistImg.set_source(info_from_yt['artistInfo']['thumbnails'][0]['url'])
-                        artistDesc.set_text(info_from_yt['artistInfo']['description'])
-            except IndexError:
-                print('Error to retrieve info from ytmusicapi')
-            except Exception as e:
-                print(f'Error to retrieve info from ytmusicapi {e}')
-            finally:
-                pass
+        # get info from ytmusicapi
+        info_from_yt = retriever.get_song_info_with_lyrics(title_tag, artist_tag)
+        print(info_from_yt)
+        #
+        song_length.set_text('length : ')
+        artist_desc.set_text('info : ')
+        album_img.set_source('')
+        artist_img.set_source('')
+        lyrics_data.set_text('')
+
+        try:
+            if info_from_yt is not None:
+                if 'lyrics' in info_from_yt:
+                    lyrics_data.set_text(info_from_yt['lyrics']['lyrics'])
+                if 'length' in info_from_yt:
+                    song_length.set_text('length : ' + info_from_yt['length'])
+                if 'thumbnails' in info_from_yt:
+                    album_img.set_source(info_from_yt['thumbnails'][0]['url'])
+                if 'artistInfo' in info_from_yt:
+                    artist_img.set_source(info_from_yt['artistInfo']['thumbnails'][0]['url'])
+                    artist_desc.set_text(info_from_yt['artistInfo']['description'])
+        except IndexError:
+            print('Error to retrieve info from ytmusicapi')
+        except Exception as e:
+            print(f'Error to retrieve info from ytmusicapi {e}')
+        finally:
+            pass
+
+        song_spinner.set_visibility(False)
 
     # reset to default at init
     LipAPI.data_changed = False
@@ -1456,6 +1321,9 @@ async def main_page():
     # Rhubarb instance, callback will send back two values: data and is_stderr (for STDErr capture)
     #
     rub.callback = update_progress
+
+    # music info
+    retriever = MusicInfoRetriever()
 
     #
     # Main UI generation
@@ -1488,7 +1356,7 @@ async def main_page():
                     file_label.bind_text_from(LipAPI, 'source_file')
             with ui.row():
 
-                del_markers = ui.chip('Clear', icon='clear', color='red', on_click=lambda :clear_markers())
+                del_markers = ui.chip('Clear', icon='clear', color='red', on_click=lambda :utils.clear_markers())
                 del_markers.tooltip('clear all markers')
                 del_markers.bind_visibility(LipAPI,'wave_show')
                 add_markers = ui.chip('Add', icon='add', color='red', on_click=lambda :add_all_markers())
@@ -1591,7 +1459,7 @@ async def main_page():
                 folder.on('click', lambda: pick_file_to_analyze())
                 # Add an input field for the audio file name
                 audio_input = ui.input(placeholder='Audio file to analyse', label='Audio File Name')
-                audio_input.on('focusout', lambda: validate_file(audio_input.value))
+                audio_input.on('focusout', lambda: check_audio_input(audio_input.value))
                 # Add an OK button to refresh the waveform and set all players and data
                 ok_button = ui.button('OK', on_click=approve_set_file_name)
                 ui.checkbox('Wave').bind_value(LipAPI, 'wave_show')
@@ -1599,30 +1467,41 @@ async def main_page():
                 info = ui.checkbox('Info', value=False)
                 with ui.card() as songInfo:
                     songInfo.bind_visibility_from(info,'value')
+                    songInfo.classes('bg-blue-grey-4')
+                    song_spinner = ui.spinner(size='xl').classes('self-center')
+                    song_spinner.set_visibility(False)
                     with ui.row():
                         with ui.column():
-                            songName = ui.label('Title : ')
-                            songAlbum = ui.label('Album : ')
-                            albumImg = ui.image('').classes('w-20')
+                            song_name = ui.label('Title : ')
+                            song_album = ui.label('Album : ')
+                            album_img = ui.image('').classes('w-20')
                         with ui.column():
-                            songLength = ui.label('length : ')
-                            songYear = ui.label('Year : ')
-                            songLyrics = ui.icon('lyrics', size='sm')
-                            songLyrics.style(add='cursor: pointer')
-                            songTags = ui.icon('tag', size='sm')
-                            songTags.style(add='cursor: pointer')
+                            song_length = ui.label('length : ')
+                            song_year = ui.label('Year : ')
+                            with ui.row():
+                                song_lyrics = ui.icon('lyrics', size='sm')
+                                song_lyrics.style(add='cursor: pointer')
+                                song_lyrics.on('click', lambda: show_lyrics())
+                                lyrics_data = ui.label('')
+                                lyrics_data.set_visibility(False)
+                            with ui.row():
+                                song_tags = ui.icon('tag', size='sm')
+                                song_tags.style(add='cursor: pointer')
+                                song_tags.on('click', lambda: show_tags())
+                                tags_data = ui.label('')
+                                tags_data.set_visibility(False)
                         with ui.column():
                             with ui.row():
-                                songArtist = ui.label('Artist: ')
-                                artistImg = ui.image('').classes('w-80')
-                            artistDesc = ui.label('info: ')
-                        with ui.column():
-                            artistTop5 = ui.label('Top 5: ')
-                        song1Name = ui.label('1')
-                        song2Name = ui.label('2')
-                        song3Name = ui.label('3')
-                        song4Name = ui.label('4')
-                        song5Name = ui.label('5')
+                                song_artist = ui.label('Artist : ')
+                                artist_img = ui.image('').classes('w-80')
+                            artist_desc = ui.label('info: ')
+                            artist_top5 = ui.label('Top 5 : ')
+                            with ui.row():
+                                song1_name = ui.label('1')
+                                song2_name = ui.label('2')
+                                song3_name = ui.label('3')
+                                song4_name = ui.label('4')
+                                song5_name = ui.label('5')
 
             ui.label(' ')
 
@@ -1630,7 +1509,7 @@ async def main_page():
                 load_mouth_button = ui.button('Load MouthCue', on_click=load_mouth_cue)
                 load_mouth_button.disable()
                 edit_mouth_button = ui.button('Edit mouth Buffer',
-                                              on_click=mouth_time_buffer_edit)
+                                              on_click=utils.mouth_time_buffer_edit)
                 edit_mouth_button.disable()
                 load_model_button = ui.button('Load a model', on_click=load_mouth_model)
 
@@ -1737,7 +1616,7 @@ async def main_page():
         net_row.update()
         LipAPI.net_status_timer.active = False
 
-    await wavesurfer()
+    await utils.wavesurfer()
 
 
 @ui.page('/edit')

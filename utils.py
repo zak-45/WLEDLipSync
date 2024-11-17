@@ -1,3 +1,5 @@
+import asyncio
+
 import av
 import base64
 import io
@@ -11,6 +13,7 @@ import re
 import socket
 import traceback
 
+import cv2
 from str2bool import str2bool
 from PIL import Image
 from nicegui import ui
@@ -246,6 +249,161 @@ def apply_custom():
                            'background-size: cover;'
                            'background-repeat: no-repeat;'
                            'background-position: center;')
+
+
+
+async def load_image_async(img_path: str):
+    """
+    Loads an image asynchronously from the specified file path.
+
+    This function reads an image file and converts its color format from BGR to RGB.
+    It is designed to be used in an asynchronous context to avoid blocking the main thread.
+
+    Args:
+        img_path (str): The file path of the image to be loaded.
+
+    Returns:
+        cv2: The loaded image in RGB format, or None if the image could not be loaded.
+    """
+
+    loop = asyncio.get_event_loop()
+    img = await loop.run_in_executor(None, cv2.imread, img_path, cv2.IMREAD_COLOR)
+    if img is not None:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    return img
+
+
+async def get_audio_duration(player: str = ''):
+    """
+    Get audio duration
+    :param player: ID of the player object (str)
+    :return: duration
+    """
+
+    return await ui.run_javascript(f'document.getElementById("{player}").duration;',timeout=2)
+
+
+async def wavesurfer():
+    """
+    Sets up the CSS and JavaScript for the wavesurfer component.
+
+    This function adds the necessary CSS styles for the waveform display and
+    includes the JavaScript module required for the wavesurfer functionality.
+    It ensures that the waveform is styled correctly and is interactive for user actions.
+
+    Returns:
+        None
+    """
+
+    ui.add_css('''
+    #waveform {
+    margin: 0 28px; /* waveform */
+    height: 192; /* Set a height for the waveform */
+    cursor: crosshair; /* Change cursor to indicate clickable area */
+    }
+    .blink {
+        animation: blinker 1s linear infinite;
+        color: yellow;
+    }
+
+    @keyframes blinker {
+        50% { opacity: 0; }
+    }
+    ''')
+
+    ui.add_body_html('''    
+    <script type="module">
+        import "/assets/js/wledlipsync.js"
+    </script>    
+    ''')
+
+
+async def get_player_time():
+    """
+    get player current playing time
+    """
+
+    return round(
+        await ui.run_javascript(
+            "document.getElementById('player_vocals').currentTime;", timeout=3
+        ),
+        2,
+    )
+
+
+def find_cue_point(time_cue, cue_points):
+    """ find mouth card near provided time """
+
+    if not cue_points or 'mouthCues' not in cue_points:
+        return [{"start": "None", "end": "None", "value": "None"},{"start": "None", "end": "None", "value": "None"}]
+
+    threshold = 5
+    actual_cue = {"start": "None", "end": "None", "value": "None"}
+    nearest_cue = {"start": "None", "end": "None", "value": "None"}
+    smallest_diff = float('inf')
+
+    for cue in cue_points['mouthCues']:
+        # find actual cue
+        if cue['start'] <= time_cue < cue['end']:
+            actual_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
+        # find nearest cue
+        diff = abs(time_cue - cue['start'])
+        if diff < smallest_diff and diff < threshold:
+            smallest_diff = diff
+            nearest_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
+
+    return actual_cue, nearest_cue
+
+
+async def run_gencuedata():
+    """
+    execute javascript function to generate
+    data when click on waveform for focus on the mouth card
+    """
+    await ui.run_javascript('genCueData();', timeout=5)
+
+
+def create_marker(position, value):
+    """ run java to add marker on the waveform """
+
+    ui.run_javascript(f'add_marker({position},"{value}");', timeout=5)
+
+
+def clear_markers():
+    """ run java to clear all markers """
+
+    ui.run_javascript('clear_markers();', timeout=5)
+
+
+async def mouth_time_buffer_edit():
+
+    buffer_dialog = ui.dialog() \
+            .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
+
+    with buffer_dialog:
+        buffer_dialog.open()
+        editor_card = ui.card().classes('w-full')
+        with editor_card:
+            ui.html(
+            '''                
+            <iframe src="/edit" frameborder="0" 
+            style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;
+                    height:100%;width:100%;
+                    position:absolute;top:0px;left:0px;right:0px;bottom:0px" 
+            height="100%" width="100%">
+            </iframe>
+            '''
+            )
+            with ui.page_sticky(position='top-right', x_offset=25, y_offset=25):
+                with ui.row():
+                    new_editor = ui.button(icon='edit',color='yellow')
+                    new_editor.on('click', lambda :ui.navigate.to('/edit', new_tab=True))
+                    new_editor.props(add='round outline size="8px"')
+                    new_editor.tooltip('Open editor in new tab')
+                    close = ui.button(icon='close',color='red')
+                    close.on('click', lambda :buffer_dialog.close())
+                    close.props(add='round outline size="8px"')
+                    close.tooltip('Close editor')
 
 
 
