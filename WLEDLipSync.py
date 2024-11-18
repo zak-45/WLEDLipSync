@@ -179,6 +179,7 @@ class LipAPI:
     source_file = ''
     output_file = ''
     file_to_analyse = ''
+    lyrics_file = ''
     wave_show = True
     mouth_cue_show = True
     net_status_timer = None
@@ -802,6 +803,7 @@ async def main_page():
             utils.convert_audio(file_path, file_folder + file + '.wav')
             player_vocals.set_source(file_path)
             LipAPI.file_to_analyse = file_folder + file + '.wav'
+            LipAPI.lyrics_file = file_folder + 'lyrics.txt'
 
         #  set some init value
         player_vocals.seek(0)
@@ -865,7 +867,9 @@ async def main_page():
                     player_vocals.set_source(file_folder + 'vocals.mp3')
                     # this one is optional
                     player_accompaniment.set_source(file_folder + 'accompaniment.mp3')
+                    #
                     LipAPI.file_to_analyse = file_folder + 'vocals.wav'
+                    LipAPI.lyrics_file = file_folder + 'lyrics.txt'
 
             # set params
             LipAPI.source_file = audio_input.value
@@ -922,7 +926,7 @@ async def main_page():
                 ui.notify('Audio Analysis initiated')
 
                 # run analyzer
-                rub.run(file_name=LipAPI.file_to_analyse, output=LipAPI.output_file)
+                rub.run(file_name=LipAPI.file_to_analyse, dialog_file=LipAPI.lyrics_file, output=LipAPI.output_file)
 
                 # set some GUI
                 spinner_analysis.set_visibility(True)
@@ -1252,13 +1256,35 @@ async def main_page():
 
 
     def show_lyrics():
+        def lyrics_save():
+            if len(lyrics_data.value) > 0:
+                print('save lyrics')
+                # extract file name only
+                file_name = os.path.basename(audio_input.value)
+                file_info = os.path.splitext(file_name)
+                file = file_info[0]
+                file_folder = app_config['audio_folder'] + file + '/'
+                # check if folder not exist
+                if not os.path.isdir(file_folder):
+                    ui.notify(f'folder {file_folder} does not exist, creating ...')
+                    os.mkdir(file_folder)
+                lyrics_file = file_folder + 'lyrics.txt'
+                with open(f'{lyrics_file}', 'w', encoding='utf-8') as f:
+                    f.write(lyrics_data.value)
+                ui.notification(f'Saving lyrics to {lyrics_file} for helping analysis ...', position='center', type='info')
+            else:
+                ui.notification(f'Nothing to save ...', position='center', type='warning')
+
         with (ui.dialog() as lyrics_dialog,ui.card(align_items='center').classes('w-full')) :
             lyrics_dialog.open()
-            lyrics = ui.textarea('LYRICS', value=lyrics_data.text)
+            lyrics = ui.textarea('LYRICS', value=lyrics_data.value)
             lyrics.classes('w-full')
             lyrics.props(add='autogrow bg-color=blue-grey-4')
             lyrics.style(add='text-align:center;')
-            ui.button('close', on_click=lyrics_dialog.close)
+            with ui.row():
+                ui.button('close', on_click=lyrics_dialog.close)
+                save_lyrics = ui.button('save', on_click=lyrics_save)
+                save_lyrics.tooltip('Save lyrics for analysis')
 
 
     def song_info(file_name):
@@ -1293,12 +1319,12 @@ async def main_page():
         artist_desc.set_text('info : ')
         album_img.set_source('')
         artist_img.set_source('')
-        lyrics_data.set_text('')
+        lyrics_data.set_value('')
 
         try:
             if info_from_yt is not None:
                 if 'lyrics' in info_from_yt:
-                    lyrics_data.set_text(info_from_yt['lyrics']['lyrics'])
+                    lyrics_data.set_value(info_from_yt['lyrics']['lyrics'])
                 if 'length' in info_from_yt:
                     song_length.set_text('length : ' + info_from_yt['length'])
                 if 'thumbnails' in info_from_yt:
@@ -1482,7 +1508,7 @@ async def main_page():
                                 song_lyrics = ui.icon('lyrics', size='sm')
                                 song_lyrics.style(add='cursor: pointer')
                                 song_lyrics.on('click', lambda: show_lyrics())
-                                lyrics_data = ui.label('')
+                                lyrics_data = ui.textarea(value='')
                                 lyrics_data.set_visibility(False)
                             with ui.row():
                                 song_tags = ui.icon('tag', size='sm')

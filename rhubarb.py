@@ -18,6 +18,7 @@ class RhubarbWrapper:
                  working_directory: str = os.getcwd()):
 
         self.input_file = ''
+        self.lyrics_file = ''
         self.callback = callback
         self.working_directory = working_directory
         self.machineReadable = machineReadable
@@ -47,11 +48,12 @@ class RhubarbWrapper:
         # Add arguments to the command
         if self.machineReadable:
             command.extend(['--machineReadable'])
-        command.extend([f'-r {self.recognizer}'])
-        command.extend([f'-f {self.export_format}'])
-        command.extend([f'--consoleLevel {self.consoleLevel}'])
-        command.extend([f'-o {self.output_file}'])
-
+        command.extend([f'-r {self.recognizer}', f'-f {self.export_format}'])
+        if os.path.isfile(self.lyrics_file):
+            command.extend([f'-d {self.lyrics_file}'])
+        command.extend(
+            [f'--consoleLevel {self.consoleLevel}', f'-o {self.output_file}']
+        )
         self.command = command
         # Run the command in a separate process
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, cwd=self.working_directory)
@@ -82,10 +84,11 @@ class RhubarbWrapper:
         self.return_code = process.returncode
         print("Return code:", self.return_code, self.command)
 
-    def run(self, file_name, output):
+    def run(self, file_name, dialog_file, output):
         if self._instance_running:
             raise RuntimeError("An instance of Rhubarb is already running.")
         self.input_file = file_name
+        self.lyrics_file = dialog_file
         self.output_file = output + self.file_extension
         self._instance_running = True  # Set the instance as running
         self.return_code = 999  # set default return code, if all Ok will be set to 0 after process finished
