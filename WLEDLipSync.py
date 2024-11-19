@@ -185,6 +185,7 @@ class LipAPI:
     net_status_timer = None
     osc_client = None
     wvs_client = None
+    cha_client = None
     data_changed = False  # True if some data has been changed by end user
     preview_area = None  # area where to display model
 
@@ -637,12 +638,79 @@ async def main_page():
                 LipAPI.wvs_client.stop()
                 LipAPI.wvs_client = None
 
-        if wvs_activate.value is False and osc_activate.value is False:
+        if LipAPI.cha_client is not None:
+            # check net status, TCP port
+            result = await utils.check_ip_alive(ip_address=cha_ip.value, port=int(cha_port.value))
+            if result is True:
+                # set value depend on return code
+                link_cha.props(remove="color=yellow")
+                link_cha.props(add="color=green")
+            else:
+                link_cha.props(remove="color=green")
+                link_cha.props(add="color=yellow")
+                LipAPI.cha_client.stop()
+                LipAPI.cha_client = None
+
+        if wvs_activate.value is False and osc_activate.value is False and cha_activate is False:
             link_wvs.props(remove="color=green")
             link_wvs.props(remove="color=yellow")
+            link_cha.props(remove="color=green")
+            link_cha.props(remove="color=yellow")
             link_osc.props(remove="color=yellow")
             link_osc.props(remove="color=green")
             LipAPI.net_status_timer.active = False
+
+
+    async def manage_cha_client():
+        """
+        Manages the WebSocket client for cha activation and deactivation.
+
+        This function activates the WVS client if the corresponding toggle is enabled,
+        creating a new WebSocket connection if one does not already exist. It also sends
+        an initialization message and manages the network status timer, stopping the client
+        if the toggle is disabled.
+
+        Returns:
+            None
+        """
+
+        logger.debug('CHA activation')
+
+        if cha_activate.value is True:
+            # we need to create a client if not exist
+            if LipAPI.cha_client is None:
+                ws_address = "ws://" + str(cha_ip.value) + ":" + str(int(cha_port.value)) + str(cha_path.value)
+                LipAPI.cha_client = WebSocketClient(ws_address)
+                LipAPI.cha_client.run()
+                # check until connected timeout 1 s
+                nb = 0
+                while LipAPI.cha_client.get_status() != 'connected':
+                    await asyncio.sleep(0.1)
+                    if nb > 9:
+                        logger.debug('error to connect to ws')
+                        return
+                    nb += 1
+            # send init message
+            cha_msg = {"action":{"type":"init_cha","param":{"connection":"true","WLEDLipSync":"true"}}}
+            LipAPI.cha_client.send_message(cha_msg)
+            # create or activate net timer
+            if LipAPI.net_status_timer is None:
+                LipAPI.net_status_timer = ui.timer(5, check_net_status)
+            else:
+                LipAPI.net_status_timer.active = True
+
+        else:
+            # we stop the client
+            if LipAPI.cha_client is not None:
+                LipAPI.cha_client.stop()
+            LipAPI.cha_client = None
+            link_cha.props(remove="color=green")
+            link_cha.props(remove="color=yellow")
+            # if timer is active, stop it or not
+            if LipAPI.net_status_timer.active is True and osc_activate.value is False:
+                logger.debug('stop timer')
+                LipAPI.net_status_timer.active = False
+
 
     async def manage_wvs_client():
         """
@@ -1256,7 +1324,7 @@ async def main_page():
 
 
     def show_lyrics():
-        def lyrics_save():
+        def save_lyrics():
             if len(lyrics_data.value) > 0:
                 print('save lyrics')
                 # extract file name only
@@ -1283,7 +1351,7 @@ async def main_page():
             lyrics.style(add='text-align:center;')
             with ui.row():
                 ui.button('close', on_click=lyrics_dialog.close)
-                save_lyrics = ui.button('save', on_click=lyrics_save)
+                save_lyrics = ui.button('save', on_click=save_lyrics)
                 save_lyrics.tooltip('Save lyrics for analysis')
 
 
@@ -1464,6 +1532,9 @@ async def main_page():
                         link_wvs = ui.icon('link', size='xs')
                         link_osc = ui.icon('link', size='xs')
                         ui.label('OSC')
+                    with ui.row():
+                        ui.label('CHA')
+                        link_cha =  ui.icon('link', size='xs')
 
                 # player 2
                 with ui.column():
@@ -1631,6 +1702,21 @@ async def main_page():
 
             send_seek = ui.checkbox('Send when Seek', value=True)
 
+        with ui.card().tight().classes('bg-cyan-400'):
+            ui.label(' ')
+            cha_exp = ui.expansion('Chataigne').classes('bg-cyan-500')
+            with cha_exp:
+                with ui.column():
+                    cha_ip = ui.input('Server IP', value='127.0.0.1')
+                    with ui.row():
+                        cha_port = ui.number('Port', value=8080)
+                        cha_path = ui.input('Path (opt)', value='')
+                        cha_activate = ui.checkbox('activate', on_change=manage_cha_client)
+
+            ui.label(' ')
+            ui.separator()
+
+
     if LipAPI.source_file != '':
         audio_input.value = LipAPI.source_file
         await set_file_name()
@@ -1639,6 +1725,7 @@ async def main_page():
     if LipAPI.net_status_timer is not None:
         LipAPI.osc_client = None
         LipAPI.wvs_client = None
+        LipAPI.cha_client = None
         net_row.update()
         LipAPI.net_status_timer.active = False
 
@@ -1678,4 +1765,4 @@ app.add_static_files('/config', 'config')
 run niceGUI
 reconnect_timeout: need big value if load thumbs
 """
-ui.run(native=False, reload=False, reconnect_timeout=3)
+ui.run(native=False, reload=False, reconnect_timeout=3, port=8081)
