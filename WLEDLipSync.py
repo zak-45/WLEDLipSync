@@ -611,7 +611,7 @@ async def main_page():
             None
         """
 
-        logger.debug('net check status')
+        print('net check status')
 
         if LipAPI.osc_client is not None:
             # check net status UDP port, can provide false positive
@@ -660,6 +660,14 @@ async def main_page():
             link_osc.props(remove="color=green")
             LipAPI.net_status_timer.active = False
 
+    async def net_timer():
+        # create or activate net timer
+        if LipAPI.net_status_timer is None:
+            LipAPI.net_status_timer = ui.timer(5, check_net_status)
+        else:
+            LipAPI.net_status_timer.active = True
+
+
 
     async def manage_cha_client():
         """
@@ -676,28 +684,17 @@ async def main_page():
 
         logger.debug('CHA activation')
 
+        await net_timer()
+
         if cha_activate.value is True:
             # we need to create a client if not exist
             if LipAPI.cha_client is None:
                 ws_address = "ws://" + str(cha_ip.value) + ":" + str(int(cha_port.value)) + str(cha_path.value)
                 LipAPI.cha_client = WebSocketClient(ws_address)
                 LipAPI.cha_client.run()
-                # check until connected timeout 1 s
-                nb = 0
-                while LipAPI.cha_client.get_status() != 'connected':
-                    await asyncio.sleep(0.1)
-                    if nb > 9:
-                        logger.debug('error to connect to ws')
-                        return
-                    nb += 1
             # send init message
             cha_msg = {"action":{"type":"init_cha","param":{"connection":"true","WLEDLipSync":"true"}}}
             LipAPI.cha_client.send_message(cha_msg)
-            # create or activate net timer
-            if LipAPI.net_status_timer is None:
-                LipAPI.net_status_timer = ui.timer(5, check_net_status)
-            else:
-                LipAPI.net_status_timer.active = True
 
         else:
             # we stop the client
@@ -707,7 +704,7 @@ async def main_page():
             link_cha.props(remove="color=green")
             link_cha.props(remove="color=yellow")
             # if timer is active, stop it or not
-            if LipAPI.net_status_timer.active is True and osc_activate.value is False:
+            if LipAPI.net_status_timer.active is True and osc_activate.value is False and wvs_activate.value is False:
                 logger.debug('stop timer')
                 LipAPI.net_status_timer.active = False
 
@@ -727,20 +724,14 @@ async def main_page():
 
         logger.debug('WVS activation')
 
+        await net_timer()
+
         if wvs_activate.value is True:
             # we need to create a client if not exist
             if LipAPI.wvs_client is None:
                 ws_address = "ws://" + str(wvs_ip.value) + ":" + str(int(wvs_port.value)) + str(wvs_path.value)
                 LipAPI.wvs_client = WebSocketClient(ws_address)
                 LipAPI.wvs_client.run()
-                # check until connected timeout 1 s
-                nb = 0
-                while LipAPI.wvs_client.get_status() != 'connected':
-                    await asyncio.sleep(0.1)
-                    if nb > 9:
-                        logger.debug('error to connect to ws')
-                        return
-                    nb += 1
             # send init message
             wvs_msg = {"action":{"type":"init_wvs","param":{"metadata":"","mouthCues":""}}}
             # add metadata if requested
@@ -748,11 +739,6 @@ async def main_page():
                 wvs_msg = {"action": {"type": "init_wvs", "param": LipAPI.mouth_times_buffer}}
                 wvs_send_metadata.value = False
             LipAPI.wvs_client.send_message(wvs_msg)
-            # create or activate net timer
-            if LipAPI.net_status_timer is None:
-                LipAPI.net_status_timer = ui.timer(5, check_net_status)
-            else:
-                LipAPI.net_status_timer.active = True
 
         else:
             # we stop the client
@@ -762,9 +748,10 @@ async def main_page():
             link_wvs.props(remove="color=green")
             link_wvs.props(remove="color=yellow")
             # if timer is active, stop it or not
-            if LipAPI.net_status_timer.active is True and osc_activate.value is False:
+            if LipAPI.net_status_timer.active is True and osc_activate.value is False and cha_activate.value is False:
                 logger.debug('stop timer')
                 LipAPI.net_status_timer.active = False
+
 
     async def manage_osc_client():
         """
@@ -781,6 +768,8 @@ async def main_page():
 
         logger.debug('OSC activation')
 
+        await net_timer()
+
         if osc_activate.value is True:
             # we need to create a client if not exist
             if LipAPI.osc_client is None:
@@ -791,11 +780,6 @@ async def main_page():
                 osc_msg = {"action": {"type": "init_osc", "param": LipAPI.mouth_times_buffer}}
                 osc_send_metadata.value = False
             LipAPI.osc_client.send_message(osc_address.value, osc_msg)
-            # create or activate net timer
-            if LipAPI.net_status_timer is None:
-                LipAPI.net_status_timer = ui.timer(5, check_net_status)
-            else:
-                LipAPI.net_status_timer.active = True
 
         else:
             # we stop the client
@@ -805,9 +789,10 @@ async def main_page():
             link_osc.props(remove="color=green")
             link_osc.props(remove="color=yellow")
             # if timer is active, stop it or not
-            if LipAPI.net_status_timer.active is True and wvs_activate.value is False:
+            if LipAPI.net_status_timer.active is True and wvs_activate.value is False and cha_activate.value is False:
                 logger.debug('stop timer')
                 LipAPI.net_status_timer.active = False
+
 
     async def validate_file(file_name):
         """ file input validation """
