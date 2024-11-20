@@ -692,6 +692,7 @@ async def main_page():
                 ws_address = "ws://" + str(cha_ip.value) + ":" + str(int(cha_port.value)) + str(cha_path.value)
                 LipAPI.cha_client = WebSocketClient(ws_address)
                 LipAPI.cha_client.run()
+            await asyncio.sleep(2)
             # send init message
             cha_msg = {"action":{"type":"init_cha","param":{"connection":"true","WLEDLipSync":"true"}}}
             LipAPI.cha_client.send_message(cha_msg)
@@ -732,6 +733,7 @@ async def main_page():
                 ws_address = "ws://" + str(wvs_ip.value) + ":" + str(int(wvs_port.value)) + str(wvs_path.value)
                 LipAPI.wvs_client = WebSocketClient(ws_address)
                 LipAPI.wvs_client.run()
+            await asyncio.sleep(2)
             # send init message
             wvs_msg = {"action":{"type":"init_wvs","param":{"metadata":"","mouthCues":""}}}
             # add metadata if requested
@@ -904,17 +906,15 @@ async def main_page():
                     # stems
                     ui.notify('We will do analysis from stems files ...')
                     # specific case for vocals
+                    # always (re)generate wav from mp3
+                    utils.convert_audio(file_folder + 'vocals.mp3', file_folder + 'vocals.wav')
+                    ui.notify('auto generate wav file')
+                    # double check
                     if not os.path.isfile(file_folder + 'vocals.wav'):
-                        # generate wav from mp3
-                        utils.convert_audio(file_folder + 'vocals.mp3', file_folder + 'vocals.wav')
-                        ui.notify('auto generate wav file')
-
-                        # double check
-                        if not os.path.isfile(file_folder + 'vocals.wav'):
-                            ui.notification('ERROR on wav file creation', position='center', type='negative')
-                            player_vocals.set_source('')
-                            LipAPI.audio_duration = None
-                            return
+                        ui.notification('ERROR on wav file creation', position='center', type='negative')
+                        player_vocals.set_source('')
+                        LipAPI.audio_duration = None
+                        return
 
                     # set players
                     player_vocals.set_source(file_folder + 'vocals.mp3')
@@ -1433,16 +1433,15 @@ async def main_page():
                     ic_refresh.on('click', lambda: ui.navigate.to('/'))
                     file_label = ui.label('File Name')
                     file_label.bind_text_from(LipAPI, 'source_file')
-            with ui.row():
-
-                del_markers = ui.chip('Clear', icon='clear', color='red', on_click=lambda :utils.clear_markers())
-                del_markers.tooltip('clear all markers')
-                del_markers.bind_visibility(LipAPI,'wave_show')
+            with ui.row().classes('border'):
                 add_markers = ui.chip('Add', icon='add', color='red', on_click=lambda :add_all_markers())
                 add_markers.tooltip('Add all markers')
                 add_markers.bind_visibility(LipAPI,'wave_show')
+                del_markers = ui.chip('Clear', icon='clear', color='red', on_click=lambda :utils.clear_markers())
+                del_markers.tooltip('clear all markers')
+                del_markers.bind_visibility(LipAPI,'wave_show')
                 ui.chip('Audio Editor', icon='edit', text_color='yellow', on_click=lambda: audio_edit())
-                ui.label('').bind_text_from(LipAPI,'file_to_analyse')
+                ui.label('').bind_text_from(LipAPI,'file_to_analyse').style(add='margin:10px')
 
             waveform = ui.html('''
             <div id=waveform ><div>
@@ -1460,8 +1459,8 @@ async def main_page():
             zoom.bind_visibility(LipAPI, 'wave_show')
 
             # time info
-            with ui.row(wrap=False).classes('self-center'):
-                ui.icon('watch', size='xs')
+            with ui.row(wrap=False).classes('self-center border'):
+                ui.icon('watch', size='xs').classes('self-center')
                 time_label = ui.label('0.0 X 0').classes('self-center')
                 time_label.style('margin:5px;'
                                  'padding:5px;'
@@ -1470,12 +1469,11 @@ async def main_page():
                                  'background:#164E63;'
                                  'width:260px;'
                                  'text-align:center')
-
                 if len(LipAPI.mouths_buffer_thumb) > 0:
                     model_img = Image.fromarray(LipAPI.mouths_buffer_thumb[0])
-                    model_thumb = ui.image(model_img).classes('w-6')
+                    model_thumb = ui.image(model_img).classes('w-6 self-center')
                 else:
-                    model_thumb = ui.image('./media/image/model/default/x.png').classes('w-6')
+                    model_thumb = ui.image('./media/image/model/default/x.png').classes('w-6 self-center')
 
             with ui.row().classes('self-center'):
                 ui.separator()
@@ -1493,9 +1491,9 @@ async def main_page():
                     ui.label('VOCALS').classes('self-center')
 
                 # card area center
-                control_area_v = ui.card(align_items='center').classes('w-44 h-60 border bg-cyan-900')
+                control_area_v = ui.card(align_items='center').classes('w-44 h-65 border bg-cyan-900')
                 with control_area_v:
-                    spinner_analysis = ui.spinner('dots', size='sm', color='red')
+                    spinner_analysis = ui.spinner('dots', size='xl', color='red')
                     spinner_analysis.set_visibility(False)
                     with ui.row(wrap=False):
                         circular = ui.circular_progress()
@@ -1512,15 +1510,17 @@ async def main_page():
                     sync_player_button = ui.button(on_click=lambda: sync_player('sync'), icon='sync')
                     sync_player_button.classes('w-10')
                     sync_player_button.props('outline')
-                    with ui.row() as net_row:
-                        ui.label('WVS')
-                        link_wvs = ui.icon('link', size='xs')
-                        link_osc = ui.icon('link', size='xs')
-                        ui.label('OSC')
-                    with ui.row():
-                        ui.label('CHA')
-                        link_cha =  ui.icon('link', size='xs')
-
+                    with ui.column():
+                        with ui.row().classes('self-center').style("margin:-10px;"):
+                            ui.label('WVS')
+                            ui.label('CHA')
+                            ui.label('OSC')
+                        with ui.row().classes('self-center') as net_row:
+                            link_wvs = ui.icon('link', size='xs')
+                            link_wvs.style(add="padding-right:10px")
+                            link_cha = ui.icon('link', size='xs')
+                            link_osc = ui.icon('link', size='xs')
+                            link_osc.style(add="padding-left:10px")
                 # player 2
                 with ui.column():
                     # player for musical part, need mp3 file
@@ -1537,6 +1537,7 @@ async def main_page():
             with ui.row():
                 folder = ui.icon('folder', size='md', color='yellow')
                 folder.style(add='cursor: pointer')
+                folder.style(add='margin:10px')
                 # made necessary checks
                 folder.on('click', lambda: pick_file_to_analyze())
                 # Add an input field for the audio file name
@@ -1544,6 +1545,7 @@ async def main_page():
                 audio_input.on('focusout', lambda: check_audio_input(audio_input.value))
                 # Add an OK button to refresh the waveform and set all players and data
                 ok_button = ui.button('OK', on_click=approve_set_file_name)
+                ok_button.style("margin:10px;")
                 ui.checkbox('Wave').bind_value(LipAPI, 'wave_show')
                 ui.checkbox('MouthCue').bind_value(LipAPI, 'mouth_cue_show')
                 info = ui.checkbox('Info', value=False)
