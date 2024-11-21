@@ -54,8 +54,8 @@ class MusicInfoRetriever:
 
         artists = self.yt.search(artist_name, filter='artists')
         if not artists:
+            print(f"No artists found for '{artist_name}'.")
             return None
-
         # we take the first record as this is the most probable one
         artist = artists[0]
         artist_id = artist['browseId']

@@ -668,7 +668,6 @@ async def main_page():
             LipAPI.net_status_timer.active = True
 
 
-
     async def manage_cha_client():
         """
         Manages the WebSocket client for cha activation and deactivation.
@@ -942,6 +941,7 @@ async def main_page():
 
             audio_input.set_value('')
 
+
     async def pick_file_to_analyze() -> None:
         """ Select file to analyse """
 
@@ -956,6 +956,7 @@ async def main_page():
             if await validate_file(result):
                 audio_input.value = result
                 await check_audio_input(result)
+
 
     def analyse_audio():
         """
@@ -1017,6 +1018,7 @@ async def main_page():
                 ui.button('Yes', on_click=run_it)
                 ui.button('No', on_click=dialog.close)
 
+
     async def load_mouth_cue():
         """ initiate mouth card cue creation """
 
@@ -1060,6 +1062,7 @@ async def main_page():
         else:
             run_it()
 
+
     async def load_mouth_model():
         """ load images from model folder into a carousel """
 
@@ -1089,6 +1092,7 @@ async def main_page():
 
             else:
                 logger.debug('you need to select folder')
+
 
     async def generate_mouth_cue():
         """Generate graphical view of json file, could be time-consuming if display thumbs."""
@@ -1175,6 +1179,7 @@ async def main_page():
         LipAPI.data_changed = False
         edit_mouth_buffer.enable()
         load_mouth_button.enable()
+
 
     async def player_time_action():
         """
@@ -1265,6 +1270,7 @@ async def main_page():
                 ok_button.enable()
                 logger.debug('Analysis Finished')
 
+
     async def sync_player(action):
         """ sync players """
 
@@ -1277,6 +1283,7 @@ async def main_page():
         elif action == 'sync':
             play_time = await utils.get_player_time()
             player_accompaniment.seek(play_time)
+
 
     async def event_player_vocals(event):
         """ store player status to class attribute """
@@ -1297,6 +1304,7 @@ async def main_page():
                 spinner_vocals.set_visibility(True)
 
         await mouth_cue_action(osc_address.value)
+
 
     def event_player_accompaniment(event):
         """ action from player accompanied """
@@ -1348,8 +1356,11 @@ async def main_page():
 
 
     def song_info(file_name):
+
+        # made spinner visible
         song_spinner.set_visibility(True)
-        # read tag data
+
+        # read tag data of the mp3 file
         with taglib.File(file_name) as song:
             print(song.tags)
             # set info from tags
@@ -1380,9 +1391,20 @@ async def main_page():
         album_img.set_source('')
         artist_img.set_source('')
         lyrics_data.set_value('')
+        song1_img.set_source('')
+        song1_title.set_text('')
+        song2_img.set_source('')
+        song2_title.set_text('')
+        song3_img.set_source('')
+        song3_title.set_text('')
+        song4_img.set_source('')
+        song4_title.set_text('')
+        song5_img.set_source('')
+        song5_title.set_text('')
 
         try:
             if info_from_yt is not None:
+                # main info
                 if 'lyrics' in info_from_yt:
                     lyrics_data.set_value(info_from_yt['lyrics']['lyrics'])
                 if 'length' in info_from_yt:
@@ -1392,6 +1414,23 @@ async def main_page():
                 if 'artistInfo' in info_from_yt:
                     artist_img.set_source(info_from_yt['artistInfo']['thumbnails'][0]['url'])
                     artist_desc.set_text(info_from_yt['artistInfo']['description'])
+
+                # get top 5
+                try:
+                    song1_img.set_source(info_from_yt['artistInfo']['top_5'][0]['thumbnails'][0]['url'])
+                    song1_title.set_text(info_from_yt['artistInfo']['top_5'][0]['title'])
+                    song2_img.set_source(info_from_yt['artistInfo']['top_5'][1]['thumbnails'][0]['url'])
+                    song2_title.set_text(info_from_yt['artistInfo']['top_5'][1]['title'])
+                    song3_img.set_source(info_from_yt['artistInfo']['top_5'][2]['thumbnails'][0]['url'])
+                    song3_title.set_text(info_from_yt['artistInfo']['top_5'][2]['title'])
+                    song4_img.set_source(info_from_yt['artistInfo']['top_5'][3]['thumbnails'][0]['url'])
+                    song4_title.set_text(info_from_yt['artistInfo']['top_5'][3]['title'])
+                    song5_img.set_source(info_from_yt['artistInfo']['top_5'][4]['thumbnails'][0]['url'])
+                    song5_title.set_text(info_from_yt['artistInfo']['top_5'][4]['title'])
+
+                except IndexError:
+                    print('Error to retrieve top5 from ytmusicapi')
+
         except IndexError:
             print('Error to retrieve info from ytmusicapi')
         except Exception as e:
@@ -1399,9 +1438,11 @@ async def main_page():
         finally:
             pass
 
+        # hide spinner when finished
         song_spinner.set_visibility(False)
 
-    # reset to default at init
+    # -----------------------------------------------------------------------------------------------------------------#
+    # reset default at init
     LipAPI.data_changed = False
     #
     # Rhubarb instance, callback will send back two values: data and is_stderr (for STDErr capture)
@@ -1415,6 +1456,7 @@ async def main_page():
     # Main UI generation
     #
     utils.apply_custom()
+
     #
     card_top_preview = ui.card(align_items='center').tight().classes('no-shadow no-border w-full h-1/3')
     card_top_preview.set_visibility(False)
@@ -1572,7 +1614,7 @@ async def main_page():
                         with ui.column():
                             song_name = ui.label('Title : ')
                             song_album = ui.label('Album : ')
-                            album_img = ui.image('').classes('w-20')
+                            album_img = ui.image('').classes('w-20 border')
                         with ui.column():
                             song_length = ui.label('length : ')
                             song_year = ui.label('Year : ')
@@ -1591,15 +1633,30 @@ async def main_page():
                         with ui.column():
                             with ui.row():
                                 song_artist = ui.label('Artist : ')
-                                artist_img = ui.image('').classes('w-80')
+                                artist_img = ui.image('').classes('w-80 border')
                             artist_desc = ui.label('info: ')
                             artist_top5 = ui.label('Top 5 : ')
                             with ui.row():
-                                song1_name = ui.label('1')
-                                song2_name = ui.label('2')
-                                song3_name = ui.label('3')
-                                song4_name = ui.label('4')
-                                song5_name = ui.label('5')
+                                song1_ndx = ui.label('1')
+                                with ui.column():
+                                    song1_img = ui.image('').classes('w-20 border')
+                                    song1_title = ui.label('')
+                                song2_ndx = ui.label('2')
+                                with ui.column():
+                                    song2_img = ui.image('').classes('w-20 border')
+                                    song2_title = ui.label('')
+                                song3_ndx = ui.label('3')
+                                with ui.column():
+                                    song3_img = ui.image('').classes('w-20 border')
+                                    song3_title = ui.label('')
+                                song4_ndx = ui.label('4')
+                                with ui.column():
+                                    song4_img = ui.image('').classes('w-20 border')
+                                    song4_title = ui.label('')
+                                song5_ndx = ui.label('5')
+                                with ui.column():
+                                    song5_img = ui.image('').classes('w-20 border')
+                                    song5_title = ui.label('')
 
             ui.label(' ')
 
@@ -1724,7 +1781,6 @@ async def main_page():
         LipAPI.osc_client = None
         LipAPI.wvs_client = None
         LipAPI.cha_client = None
-        net_row.update()
         LipAPI.net_status_timer.active = False
 
     await utils.wavesurfer()
