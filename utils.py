@@ -394,7 +394,7 @@ async def mouth_time_buffer_edit():
             </iframe>
             '''
             )
-            with ui.page_sticky(position='top-right', x_offset=25, y_offset=25):
+            with ui.page_sticky(position='top-right', x_offset=85, y_offset=28):
                 with ui.row():
                     new_editor = ui.button(icon='edit',color='yellow')
                     new_editor.on('click', lambda :ui.navigate.to('/edit', new_tab=True))

@@ -1641,22 +1641,27 @@ async def main_page():
                                 with ui.column():
                                     song1_img = ui.image('').classes('w-20 border')
                                     song1_title = ui.label('')
+                                    song1_title.style('max-width:8em')
                                 song2_ndx = ui.label('2')
                                 with ui.column():
                                     song2_img = ui.image('').classes('w-20 border')
                                     song2_title = ui.label('')
+                                    song2_title.style('max-width:8em')
                                 song3_ndx = ui.label('3')
                                 with ui.column():
                                     song3_img = ui.image('').classes('w-20 border')
                                     song3_title = ui.label('')
+                                    song3_title.style('max-width:8em')
                                 song4_ndx = ui.label('4')
                                 with ui.column():
                                     song4_img = ui.image('').classes('w-20 border')
                                     song4_title = ui.label('')
+                                    song4_title.style('max-width:8em')
                                 song5_ndx = ui.label('5')
                                 with ui.column():
                                     song5_img = ui.image('').classes('w-20 border')
                                     song5_title = ui.label('')
+                                    song5_title.style('max-width:8em')
 
             ui.label(' ')
 
