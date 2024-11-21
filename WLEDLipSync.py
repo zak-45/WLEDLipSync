@@ -801,7 +801,7 @@ async def main_page():
 
         # disable button
         load_mouth_button.disable()
-        edit_mouth_button.disable()
+        edit_mouth_buffer.disable()
 
         # check some requirements
         if file_name == '':
@@ -857,6 +857,10 @@ async def main_page():
             # convert mp3 to wav
             utils.convert_audio(file_path, file_folder + file + '.wav')
             player_vocals.set_source(file_path)
+            audio_vocals.tooltip(file_path)
+            audio_vocals.update()
+            audio_accompaniment.tooltip('TBD')
+            audio_accompaniment.update()
             LipAPI.file_to_analyse = file_folder + file + '.wav'
             LipAPI.lyrics_file = file_folder + 'lyrics.txt'
 
@@ -896,17 +900,15 @@ async def main_page():
                 ui.timer(1, set_audio_duration, once=True)
 
             else:
-                # check if both mp3 files exist, if not so suppose not stems, manage from only source file
-                if not os.path.isfile(file_folder + 'accompaniment.mp3') or \
-                        not os.path.isfile(file_folder + 'vocals.mp3'):
-
+                # check if vocals mp3 files exist, if not so suppose not stems, manage from only source file
+                if not os.path.isfile(file_folder + 'vocals.mp3'):
                     file_alone()
 
                 else:
                     # stems
                     ui.notify('We will do analysis from stems files ...')
                     # specific case for vocals
-                    # always (re)generate wav from mp3
+                    # always (re)generate wav from mp3, rhubarb will need it
                     utils.convert_audio(file_folder + 'vocals.mp3', file_folder + 'vocals.wav')
                     ui.notify('auto generate wav file')
                     # double check
@@ -918,8 +920,13 @@ async def main_page():
 
                     # set players
                     player_vocals.set_source(file_folder + 'vocals.mp3')
+                    audio_vocals.tooltip(file_folder + 'vocals.mp3')
+                    audio_vocals.update()
                     # this one is optional
-                    player_accompaniment.set_source(file_folder + 'accompaniment.mp3')
+                    if os.path.isfile(file_folder + 'accompaniment.mp3'):
+                        player_accompaniment.set_source(file_folder + 'accompaniment.mp3')
+                        audio_accompaniment.tooltip(file_folder + 'accompaniment.mp3')
+                        audio_accompaniment.update()
                     #
                     LipAPI.file_to_analyse = file_folder + 'vocals.wav'
                     LipAPI.lyrics_file = file_folder + 'lyrics.txt'
@@ -927,7 +934,7 @@ async def main_page():
             # set params
             LipAPI.source_file = audio_input.value
             LipAPI.output_file = app_config['output_folder'] + file + '/' + 'rhubarb'
-            edit_mouth_button.enable()
+            edit_mouth_buffer.enable()
             load_mouth_button.enable()
             ui.timer(1, set_audio_duration, once=True)
 
@@ -988,7 +995,7 @@ async def main_page():
                 spinner_accompaniment.set_visibility(False)
                 spinner_vocals.set_visibility(False)
                 load_model_button.disable()
-                edit_mouth_button.disable()
+                edit_mouth_buffer.disable()
                 load_mouth_button.disable()
                 ok_button.disable()
                 try:
@@ -1166,7 +1173,7 @@ async def main_page():
         ui.timer(1, utils.run_gencuedata, once=True)
 
         LipAPI.data_changed = False
-        edit_mouth_button.enable()
+        edit_mouth_buffer.enable()
         load_mouth_button.enable()
 
     async def player_time_action():
@@ -1253,7 +1260,7 @@ async def main_page():
             if new_value == 1:
                 spinner_analysis.set_visibility(False)
                 load_model_button.enable()
-                edit_mouth_button.enable()
+                edit_mouth_buffer.enable()
                 load_mouth_button.enable()
                 ok_button.enable()
                 logger.debug('Analysis Finished')
@@ -1431,8 +1438,11 @@ async def main_page():
                     ui.label('.json')
                     ic_refresh = ui.icon('refresh')
                     ic_refresh.on('click', lambda: ui.navigate.to('/'))
-                    file_label = ui.label('File Name')
-                    file_label.bind_text_from(LipAPI, 'source_file')
+                    edit_mouth_buffer = ui.chip('Edit mouth Cues',
+                                                icon='edit',
+                                                text_color='yellow',
+                                                on_click=utils.mouth_time_buffer_edit)
+                    edit_mouth_buffer.disable()
             with ui.row().classes('border'):
                 add_markers = ui.chip('Add', icon='add', color='red', on_click=lambda :add_all_markers())
                 add_markers.tooltip('Add all markers')
@@ -1458,6 +1468,10 @@ async def main_page():
             ''')
             zoom.bind_visibility(LipAPI, 'wave_show')
 
+            file_label = ui.label('File Name')
+            file_label.classes('self-center')
+            file_label.bind_text_from(LipAPI, 'source_file')
+
             # time info
             with ui.row(wrap=False).classes('self-center border'):
                 ui.icon('watch', size='xs').classes('self-center')
@@ -1475,62 +1489,62 @@ async def main_page():
                 else:
                     model_thumb = ui.image('./media/image/model/default/x.png').classes('w-6 self-center')
 
-            with ui.row().classes('self-center'):
-                ui.separator()
+            with ui.card().classes('self-center border bg-cyan-800'):
 
-                with ui.column():
-                    # player for vocals part, better mp3 file
-                    player_vocals = ui.audio('').props('id=player_vocals')
-                    player_vocals.props('preload=auto')
-                    player_vocals.on('timeupdate', lambda: player_time_action())
-                    player_vocals.on('play', lambda: event_player_vocals('play'))
-                    player_vocals.on('pause', lambda: event_player_vocals('pause'))
-                    player_vocals.on('ended', lambda: event_player_vocals('end'))
-                    spinner_vocals = ui.spinner('audio', size='lg', color='green')
-                    spinner_vocals.set_visibility(False)
-                    ui.label('VOCALS').classes('self-center')
-
-                # card area center
-                control_area_v = ui.card(align_items='center').classes('w-44 h-65 border bg-cyan-900')
-                with control_area_v:
-                    spinner_analysis = ui.spinner('dots', size='xl', color='red')
-                    spinner_analysis.set_visibility(False)
-                    with ui.row(wrap=False):
-                        circular = ui.circular_progress()
-                        run_icon = ui.icon('rocket', size='lg')
-                        run_icon.style('cursor: pointer')
-                        run_icon.tooltip('Click to analyse audio with Rhubarb')
-                        run_icon.on('click', lambda: analyse_audio())
-                        scroll_time = ui.checkbox('')
-                        scroll_time.tooltip('check to auto scroll graphic mouth cue')
-                        scroll_time.bind_value(LipAPI, 'scroll_graphic')
-                    with ui.row():
-                        ui.button(on_click=lambda: sync_player('play'), icon='play_circle').props('outline')
-                        ui.button(on_click=lambda: sync_player('pause'), icon='pause_circle').props('outline')
-                    sync_player_button = ui.button(on_click=lambda: sync_player('sync'), icon='sync')
-                    sync_player_button.classes('w-10')
-                    sync_player_button.props('outline')
+                with ui.row().classes('self-center'):
                     with ui.column():
-                        with ui.row().classes('self-center').style("margin:-10px;"):
-                            ui.label('WVS')
-                            ui.label('CHA')
-                            ui.label('OSC')
-                        with ui.row().classes('self-center') as net_row:
-                            link_wvs = ui.icon('link', size='xs')
-                            link_wvs.style(add="padding-right:10px")
-                            link_cha = ui.icon('link', size='xs')
-                            link_osc = ui.icon('link', size='xs')
-                            link_osc.style(add="padding-left:10px")
-                # player 2
-                with ui.column():
-                    # player for musical part, need mp3 file
-                    player_accompaniment = ui.audio('').props('id=player_accompaniment')
-                    spinner_accompaniment = ui.spinner('audio', size='lg', color='green')
-                    player_accompaniment.on('play', lambda: event_player_accompaniment('play'))
-                    player_accompaniment.on('pause', lambda: event_player_accompaniment('pause'))
-                    player_accompaniment.on('ended', lambda: event_player_accompaniment('end'))
-                    spinner_accompaniment.set_visibility(False)
-                    ui.label('ACCOMPANIMENT').classes('self-center')
+                        # player for vocals part, better mp3 file
+                        player_vocals = ui.audio('').props('id=player_vocals')
+                        player_vocals.props('preload=auto')
+                        player_vocals.on('timeupdate', lambda: player_time_action())
+                        player_vocals.on('play', lambda: event_player_vocals('play'))
+                        player_vocals.on('pause', lambda: event_player_vocals('pause'))
+                        player_vocals.on('ended', lambda: event_player_vocals('end'))
+                        spinner_vocals = ui.spinner('audio', size='lg', color='green')
+                        spinner_vocals.set_visibility(False)
+                        audio_vocals = ui.label('VOCALS').classes('self-center').tooltip('TBD')
+
+                    # card area center
+                    control_area_v = ui.card(align_items='center').classes('w-44 h-65 border bg-cyan-900')
+                    with control_area_v:
+                        spinner_analysis = ui.spinner('dots', size='xl', color='red')
+                        spinner_analysis.set_visibility(False)
+                        with ui.row(wrap=False):
+                            circular = ui.circular_progress()
+                            run_icon = ui.icon('rocket', size='lg')
+                            run_icon.style('cursor: pointer')
+                            run_icon.tooltip('Click to analyse audio with Rhubarb')
+                            run_icon.on('click', lambda: analyse_audio())
+                            scroll_time = ui.checkbox('')
+                            scroll_time.tooltip('check to auto scroll graphic mouth cue')
+                            scroll_time.bind_value(LipAPI, 'scroll_graphic')
+                        with ui.row():
+                            ui.button(on_click=lambda: sync_player('play'), icon='play_circle').props('outline')
+                            ui.button(on_click=lambda: sync_player('pause'), icon='pause_circle').props('outline')
+                        sync_player_button = ui.button(on_click=lambda: sync_player('sync'), icon='sync')
+                        sync_player_button.classes('w-10')
+                        sync_player_button.props('outline')
+                        with ui.column():
+                            with ui.row().classes('self-center').style("margin:-10px;"):
+                                ui.label('WVS')
+                                ui.label('CHA')
+                                ui.label('OSC')
+                            with ui.row().classes('self-center') as net_row:
+                                link_wvs = ui.icon('link', size='xs')
+                                link_wvs.style(add="padding-right:10px")
+                                link_cha = ui.icon('link', size='xs')
+                                link_osc = ui.icon('link', size='xs')
+                                link_osc.style(add="padding-left:10px")
+                    # player 2
+                    with ui.column():
+                        # player for musical part, need mp3 file
+                        player_accompaniment = ui.audio('').props('id=player_accompaniment')
+                        spinner_accompaniment = ui.spinner('audio', size='lg', color='green')
+                        player_accompaniment.on('play', lambda: event_player_accompaniment('play'))
+                        player_accompaniment.on('pause', lambda: event_player_accompaniment('pause'))
+                        player_accompaniment.on('ended', lambda: event_player_accompaniment('end'))
+                        spinner_accompaniment.set_visibility(False)
+                        audio_accompaniment = ui.label('ACCOMPANIMENT').classes('self-center').tooltip('TBD')
 
             ui.separator()
 
@@ -1592,9 +1606,6 @@ async def main_page():
             with ui.row():
                 load_mouth_button = ui.button('Load MouthCue', on_click=load_mouth_cue)
                 load_mouth_button.disable()
-                edit_mouth_button = ui.button('Edit mouth Buffer',
-                                              on_click=utils.mouth_time_buffer_edit)
-                edit_mouth_button.disable()
                 load_model_button = ui.button('Load a model', on_click=load_mouth_model)
 
         with ui.card(align_items='center').tight().classes(
