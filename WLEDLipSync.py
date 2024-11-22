@@ -90,7 +90,8 @@ if sys.platform.lower() == 'win32':
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
 rub = RhubarbWrapper()
-
+# music info
+retriever = MusicInfoRetriever()
 
 """
 When this env var exist, this mean run from the one-file executable (compressed file).
@@ -172,7 +173,6 @@ class LipAPI:
     mouth_images_buffer: List = []  # list contains mouth images from a model
     mouths_buffer_thumb: List = []  # contains thumb mouth images
     thumbnail_width: int = 64  # thumb image width
-    # mouth_carousel: ui.carousel = None  # carousel object
     mouth_carousel = None  # carousel object
     mouth_area_h: Union[ui.scroll_area, None] = None  # scroll area object
     audio_duration: Union[float, None] = None  # audio file duration
@@ -1170,7 +1170,7 @@ async def main_page():
                         letter_label = ui.label(letter).style('cursor:pointer')
                         letter_label.on('click', lambda st=start, lb=letter_label: select_letter(st, lb))
 
-        # Move to the right container
+        # Move to the required container
         LipAPI.mouth_area_h.move(target_container=card_mouth)
 
         # This could take some time
@@ -1382,15 +1382,12 @@ async def main_page():
             song_artist.set_text('Artist : ' + artist_tag)
         tags_data.set_text(song.tags)
 
-        # get info from ytmusicapi
-        info_from_yt = retriever.get_song_info_with_lyrics(title_tag, artist_tag)
-        print(info_from_yt)
         #
         song_length.set_text('length : ')
         artist_desc.set_text('info : ')
-        album_img.set_source('')
         artist_img.set_source('')
         lyrics_data.set_value('')
+        album_img.set_source('')
         song1_img.set_source('')
         song1_title.set_text('')
         song2_img.set_source('')
@@ -1401,6 +1398,9 @@ async def main_page():
         song4_title.set_text('')
         song5_img.set_source('')
         song5_title.set_text('')
+        # get info from ytmusicapi
+        info_from_yt = retriever.get_song_info_with_lyrics(title_tag, artist_tag)
+        print(info_from_yt)
 
         try:
             if info_from_yt is not None:
@@ -1431,6 +1431,9 @@ async def main_page():
                 except IndexError:
                     print('Error to retrieve top5 from ytmusicapi')
 
+            else:
+                print('nothing from ytmusicapi')
+
         except IndexError:
             print('Error to retrieve info from ytmusicapi')
         except Exception as e:
@@ -1448,9 +1451,6 @@ async def main_page():
     # Rhubarb instance, callback will send back two values: data and is_stderr (for STDErr capture)
     #
     rub.callback = update_progress
-
-    # music info
-    retriever = MusicInfoRetriever()
 
     #
     # Main UI generation
