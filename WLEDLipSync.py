@@ -83,6 +83,7 @@ from niceutils import LocalFilePicker
 from typing import List, Union
 from math import trunc
 from ytmusic import MusicInfoRetriever
+from utils import AnimatedElement as Animate
 
 if sys.platform.lower() == 'win32':
     from asyncio import WindowsSelectorEventLoopPolicy, set_event_loop_policy, timeout
@@ -131,6 +132,8 @@ if "NUITKA_ONEFILE_PARENT" not in os.environ:
         logger.error(f'Bad server Port: {server_port}')
         sys.exit(2)
 
+    # animate or not
+    do_animation = str2bool(custom_config['animate-ui'])
 
 class LipAPI:
     """
@@ -256,7 +259,8 @@ async def create_carousel():
     image_number = len(LipAPI.mouth_images_buffer)
     LipAPI.mouth_carousel = ui.carousel(animated=False, arrows=False, navigation=False)
     LipAPI.mouth_carousel.props('max-height=360px')
-    with  LipAPI.mouth_carousel:
+    LipAPI.mouth_carousel.classes('self-center')
+    with LipAPI.mouth_carousel:
         for i in range(image_number):
             await create_carousel_slide(i)
             await create_thumbnail(i)
@@ -1137,7 +1141,12 @@ async def main_page():
             logger.debug(LipAPI.mouth_times_selected)
 
         # Scroll area with timeline/images
-        LipAPI.mouth_area_h = ui.scroll_area().classes('bg-cyan-700 w-400 h-40')
+        if do_animation:
+            scroll_area_anim = Animate(ui.scroll_area, animation_name_in='flipInX', duration=2)
+            LipAPI.mouth_area_h = scroll_area_anim.create_element()
+        else:
+            LipAPI.mouth_area_h = ui.scroll_area()
+        LipAPI.mouth_area_h.classes('bg-cyan-700 w-400 h-40')
         LipAPI.mouth_area_h.props('id="CuePointsArea"')
         LipAPI.mouth_area_h.bind_visibility(LipAPI, 'mouth_cue_show')
         with LipAPI.mouth_area_h:
@@ -1457,19 +1466,41 @@ async def main_page():
     #
     utils.apply_custom()
 
+
+    # Add Animate.css to the HTML head
+    ui.add_head_html("""
+    <link rel="stylesheet" href="./assets/css/animate.min.css"/>
+    """)
     #
-    card_top_preview = ui.card(align_items='center').tight().classes('no-shadow no-border w-full h-1/3')
+    #
+    if do_animation:
+        card_top_preview_anim = Animate(ui.card, animation_name_in='fadeInDown', duration=1)
+        card_top_preview = card_top_preview_anim.create_element()
+    else:
+        card_top_preview = ui.card()
+    card_top_preview.tight().classes('self-center no-shadow no-border w-full h-1/3')
     card_top_preview.set_visibility(False)
 
     with ui.row(wrap=False).classes('w-full'):
 
-        card_left_preview = ui.card(align_items='center').tight().classes('self-center no-shadow no-border w-1/3')
+        if do_animation:
+            card_left_preview_anim = Animate(ui.card, animation_name_in='fadeInLeft', duration=1)
+            card_left_preview = card_left_preview_anim.create_element()
+        else:
+            card_left_preview = ui.card()
+        card_left_preview.tight().classes('self-center no-shadow no-border w-1/3')
         card_left_preview.set_visibility(False)
 
         card_left = ui.card().tight().classes('w-full')
         card_left.set_visibility(True)
         with card_left:
-            card_mouth = ui.card().classes('w-full')
+
+            if do_animation:
+                card_mouth_anim = Animate(ui.card, animation_name_in='fadeInDown', duration=3)
+                card_mouth = card_mouth_anim.create_element()
+            else:
+                card_mouth = ui.card()
+            card_mouth.classes('w-full')
             card_mouth.props('id="CardMouth"')
             with card_mouth:
                 with ui.row():
@@ -1515,7 +1546,14 @@ async def main_page():
             file_label.bind_text_from(LipAPI, 'source_file')
 
             # time info
-            with ui.row(wrap=False).classes('self-center border'):
+            if do_animation:
+                row_time_anim = Animate(ui.row, animation_name_in='flipInY', duration=2)
+                row_time = row_time_anim.create_element()
+            else:
+                row_time = ui.row()
+            row_time.classes('self-center border')
+
+            with row_time:
                 ui.icon('watch', size='xs').classes('self-center')
                 time_label = ui.label('0.0 X 0').classes('self-center')
                 time_label.style('margin:5px;'
@@ -1531,7 +1569,15 @@ async def main_page():
                 else:
                     model_thumb = ui.image('./media/image/model/default/x.png').classes('w-6 self-center')
 
-            with ui.card().classes('self-center border bg-cyan-800'):
+            # players
+            if do_animation:
+                card_player_anim = Animate(ui.card, animation_name_in='fadeIn', duration=2)
+                card_player = card_player_anim.create_element()
+            else:
+                card_player = ui.card()
+            card_player.classes('self-center border bg-cyan-800')
+
+            with card_player:
 
                 with ui.row().classes('self-center'):
                     with ui.column():
@@ -1605,9 +1651,14 @@ async def main_page():
                 ui.checkbox('Wave').bind_value(LipAPI, 'wave_show')
                 ui.checkbox('MouthCue').bind_value(LipAPI, 'mouth_cue_show')
                 info = ui.checkbox('Info', value=False)
-                with ui.card() as songInfo:
-                    songInfo.bind_visibility_from(info,'value')
-                    songInfo.classes('bg-blue-grey-4')
+                if do_animation:
+                    song_info_anim = Animate(ui.card, animation_name_in='fadeInUp', duration=1)
+                    song_info_card = song_info_anim.create_element()
+                else:
+                    song_info_card = ui.card()
+                with song_info_card:
+                    song_info_card.bind_visibility_from(info,'value')
+                    song_info_card.classes('bg-blue-grey-4')
                     song_spinner = ui.spinner(size='xl').classes('self-center')
                     song_spinner.set_visibility(False)
                     with ui.row():
@@ -1670,8 +1721,13 @@ async def main_page():
                 load_mouth_button.disable()
                 load_model_button = ui.button('Load a model', on_click=load_mouth_model)
 
-        with ui.card(align_items='center').tight().classes(
-                'self-center no-shadow no-border w-1/3') as card_right_preview:
+        if do_animation:
+            card_right_preview_anim = Animate(ui.card, animation_name_in='fadeInRight', duration=1)
+            card_right_preview = card_right_preview_anim.create_element()
+        else:
+            card_right_preview = ui.card()
+        card_right_preview.tight().classes('self-center no-shadow no-border w-1/3')
+        with card_right_preview:
             LipAPI.preview_area = card_right_preview
             # generate default mouth model on first run
             if len(LipAPI.mouth_images_buffer) == 0:
