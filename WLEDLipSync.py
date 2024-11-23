@@ -1491,9 +1491,9 @@ async def main_page():
         card_left_preview.tight().classes('self-center no-shadow no-border w-1/3')
         card_left_preview.set_visibility(False)
 
-        card_left = ui.card().tight().classes('w-full')
-        card_left.set_visibility(True)
-        with card_left:
+        card_main = ui.card().tight().classes('w-full')
+        card_main.set_visibility(True)
+        with card_main:
 
             if do_animation:
                 card_mouth_anim = Animate(ui.card, animation_name_in='fadeInDown', duration=3)
@@ -1747,7 +1747,11 @@ async def main_page():
         with ui.row(wrap=False):
             dark = ui.dark_mode()
             ui.switch('dark mode', on_change=dark.toggle)
-            ui.switch('Show', on_change=lambda v: card_left.set_visibility(v.value), value=True)
+            ui.switch('Show', on_change=lambda v: card_main.set_visibility(v.value), value=True)
+        with ui.row(wrap=False):
+            def toggle_anim(v):
+                globals()['do_animation'] = v
+            ui.switch('Animate', on_change=lambda v: toggle_anim(v.value), value=do_animation).style('margin-top:-20px')
 
         with ui.card(align_items='center').tight().classes('bg-cyan-400'):
             # Function to move the carousel to the desired target container
