@@ -127,6 +127,8 @@ jobs:
             pygments.formatters.html
             av.opaque
             taglib
+            ytmusicapi
+            nicegui
 
           include-data-files: |
             favicon.ico=favicon.ico
