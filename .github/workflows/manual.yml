@@ -61,7 +61,7 @@ jobs:
           ARCHITECTURE=$(uname -m)
           echo "ARCHITECTURE=$ARCHITECTURE" >> $GITHUB_ENV                  
 
-      - name: MacOS specific M1
+      - name: MacOS specific Apple
         if: matrix.os == 'macos-latest'
         run: |
           brew update
