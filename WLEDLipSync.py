@@ -1,6 +1,5 @@
 # Compilation mode, standalone everywhere, except on macOS there app bundle
 # nuitka-project-if: {OS} == "Darwin":
-#    nuitka-project: --macos-create-app-bundle
 #    nuitka-project: --include-raw-dir=rhubarb/mac=rhubarb/mac
 # nuitka-project-if: {OS} == "Windows":
 #    nuitka-project: --onefile-windows-splash-screen-image={MAIN_DIRECTORY}/splash-screen.png
