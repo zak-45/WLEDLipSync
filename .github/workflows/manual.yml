@@ -50,7 +50,7 @@ jobs:
       - name: Windows specific
         if: matrix.os == 'windows-latest'
         run: |
-          echo "ARCHITECTURE=%PROCESSOR_ARCHITECTURE%" >> $GITHUB_ENV
+          echo "ARCHITECTURE=amd64" >> $GITHUB_ENV
 
       - name: Ubuntu specific
         if: matrix.os == 'ubuntu-latest'
