@@ -118,7 +118,7 @@ jobs:
           windows-icon-from-ico: assets/favicon.ico
           macos-app-icon: assets/favicon.ico
           onefile-tempdir-spec: ./WLEDLipSync
-          output-file: WLEDLipSync-${{runner.os}}-${{ env.ARCHITECTURE }}
+          output-file: WLEDLipSync-${{runner.os}}_${{ env.ARCHITECTURE }}
           include-package-data: |
             nicegui
             ytmusicapi
@@ -139,7 +139,9 @@ jobs:
         with:
           name: ${{runner.os}} Build
           if-no-files-found: warn
-          path: 'build/WLEDLipSync-${{runner.os}}-${{ env.ARCHITECTURE }}**'
+          overwrite: true
+          include-hidden-files: true
+          path: 'build/WLEDLipSync-${{runner.os}}_${{ env.ARCHITECTURE }}**'
             
       - name: Create Release ${{github.event.inputs.mytag}} with Builds from Nuitka
         uses: ncipollo/release-action@v1
@@ -147,4 +149,4 @@ jobs:
           allowUpdates: true
           commit: main
           tag: ${{github.event.inputs.mytag}}
-          artifacts: 'build/WLEDLipSync-${{runner.os}}-${{ env.ARCHITECTURE }}**'
+          artifacts: 'build/WLEDLipSync-${{runner.os}}_${{ env.ARCHITECTURE }}**'
