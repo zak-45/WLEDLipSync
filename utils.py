@@ -8,6 +8,7 @@ import logging
 import logging.config
 import concurrent_log_handler
 import cfg_load as cfg
+import contextlib
 import ipaddress
 import re
 import socket
@@ -78,12 +79,10 @@ async def check_ip_alive(ip_address, port=80, timeout=2):
         sock.settimeout(timeout)
         # Attempt to connect to the IP address and port
         result = sock.connect_ex((ip_address, port))
-        # Check if the connection was successful
         if result == 0:
             return True  # Host is reachable
-        else:
-            logger.error(f"Failed to connect to {ip_address}:{port}. Error code: {result}")
-            return False  # Host is not reachable
+        logger.error(f"Failed to connect to {ip_address}:{port}. Error code: {result}")
+        return False  # Host is not reachable
     except Exception as error:
         logger.error(traceback.format_exc())
         logger.error(f'Error on check IP: {error}')
@@ -114,12 +113,9 @@ def validate_ip_address(ip_string):
         return all(allowed.match(part) for part in hostname.split("."))
 
     # Check if it's a valid IP address
-    try:
+    with contextlib.suppress(ValueError):
         ipaddress.ip_address(ip_string)
         return True
-    except ValueError:
-        pass
-
     # Check if it's a valid hostname
     if is_valid_hostname(ip_string):
         try:
@@ -131,19 +127,44 @@ def validate_ip_address(ip_string):
 
     return False
 
-def read_config():
-    # load config file
-    lip_config = cfg.load('config/WLEDLipSync.ini')
-    # config keys
-    server_config = lip_config.get('server')
-    app_config = lip_config.get('app')
-    colors_config = lip_config.get('colors')
-    custom_config = lip_config.get('custom')
 
-    return server_config, app_config, colors_config, custom_config
+def read_config():
+    """
+    Reads the configuration settings from a specified INI file.
+    This function loads the configuration file, retrieves various configuration sections,
+    and returns them for use in the application.
+
+    Returns:
+        tuple: A tuple containing the server configuration,
+        application configuration, colors configuration, and custom configuration.
+
+    """
+    # load config file
+    lip_cfg = cfg.load('config/WLEDLipSync.ini')
+    # config keys
+    server_cfg = lip_cfg.get('server')
+    app_cfg = lip_cfg.get('app')
+    colors_cfg = lip_cfg.get('colors')
+    custom_cfg = lip_cfg.get('custom')
+
+    return server_cfg, app_cfg, colors_cfg, custom_cfg
 
 
 def setup_logging(config_path='logging_config.ini', handler_name: str = None):
+    """
+    Sets up logging configuration based on a specified configuration file. 
+    This function checks for the existence of a logging configuration file, applies the configuration if found, 
+    and returns a logger instance configured according to the settings, 
+    or falls back to a basic configuration if the file is not found.
+
+    Args:
+        config_path (str): The path to the logging configuration file. Defaults to 'logging_config.ini'.
+        handler_name (str, optional): The name of the logger handler to use. Defaults to None.
+
+    Returns:
+        logging.Logger: The configured logger instance.
+
+    """
     if os.path.exists(config_path):
         logging.config.fileConfig(config_path, disable_existing_loggers=True)
         # trick: use the same name for all modules, ui.log will receive message from alls
@@ -223,10 +244,7 @@ def image_array_to_base64(nparray):
     # Save the image to a bytes buffer
     buffered = io.BytesIO()
     image.save(buffered, format="JPEG")
-    # Encode the bytes as Base64
-    img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-    # The img_str is the Base64 string representation of the image
-    return img_str
+    return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
 
 def apply_custom():
@@ -317,6 +335,11 @@ async def wavesurfer():
     </script>    
     ''')
 
+async def drag_drop():
+    ui.add_body_html('''    
+    <script src="/assets/js/dragdrop.js"></script>    
+    ''')
+
 
 async def get_player_time():
     """
@@ -376,7 +399,15 @@ def clear_markers():
 
 
 async def mouth_time_buffer_edit():
+    """
+    Displays a dialog for editing the mouth time buffer in the application. 
+    This asynchronous function creates a full-screen dialog containing an iframe for the editor and 
+    provides buttons to open the editor in a new tab or to close the dialog.
 
+    Returns:
+        None
+
+    """
     buffer_dialog = ui.dialog() \
             .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
 
@@ -424,19 +455,57 @@ class AnimatedElement:
         duration : custom animation delay
     """
 
-    def __init__(self, element_type, animation_name_in='fadeIn', animation_name_out='fadeOut', duration=1.5):
+    def __init__(self, element_type: type[any], animation_name_in='fadeIn', animation_name_out='fadeOut', duration=1.5):
+        """
+        Initializes a new instance of the animation class with specified parameters. 
+        This constructor sets up the element type, animation names for entering and exiting, 
+        and the duration of the animations.
+
+        Args:
+            element_type (str): The type of element to which the animation will be applied.
+            animation_name_in (str): The name of the animation for the entry effect. Defaults to 'fadeIn'.
+            animation_name_out (str): The name of the animation for the exit effect. Defaults to 'fadeOut'.
+            duration (float): The duration of the animation in seconds. Defaults to 1.5.
+
+        Returns:
+            None
+
+        """
         self.element_type = element_type
         self.animation_name_in = animation_name_in
         self.animation_name_out = animation_name_out
         self.duration = duration
 
+
     def generate_animation_classes(self, animation_name):
+        """
+        Generates CSS classes for animations based on the specified animation name and duration. 
+        This method constructs the animation class and duration class strings, 
+        which can be used to apply animations to elements in a user interface.
+
+        Args:
+            animation_name (str): The name of the animation to be applied.
+
+        Returns:
+            tuple: A tuple containing the animation class and the duration class.
+
+        """
         # Generate the animation and duration classes
         animation_class = f'animate__{animation_name}'
         duration_class = f'custom-duration-{self.duration}s'
         return animation_class, duration_class
 
+
     def add_custom_css(self):
+        """
+        Adds custom CSS to the user interface for specifying animation duration. 
+        This method generates a style block that sets the animation duration based 
+        on the instance's duration attribute and injects it into the HTML head of the UI.
+
+        Returns:
+            None
+
+        """
         # Add custom CSS for animation duration
         custom_css = f"""
         <style>
@@ -447,6 +516,7 @@ class AnimatedElement:
         """
         ui.add_head_html(custom_css)
 
+
     def create_element(self, *args, **kwargs):
         """ Add class for in """
         self.add_custom_css()
@@ -455,15 +525,13 @@ class AnimatedElement:
         element.classes(f'animate__animated {animation_class} {duration_class}')
         return element
 
+
     def delete_element(self, element):
         """ Add class for out and delete """
         animation_class, duration_class = self.generate_animation_classes(self.animation_name_out)
         element.classes(f'animate__animated {animation_class} {duration_class}')
         # Delay the actual deletion to allow the animation to complete
         ui.timer(self.duration, lambda: element.delete(), once=True)
-
-
-
 
 
 """

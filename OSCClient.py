@@ -19,6 +19,19 @@ class OSCClient:
     """
 
     def __init__(self, ip: str, port: int):
+        """
+        Initializes a new instance of the OSCClient class for sending OSC messages.
+        This constructor sets up the UDP client with the specified IP and port, initializes a message queue,
+        and starts a separate thread for sending messages.
+
+        Args:
+            ip (str): The IP address of the OSC server to send messages to.
+            port (int): The port number of the OSC server.
+
+        Returns:
+            None
+
+        """
         self.client = udp_client.SimpleUDPClient(ip, port)
         self.queue = []
         self.lock = threading.Lock()
@@ -27,8 +40,15 @@ class OSCClient:
         self.thread.start()
 
     def _send_messages(self):
-        """ send the message by reading the queue """
+        """
+        Continuously sends messages from the queue to the OSC server while the client is running.
+        This method checks the message queue, acquires a lock to safely pop messages,
+        and sends them to the specified address, with a small delay to manage the sending rate.
 
+        Returns:
+            None
+
+        """
         while self.running:
             if self.queue:
                 self.lock.acquire()
@@ -41,7 +61,19 @@ class OSCClient:
             time.sleep(0.01)
 
     def send_message(self, address: str, value):
-        """ add message to queue """
+        """
+        Adds a message to the queue for sending to the OSC server.
+        This method acquires a lock to ensure thread safety while appending the message,
+        which consists of an address and a value, to the queue.
+
+        Args:
+            address (str): The OSC address to which the message will be sent.
+            value: The value associated with the OSC message.
+
+        Returns:
+            None
+
+        """
         self.lock.acquire()
         try:
             self.queue.append((address, value))
@@ -49,5 +81,13 @@ class OSCClient:
             self.lock.release()
 
     def stop(self):
+        """
+        Stops the OSC client by setting the running flag to False and waiting for the message-sending thread to finish.
+        This method ensures that all resources are properly released before the client is terminated.
+
+        Returns:
+            None
+
+        """
         self.running = False
         self.thread.join()
