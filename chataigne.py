@@ -7,7 +7,9 @@ import threading
 
 class ChataigneWrapper:
     """
-    Simple Chataigne wrapper to run it from python
+    Simple Chataigne wrapper to run it from python.
+    This will execute a 'pseudo' portable version by redirecting USERPROFILE to the working directory (env)
+    Desktop & Documents folder need to exist to have it running in this way (Win OS)
 
     command line arguments are :
     ./Chataigne [-r] [-f file] [-headless] [-forceGL / -forceNoGL] [<file>]
@@ -67,6 +69,8 @@ class ChataigneWrapper:
         Executes a command in a separate subprocess with the configured parameters.
         This method constructs the command based on the instance's settings and manages the execution
         in a way that allows for output handling.
+
+        Subprocess will run on redirected USERPROFILE.
 
         Returns:
             None
