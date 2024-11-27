@@ -1,3 +1,14 @@
+"""
+a: zak-45
+d: 09/10/2024
+v: 1.0.0.0
+
+A class to run chataigne as portable version.
+    This will execute a 'pseudo' portable version by redirecting USERPROFILE to the working directory (env)
+    Desktop & Documents folder need to exist to have it running in this way (Win OS)
+
+"""
+
 import os
 import subprocess
 import json
@@ -8,8 +19,6 @@ import threading
 class ChataigneWrapper:
     """
     Simple Chataigne wrapper to run it from python.
-    This will execute a 'pseudo' portable version by redirecting USERPROFILE to the working directory (env)
-    Desktop & Documents folder need to exist to have it running in this way (Win OS)
 
     command line arguments are :
     ./Chataigne [-r] [-f file] [-headless] [-forceGL / -forceNoGL] [<file>]
