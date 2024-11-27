@@ -4,6 +4,7 @@ import json
 import sys
 import threading
 
+
 class ChataigneWrapper:
     """
     Simple Chataigne wrapper to run it from python
@@ -26,9 +27,9 @@ class ChataigneWrapper:
     _instance_running = False
 
     def __init__(self,
-                 reset:bool = False,
+                 reset: bool = False,
                  load_file: str = '',
-                 headless:bool = True,
+                 headless: bool = True,
                  open_gl: bool = True,
                  callback=None,
                  working_directory: str = os.getcwd()):
@@ -60,7 +61,6 @@ class ChataigneWrapper:
         self.load_file = f"{self.working_directory}/{load_file}"
         self.command = []
         self.return_code = 0
-
 
     def run_command_in_subprocess(self):
         """
@@ -158,7 +158,7 @@ class ChataigneWrapper:
         self.return_code = process.returncode
         print("Return code:", self.return_code, self.command)
 
-    def run(self, reset = False,  file_name = '', headless = True, open_gl = True):
+    def run(self, reset=False, file_name='', headless=True, open_gl=True):
         """
         Starts the execution of a subprocess with the specified parameters.
         This method initializes the necessary settings and launches the subprocess in a separate thread,

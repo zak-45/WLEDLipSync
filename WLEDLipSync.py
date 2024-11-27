@@ -535,8 +535,7 @@ async def audio_edit():
         audio_dialog.open()
         editor_card = ui.card().classes('w-full')
         with editor_card:
-            ui.html(
-                f'''                
+            ui.html(f'''                
             <iframe src="audiomass/src/index.html?WLEDLipSyncFilePath={audiomass_file}" frameborder="0" 
             style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;
                     height:100%;width:100%;
@@ -1507,6 +1506,54 @@ async def main_page():
         # hide spinner when finished
         song_spinner.set_visibility(False)
 
+    def move_preview(container):
+        """
+        Moves the preview area of the LipAPI to a specified container position.
+        This function updates the preview area based on the provided container argument
+        and triggers the movement of the mouth carousel to the new location.
+
+        Args:
+            container (str): The target position for the preview area, which can be 'left', 'top', or 'right'.
+
+        Returns:
+            None
+
+        """
+        def run_it():
+            LipAPI.mouth_carousel.move(target_container=LipAPI.preview_area)
+
+        prev_hide.set_value(False)
+
+        if container == 'left':
+            LipAPI.preview_area = card_left_preview
+            run_it()
+        elif container == 'top':
+            LipAPI.preview_area = card_top_preview
+            run_it()
+        elif container == 'right':
+            LipAPI.preview_area = card_right_preview
+            run_it()
+
+    def show_preview(prev):
+        """
+        Controls the visibility of the preview area based on the provided flag.
+        This function hides all preview cards and sets the visibility of the LipAPI preview area
+        according to the boolean value of the `prev` argument.
+
+        Args:
+            prev (bool): A flag indicating whether to show the preview area (True) or hide it (False).
+
+        Returns:
+            None
+        """
+        card_left_preview.set_visibility(False)
+        card_top_preview.set_visibility(False)
+        card_right_preview.set_visibility(False)
+        if prev is True:
+            LipAPI.preview_area.set_visibility(True)
+        else:
+            LipAPI.preview_area.set_visibility(False)
+
     # -----------------------------------------------------------------------------------------------------------------#
     # reset default at init
     LipAPI.data_changed = False
@@ -1815,34 +1862,8 @@ async def main_page():
             ui.switch('Animate', on_change=lambda v: toggle_anim(v.value), value=do_animation).style('margin-top:-20px')
 
         with ui.card(align_items='center').tight().classes('bg-cyan-400'):
-            # Function to move the carousel to the desired target container
-            def move_preview(container):
-                def run_it():
-                    LipAPI.mouth_carousel.move(target_container=LipAPI.preview_area)
-
-                prev_hide.set_value(False)
-
-                if container == 'left':
-                    LipAPI.preview_area = card_left_preview
-                    run_it()
-                elif container == 'top':
-                    LipAPI.preview_area = card_top_preview
-                    run_it()
-                elif container == 'right':
-                    LipAPI.preview_area = card_right_preview
-                    run_it()
-
             prev_exp = ui.expansion('Preview').classes('bg-cyan-500')
             with prev_exp:
-                def show_preview(prev):
-                    card_left_preview.set_visibility(False)
-                    card_top_preview.set_visibility(False)
-                    card_right_preview.set_visibility(False)
-                    if prev is True:
-                        LipAPI.preview_area.set_visibility(True)
-                    else:
-                        LipAPI.preview_area.set_visibility(False)
-
                 with ui.row().classes('self-center'):
                     ui.label('Position').classes('self-center')
                     # ui.icon('open_in_new').on('click',lambda:tab_preview())
