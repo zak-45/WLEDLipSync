@@ -168,7 +168,7 @@ class ChataigneWrapper:
         Args:
             reset (bool): Indicates whether to reset the instance. Defaults to False.
             file_name (str): The name of the file to load. Defaults to an empty string.
-            headless (bool): Specifies if the instance should run in headless mode. Defaults to True.
+            headless (bool): Specifies if the instance should run in headless mode (no GUI). Defaults to True.
             open_gl (bool): Indicates whether to enable OpenGL support. Defaults to True.
 
         Returns:
