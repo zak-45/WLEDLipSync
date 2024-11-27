@@ -47,6 +47,7 @@ As output, this will generate a json file with corresponding time/mouth position
 ./media/audio/Mytest of all-time
                 |_WLEDLipSync.json
              +  |_vocals.wav <---- this one is used by rhubarb (external program) and created automatically if missing
+             +  |_lyrics.txt  <--- optional text file with the dialog text to get more reliable results
 
 For mouths model/images, need 9 images representing mouth positions:
 ./media/image/model/<model name>
