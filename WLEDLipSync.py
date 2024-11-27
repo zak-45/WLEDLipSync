@@ -396,7 +396,7 @@ def save_data(force: bool = False):
     """
 
     def run_it():
-        with open(f'{LipAPI.output_file}.json', 'w', encoding='utf-8') as f:
+        with open(f'{LipAPI.output_file}', 'w', encoding='utf-8') as f:
             json.dump(LipAPI.mouth_times_buffer, f, ensure_ascii=False, indent=4)
             LipAPI.data_changed = False
         dialog.close()
@@ -453,7 +453,7 @@ async def set_audio_duration():
 def add_all_markers():
     """ run java to add all markers """
 
-    ui.run_javascript(f'LoadMouthCues("{LipAPI.output_file}.json");', timeout=5)
+    ui.run_javascript(f'LoadMouthCues("{LipAPI.output_file}");', timeout=5)
 
 
 async def mouth_cue_action(osc_address):
@@ -934,7 +934,7 @@ async def main_page():
 
             # set params
             LipAPI.source_file = audio_input.value
-            LipAPI.output_file = app_config['output_folder'] + file + '/' + 'rhubarb'
+            LipAPI.output_file = app_config['output_folder'] + file + '/' + 'rhubarb.json'
             edit_mouth_buffer.enable()
             load_mouth_button.enable()
             ui.timer(1, set_audio_duration, once=True)
@@ -987,7 +987,9 @@ async def main_page():
                 ui.notify('Audio Analysis initiated')
 
                 # run analyzer
-                rub.run(file_name=LipAPI.file_to_analyse, dialog_file=LipAPI.lyrics_file, output=LipAPI.output_file)
+                # rhubarb will append file extension
+                analysis_output = LipAPI.output_file.replace('.json','')
+                rub.run(file_name=LipAPI.file_to_analyse, dialog_file=LipAPI.lyrics_file, output=analysis_output)
 
                 # set some GUI
                 spinner_analysis.set_visibility(True)
@@ -1012,7 +1014,7 @@ async def main_page():
         with ui.dialog() as dialog, ui.card():
             dialog.open()
             ui.label(f'Analyse file "{LipAPI.source_file}" with Rhubarb')
-            ui.label(f'This will overwrite : {LipAPI.output_file}.json')
+            ui.label(f'This will overwrite : {LipAPI.output_file}')
             ui.label('Are You Sure ?')
             with ui.row():
                 ui.button('Yes', on_click=run_it)
@@ -1039,14 +1041,18 @@ async def main_page():
             if LipAPI.source_file != '':
                 ui.notification('this could take some times .....', position='center', type='warning', spinner=True)
 
-                if os.path.isfile(LipAPI.output_file + '.json'):
-                    with open(LipAPI.output_file + '.json', 'r') as data:
+                if os.path.isfile(LipAPI.output_file):
+                    with open(LipAPI.output_file , 'r') as data:
                         LipAPI.mouth_times_buffer = json.loads(data.read())
 
                     ui.timer(1, generate_mouth_cue, once=True)
+                    output_label.classes(remove='animate-pulse')
+                    output_label.style(remove='color: red')
 
                 else:
                     ui.notify('No analysis file to read')
+                    output_label.classes(add='animate-pulse')
+                    output_label.style(add='color: red')
             else:
                 ui.notify('Source file blank ... load a new file')
 
@@ -1555,7 +1561,7 @@ async def main_page():
                     ic_save.on('click', lambda: save_data())
                     output_label = ui.label('Output')
                     output_label.bind_text_from(LipAPI, 'output_file')
-                    ui.label('.json')
+                    output_label.style(add='padding-top:10px')
                     ic_refresh = ui.icon('refresh')
                     ic_refresh.on('click', lambda: ui.navigate.to('/'))
                     edit_mouth_buffer = ui.chip('Edit mouth Cues',
@@ -1705,68 +1711,68 @@ async def main_page():
                 ui.checkbox('Wave').bind_value(LipAPI, 'wave_show')
                 ui.checkbox('MouthCue').bind_value(LipAPI, 'mouth_cue_show')
                 info = ui.checkbox('Info', value=False)
-                if do_animation:
-                    song_info_anim = Animate(ui.card, animation_name_in='fadeInUp', duration=1)
-                    song_info_card = song_info_anim.create_element()
-                else:
-                    song_info_card = ui.card()
-                with song_info_card:
-                    song_info_card.bind_visibility_from(info, 'value')
-                    song_info_card.classes('bg-blue-grey-4')
-                    song_spinner = ui.spinner(size='xl').classes('self-center')
-                    song_spinner.set_visibility(False)
-                    with ui.row():
-                        with ui.column():
-                            song_name = ui.label('Title : ')
-                            song_album = ui.label('Album : ')
-                            album_img = ui.image('').classes('w-20 border')
-                        with ui.column():
-                            song_length = ui.label('length : ')
-                            song_year = ui.label('Year : ')
-                            with ui.row():
-                                song_lyrics = ui.icon('lyrics', size='sm')
-                                song_lyrics.style(add='cursor: pointer')
-                                song_lyrics.on('click', lambda: show_lyrics())
-                                lyrics_data = ui.textarea(value='')
-                                lyrics_data.set_visibility(False)
-                            with ui.row():
-                                song_tags = ui.icon('tag', size='sm')
-                                song_tags.style(add='cursor: pointer')
-                                song_tags.on('click', lambda: show_tags())
-                                tags_data = ui.label('')
-                                tags_data.set_visibility(False)
-                        with ui.column():
-                            with ui.row():
-                                song_artist = ui.label('Artist : ')
-                                artist_img = ui.image('').classes('w-80 border')
-                            artist_desc = ui.label('info: ')
-                            artist_top5 = ui.label('Top 5 : ')
-                            with ui.row():
-                                song1_ndx = ui.label('1')
-                                with ui.column():
-                                    song1_img = ui.image('').classes('w-20 border')
-                                    song1_title = ui.label('')
-                                    song1_title.style('max-width:8em')
-                                song2_ndx = ui.label('2')
-                                with ui.column():
-                                    song2_img = ui.image('').classes('w-20 border')
-                                    song2_title = ui.label('')
-                                    song2_title.style('max-width:8em')
-                                song3_ndx = ui.label('3')
-                                with ui.column():
-                                    song3_img = ui.image('').classes('w-20 border')
-                                    song3_title = ui.label('')
-                                    song3_title.style('max-width:8em')
-                                song4_ndx = ui.label('4')
-                                with ui.column():
-                                    song4_img = ui.image('').classes('w-20 border')
-                                    song4_title = ui.label('')
-                                    song4_title.style('max-width:8em')
-                                song5_ndx = ui.label('5')
-                                with ui.column():
-                                    song5_img = ui.image('').classes('w-20 border')
-                                    song5_title = ui.label('')
-                                    song5_title.style('max-width:8em')
+            if do_animation:
+                song_info_anim = Animate(ui.card, animation_name_in='fadeInUp', duration=1)
+                song_info_card = song_info_anim.create_element()
+            else:
+                song_info_card = ui.card()
+            with song_info_card.classes('self-center'):
+                song_info_card.bind_visibility_from(info, 'value')
+                song_info_card.classes('bg-blue-grey-4')
+                song_spinner = ui.spinner(size='xl').classes('self-center')
+                song_spinner.set_visibility(False)
+                with ui.row():
+                    with ui.column():
+                        song_name = ui.label('Title : ')
+                        song_album = ui.label('Album : ')
+                        album_img = ui.image('').classes('w-20 border')
+                    with ui.column():
+                        song_length = ui.label('length : ')
+                        song_year = ui.label('Year : ')
+                        with ui.row():
+                            song_lyrics = ui.icon('lyrics', size='sm')
+                            song_lyrics.style(add='cursor: pointer')
+                            song_lyrics.on('click', lambda: show_lyrics())
+                            lyrics_data = ui.textarea(value='')
+                            lyrics_data.set_visibility(False)
+                        with ui.row():
+                            song_tags = ui.icon('tag', size='sm')
+                            song_tags.style(add='cursor: pointer')
+                            song_tags.on('click', lambda: show_tags())
+                            tags_data = ui.label('')
+                            tags_data.set_visibility(False)
+                    with ui.column():
+                        with ui.row():
+                            song_artist = ui.label('Artist : ')
+                            artist_img = ui.image('').classes('w-80 border')
+                        artist_desc = ui.label('info: ')
+                        artist_top5 = ui.label('Top 5 : ')
+                        with ui.row():
+                            song1_ndx = ui.label('1')
+                            with ui.column():
+                                song1_img = ui.image('').classes('w-20 border')
+                                song1_title = ui.label('')
+                                song1_title.style('max-width:8em')
+                            song2_ndx = ui.label('2')
+                            with ui.column():
+                                song2_img = ui.image('').classes('w-20 border')
+                                song2_title = ui.label('')
+                                song2_title.style('max-width:8em')
+                            song3_ndx = ui.label('3')
+                            with ui.column():
+                                song3_img = ui.image('').classes('w-20 border')
+                                song3_title = ui.label('')
+                                song3_title.style('max-width:8em')
+                            song4_ndx = ui.label('4')
+                            with ui.column():
+                                song4_img = ui.image('').classes('w-20 border')
+                                song4_title = ui.label('')
+                                song4_title.style('max-width:8em')
+                            song5_ndx = ui.label('5')
+                            with ui.column():
+                                song5_img = ui.image('').classes('w-20 border')
+                                song5_title = ui.label('')
+                                song5_title.style('max-width:8em')
 
             ui.label(' ')
 
