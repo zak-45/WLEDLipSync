@@ -32,6 +32,7 @@ class LocalFilePicker(ui.dialog):
         else:
             self.upper_limit = Path(directory if upper_limit == ... else upper_limit).expanduser()
         self.show_hidden_files = show_hidden_files
+        self.supported_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff')
 
         with (self, ui.card()):
             self.add_drives_toggle()
@@ -99,14 +100,12 @@ class LocalFilePicker(ui.dialog):
 
     def click(self, e: events.GenericEventArguments) -> None:
         self.path = Path(e.args['data']['path'])
-        supported_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff')
-        if self.path.suffix.lower() in supported_extensions and self.path.is_file() and self.thumbs:
+        if self.path.suffix.lower() in self.supported_extensions and self.path.is_file() and self.thumbs:
             ui.notify('Right-click for Preview', position='top')
 
     async def right_click(self, e: events.GenericEventArguments) -> None:
         self.path = Path(e.args['data']['path'])
-        supported_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff')
-        if self.path.suffix.lower() in supported_extensions and self.path.is_file() and self.thumbs:
+        if self.path.suffix.lower() in self.supported_extensions and self.path.is_file() and self.thumbs:
             with ui.dialog() as thumb:
                 thumb.open()
                 with ui.card().classes('w-full'):
