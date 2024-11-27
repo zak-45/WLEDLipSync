@@ -99,12 +99,14 @@ class LocalFilePicker(ui.dialog):
 
     def click(self, e: events.GenericEventArguments) -> None:
         self.path = Path(e.args['data']['path'])
-        if self.path.is_file() and self.thumbs:
+        supported_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff')
+        if self.path.suffix.lower() in supported_extensions and self.path.is_file() and self.thumbs:
             ui.notify('Right-click for Preview', position='top')
 
     async def right_click(self, e: events.GenericEventArguments) -> None:
         self.path = Path(e.args['data']['path'])
-        if self.path.is_file() and self.thumbs:
+        supported_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff')
+        if self.path.suffix.lower() in supported_extensions and self.path.is_file() and self.thumbs:
             with ui.dialog() as thumb:
                 thumb.open()
                 with ui.card().classes('w-full'):
