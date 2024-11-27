@@ -10,8 +10,31 @@ let checkBlinkingInterval;
 let regions = RegionsPlugin.create()
 
 // Give regions a random color when they are created
-let random = (min, max) => Math.random() * (max - min) + min
-let randomColor = () => `rgba(${random(0, 255)}, ${random(0, 255)}, ${random(0, 255)}, 0.5)`
+/**
+ * Generates a random number within a specified range.
+ *
+ * This function returns a random floating-point number that is greater than or equal to `min`
+ * and less than `max`. It utilizes the built-in `Math.random()` function to ensure that the
+ * generated number is uniformly distributed across the specified range, making it suitable for
+ * applications requiring randomization.
+ *
+ * @param {number} min - The lower bound of the range (inclusive).
+ * @param {number} max - The upper bound of the range (exclusive).
+ * @returns {number} A random number between `min` (inclusive) and `max` (exclusive).
+ */
+let random = (min, max) => Math.random() * (max - min) + min;
+
+/**
+ * Generates a random RGBA color string.
+ *
+ * This function creates a color in the RGBA format with random values for the red, green, and blue
+ * channels, each ranging from 0 to 255. The alpha channel is set to 0.5, resulting in a semi-transparent color
+ * that can be used for various graphical applications, such as styling elements or creating overlays.
+ *
+ * @returns {string} A string representing an RGBA color, formatted as 'rgba(r, g, b, a)'.
+ */
+let randomColor = () => `rgba(${random(0, 255)}, ${random(0, 255)}, ${random(0, 255)}, 0.5)`;
+
 
 // init waveform at page load only so container exist
 document.addEventListener('DOMContentLoaded', function() {
