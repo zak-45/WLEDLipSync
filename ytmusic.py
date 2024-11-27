@@ -1,10 +1,16 @@
-from ytmusicapi import YTMusic
+"""
+a: zak-45
+d: 09/10/2024
+v: 1.0.0.0
 
+A class to retrieve music artist information and song lyrics using the YTMusic API.
+
+"""
+
+from ytmusicapi import YTMusic
 
 class MusicInfoRetriever:
     """
-    A class to retrieve music artist information and song lyrics using the YTMusic API.
-
     This class provides methods to search for an artist and retrieve their information,
     as well as to search for a song and obtain its lyrics.
 
@@ -70,6 +76,51 @@ class MusicInfoRetriever:
             'top_5': artist_all_info['songs']['results']
         }
 
+    def search_song(self, artist, song_name, songs_result):
+        """
+        Searches for a specific song by a given artist within a list of song results.
+        This function filters the results to find a match based on the artist's ID and the song name,
+        and retrieves detailed information about the song, including its lyrics if available.
+
+        Args:
+            artist (dict): A dictionary containing information about the artist, including their ID.
+            song_name (str): The name of the song to search for.
+            songs_result (list): A list of song dictionaries to search through.
+
+        Returns:
+            dict: A dictionary containing details about the found song,
+            including title, length, year, lyrics, video ID, album ID, album name, thumbnails, and artist information.
+            If no song is found, an empty dictionary is returned.
+
+        """
+        song_data = {}
+        artist_id = artist['id']
+        # iterate over the search result, this could include not expected result (e.g. other artist)
+        for index, song in enumerate(songs_result):
+            # we take only song from this artist ID
+            if song['artists'][0]['id'] == artist_id and song_name.lower() in song['title'].lower():
+                # grab video info
+                video = self.yt.get_watch_playlist(song['videoId'])
+                # put the first result into dict
+                if index == 0:
+                    song_data = {
+                        'title': video['tracks'][0]['title'],
+                        'length': video['tracks'][0]['length'],
+                        'year': video['tracks'][0]['year'],
+                        'lyrics': None,
+                        'videoId': video['tracks'][0]['videoId'],
+                        'albumId': video['tracks'][0]['album']['id'],
+                        'albumName': video['tracks'][0]['album']['name'],
+                        'thumbnails': video['tracks'][0]['thumbnail'],
+                        'artistInfo': artist
+                    }
+                # take the first video with lyrics
+                if video.get('lyrics') is not None:
+                    song_data['lyrics'] = self.yt.get_lyrics(video['lyrics'])
+                    break
+
+        return song_data
+
     def get_song_info_with_lyrics(self, song_name, artist_name):
         """
         Searches for the specified song by the artist and retrieves its lyrics/info.
@@ -85,39 +136,17 @@ class MusicInfoRetriever:
 
         Returns:
             str or None: The lyrics/song info of the song if found, or None if no data are available.
-        """
 
-        song_data = {}
+        """
         # search artist to get ID
         artist = self.get_artist_info(artist_name)
-        if artist is not None:
-            artist_id = artist['id']
-            song_search = self.yt.search(f"{song_name} {artist_name}", filter='songs')
-            # iterate over the search result, this could include not expected result (e.g. other artist)
-            for index, song in enumerate(song_search):
-                # we take only song from this artist ID
-                if song['artists'][0]['id'] == artist_id and song_name.lower() in song['title'].lower():
-                    # grab video info
-                    video = self.yt.get_watch_playlist(song['videoId'])
-                    # put the first result into dict
-                    if index == 0:
-                        song_data = {
-                            'title': video['tracks'][0]['title'],
-                            'length': video['tracks'][0]['length'],
-                            'year': video['tracks'][0]['year'],
-                            'lyrics': None,
-                            'videoId': video['tracks'][0]['videoId'],
-                            'albumId': video['tracks'][0]['album']['id'],
-                            'albumName': video['tracks'][0]['album']['name'],
-                            'thumbnails': video['tracks'][0]['thumbnail'],
-                            'artistInfo': artist
-                        }
-                    # take the first video with lyrics
-                    if video.get('lyrics') is not None:
-                        song_data['lyrics'] = self.yt.get_lyrics(video['lyrics'])
-                        break
 
-            # return only song info if exist
+        if artist is not None:
+            # get all possibility
+            songs_possibility = self.yt.search(f"{song_name} {artist_name}", filter='songs')
+            # retrieve data for the song
+            song_data = self.search_song(artist,song_name,songs_possibility)
+            # return only song info if something
             if len(song_data) > 0:
                 return song_data
 

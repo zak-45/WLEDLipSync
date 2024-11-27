@@ -17,7 +17,6 @@ class ChataigneWrapper:
     (forceNoGL can be handy when having problem with graphics drivers)
 
     """
-
     if sys.platform.lower() == 'win32':
         _exe_name = './chataigne/win/chataigne.exe'
     elif sys.platform.lower() == 'linux':
