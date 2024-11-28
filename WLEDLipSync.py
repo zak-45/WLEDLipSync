@@ -860,6 +860,7 @@ async def main_page():
             player_vocals.set_source(file_path)
             audio_vocals.tooltip(file_path)
             audio_vocals.update()
+            player_accompaniment.set_source('')
             audio_accompaniment.tooltip('TBD')
             audio_accompaniment.update()
             LipAPI.file_to_analyse = file_folder + file + '.wav'
@@ -892,45 +893,45 @@ async def main_page():
             file = file_info[0]
             file_folder = app_config['audio_folder'] + file + '/'
 
-            # check if folder not exist
-            if not os.path.isdir(file_folder):
-                ui.notify(f'folder {file_folder} does not exist, creating ...')
-                os.mkdir(file_folder)
-                # in this case, source file is supposed to be only vocal, but not mandatory
+            # check if folder / file  not exist (not stems)
+            if not os.path.isfile(file_folder + 'vocals.mp3'):
+                if not os.path.isdir(file_folder):
+                    ui.notify(f'folder {file_folder} does not exist, creating ...')
+                    os.mkdir(file_folder)
+                # in this case, source file is supposed not been separated in stems
                 file_alone()
                 ui.timer(1, set_audio_duration, once=True)
 
             else:
-                # check if vocals mp3 files exist, if not so suppose not stems, manage from only source file
-                if not os.path.isfile(file_folder + 'vocals.mp3'):
-                    file_alone()
-
+                #  vocals.mp3 exist so stems
+                ui.notify('We will do analysis from stems files ...')
+                # specific case for vocals
+                # always (re)generate wav from mp3, rhubarb will need it
+                utils.convert_audio(file_folder + 'vocals.mp3', file_folder + 'vocals.wav')
+                ui.notify('auto generate wav file')
+                # double check (e.g. no more disk space)
+                if not os.path.isfile(file_folder + 'vocals.wav'):
+                    ui.notification('ERROR on wav file creation', position='center', type='negative')
+                    player_vocals.set_source('')
+                    LipAPI.audio_duration = None
+                    return
+                # set players
+                player_vocals.set_source(file_folder + 'vocals.mp3')
+                audio_vocals.tooltip(file_folder + 'vocals.mp3')
+                # this one is optional
+                if os.path.isfile(file_folder + 'accompaniment.mp3'):
+                    player_accompaniment.set_source(file_folder + 'accompaniment.mp3')
+                    audio_accompaniment.tooltip(file_folder + 'accompaniment.mp3')
                 else:
-                    # stems
-                    ui.notify('We will do analysis from stems files ...')
-                    # specific case for vocals
-                    # always (re)generate wav from mp3, rhubarb will need it
-                    utils.convert_audio(file_folder + 'vocals.mp3', file_folder + 'vocals.wav')
-                    ui.notify('auto generate wav file')
-                    # double check
-                    if not os.path.isfile(file_folder + 'vocals.wav'):
-                        ui.notification('ERROR on wav file creation', position='center', type='negative')
-                        player_vocals.set_source('')
-                        LipAPI.audio_duration = None
-                        return
-
-                    # set players
-                    player_vocals.set_source(file_folder + 'vocals.mp3')
-                    audio_vocals.tooltip(file_folder + 'vocals.mp3')
-                    audio_vocals.update()
-                    # this one is optional
-                    if os.path.isfile(file_folder + 'accompaniment.mp3'):
-                        player_accompaniment.set_source(file_folder + 'accompaniment.mp3')
-                        audio_accompaniment.tooltip(file_folder + 'accompaniment.mp3')
-                        audio_accompaniment.update()
-                    #
-                    LipAPI.file_to_analyse = file_folder + 'vocals.wav'
-                    LipAPI.lyrics_file = file_folder + 'lyrics.txt'
+                    player_accompaniment.set_source('')
+                    audio_accompaniment.tooltip(' ' * 20)
+                    audio_accompaniment.update()
+                #
+                audio_vocals.update()
+                audio_accompaniment.update()
+                #
+                LipAPI.file_to_analyse = file_folder + 'vocals.wav'
+                LipAPI.lyrics_file = file_folder + 'lyrics.txt'
 
             # set params
             LipAPI.source_file = audio_input.value
@@ -940,7 +941,6 @@ async def main_page():
             ui.timer(1, set_audio_duration, once=True)
 
         else:
-
             audio_input.set_value('')
 
     async def pick_file_to_analyze() -> None:
