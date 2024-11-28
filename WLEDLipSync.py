@@ -1267,9 +1267,9 @@ async def main_page():
         """
 
         if is_stderr and 'value' in data:
-            new_value = data['value']
+            new_value = int(round(data['value'] * 100))
             circular.set_value(new_value)
-            if new_value == 1:
+            if new_value == 100:
                 spinner_analysis.set_visibility(False)
                 load_model_button.enable()
                 edit_mouth_buffer.enable()
@@ -1700,13 +1700,14 @@ async def main_page():
                         spinner_vocals.set_visibility(False)
                         audio_vocals = ui.label('VOCALS').classes('self-center').tooltip('TBD')
 
+
                     # card area center
-                    control_area_v = ui.card(align_items='center').classes('w-44 h-65 border bg-cyan-900')
+                    control_area_v = ui.card(align_items='center').classes('w-45 h-85 border bg-cyan-900')
                     with control_area_v:
-                        spinner_analysis = ui.spinner('dots', size='xl', color='red')
+                        spinner_analysis = ui.spinner('dots', size='sm', color='red')
                         spinner_analysis.set_visibility(False)
                         with ui.row(wrap=False):
-                            circular = ui.circular_progress()
+                            circular = ui.circular_progress(min=1, max=100)
                             run_icon = ui.icon('rocket', size='lg')
                             run_icon.style('cursor: pointer')
                             run_icon.tooltip('Click to analyse audio with Rhubarb')
