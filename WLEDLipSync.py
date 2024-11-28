@@ -958,6 +958,45 @@ async def main_page():
                 audio_input.value = result
                 await check_audio_input(result)
 
+    def run_analyse(dialog):
+        if rub._instance_running:
+            ui.notification('Already running instance', type='negative', position='center')
+        elif LipAPI.data_changed is True:
+            ui.notification('You have changed some data ....run not allowed',
+                            position='center', close_button=True, type='warning', timeout=10)
+        elif LipAPI.file_to_analyse == '':
+            ui.notification('Source file not set ', type='negative', position='center')
+        else:
+            if rub.return_code > 0:
+                ui.notification('Caution ...Last running instance in trouble', type='negative', position='center')
+            ui.notify('Audio Analysis initiated')
+
+            # run analyzer
+            # rhubarb will append file extension
+            analysis_output = LipAPI.output_file.replace('.json','')
+            rub.run(file_name=LipAPI.file_to_analyse, dialog_file=LipAPI.lyrics_file, output=analysis_output)
+
+            # set some GUI
+            spinner_analysis.set_visibility(True)
+            player_vocals.pause()
+            player_accompaniment.pause()
+            spinner_accompaniment.set_visibility(False)
+            spinner_vocals.set_visibility(False)
+            load_model_button.disable()
+            edit_mouth_buffer.disable()
+            load_mouth_button.disable()
+            ok_button.disable()
+            try:
+                LipAPI.mouth_area_h.delete()
+            except ValueError:
+                pass
+            except AttributeError:
+                pass
+            LipAPI.mouth_times_buffer = {}
+            LipAPI.mouth_times_selected = []
+            dialog.close()
+
+
     def analyse_audio():
         """
         Initiates the audio analysis process using the Rhubarb tool.
@@ -972,89 +1011,50 @@ async def main_page():
         Returns:
             None
         """
-
-        def run_it():
-            if rub._instance_running:
-                ui.notification('Already running instance', type='negative', position='center')
-            elif LipAPI.data_changed is True:
-                ui.notification('You have changed some data ....run not allowed',
-                                position='center', close_button=True, type='warning', timeout=10)
-            elif LipAPI.file_to_analyse == '':
-                ui.notification('Source file not set ', type='negative', position='center')
-            else:
-                if rub.return_code > 0:
-                    ui.notification('Caution ...Last running instance in trouble', type='negative', position='center')
-                ui.notify('Audio Analysis initiated')
-
-                # run analyzer
-                # rhubarb will append file extension
-                analysis_output = LipAPI.output_file.replace('.json','')
-                rub.run(file_name=LipAPI.file_to_analyse, dialog_file=LipAPI.lyrics_file, output=analysis_output)
-
-                # set some GUI
-                spinner_analysis.set_visibility(True)
-                player_vocals.pause()
-                player_accompaniment.pause()
-                spinner_accompaniment.set_visibility(False)
-                spinner_vocals.set_visibility(False)
-                load_model_button.disable()
-                edit_mouth_buffer.disable()
-                load_mouth_button.disable()
-                ok_button.disable()
-                try:
-                    LipAPI.mouth_area_h.delete()
-                except ValueError:
-                    pass
-                except AttributeError:
-                    pass
-                LipAPI.mouth_times_buffer = {}
-                LipAPI.mouth_times_selected = []
-                dialog.close()
-
         with ui.dialog() as dialog, ui.card():
             dialog.open()
             ui.label(f'Analyse file "{LipAPI.source_file}" with Rhubarb')
             ui.label(f'This will overwrite : {LipAPI.output_file}')
             ui.label('Are You Sure ?')
             with ui.row():
-                ui.button('Yes', on_click=run_it)
+                ui.button('Yes', on_click=lambda : run_analyse(dialog))
                 ui.button('No', on_click=dialog.close)
+
+    def load_cues(dialog=None):
+
+        if dialog is not None:
+            dialog.close()
+
+        try:
+            LipAPI.mouth_area_h.delete()
+        except ValueError:
+            pass
+        except AttributeError:
+            pass
+
+        LipAPI.mouth_times_buffer = {}
+        LipAPI.mouth_times_selected = []
+
+        if LipAPI.source_file != '':
+            ui.notification('this could take some times .....', position='center', type='warning', spinner=True)
+
+            if os.path.isfile(LipAPI.output_file):
+                with open(LipAPI.output_file , 'r') as data:
+                    LipAPI.mouth_times_buffer = json.loads(data.read())
+
+                ui.timer(1, generate_mouth_cue, once=True)
+                output_label.classes(remove='animate-pulse')
+                output_label.style(remove='color: red')
+
+            else:
+                ui.notify('No analysis file to read')
+                output_label.classes(add='animate-pulse')
+                output_label.style(add='color: red')
+        else:
+            ui.notify('Source file blank ... load a new file')
 
     async def load_mouth_cue():
         """ initiate mouth card cue creation """
-
-        def run_it():
-
-            if LipAPI.data_changed is True:
-                dialog.close()
-
-            try:
-                LipAPI.mouth_area_h.delete()
-            except ValueError:
-                pass
-            except AttributeError:
-                pass
-
-            LipAPI.mouth_times_buffer = {}
-            LipAPI.mouth_times_selected = []
-
-            if LipAPI.source_file != '':
-                ui.notification('this could take some times .....', position='center', type='warning', spinner=True)
-
-                if os.path.isfile(LipAPI.output_file):
-                    with open(LipAPI.output_file , 'r') as data:
-                        LipAPI.mouth_times_buffer = json.loads(data.read())
-
-                    ui.timer(1, generate_mouth_cue, once=True)
-                    output_label.classes(remove='animate-pulse')
-                    output_label.style(remove='color: red')
-
-                else:
-                    ui.notify('No analysis file to read')
-                    output_label.classes(add='animate-pulse')
-                    output_label.style(add='color: red')
-            else:
-                ui.notify('Source file blank ... load a new file')
 
         if LipAPI.data_changed is True:
             with ui.dialog() as dialog, ui.card():
@@ -1062,10 +1062,10 @@ async def main_page():
                 ui.label(f'Detected changed data ...')
                 ui.label('Are You Sure ?')
                 with ui.row():
-                    ui.button('Yes', on_click=run_it)
+                    ui.button('Yes', on_click=lambda: load_cues(dialog))
                     ui.button('No', on_click=dialog.close)
         else:
-            run_it()
+            load_cues()
 
     async def load_mouth_model():
         """ load images from model folder into a carousel """
@@ -1364,6 +1364,37 @@ async def main_page():
             ui.json_editor({'content': {'json': tags_data.text}})
             ui.button('close', on_click=tags_dialog.close)
 
+
+    def save_lyrics():
+        """
+        Saves the lyrics from the input data to a specified text file.
+        This function checks if the lyrics data is not empty, creates the necessary directory if it does not exist,
+        and writes the lyrics to a file named 'lyrics.txt' in the appropriate folder.
+
+        Returns:
+            None
+        """
+
+        if len(lyrics_data.value) > 0:
+            print('save lyrics')
+            # extract file name only
+            file_name = os.path.basename(audio_input.value)
+            file_info = os.path.splitext(file_name)
+            file = file_info[0]
+            file_folder = app_config['audio_folder'] + file + '/'
+            # check if folder not exist
+            if not os.path.isdir(file_folder):
+                ui.notify(f'folder {file_folder} does not exist, creating ...')
+                os.mkdir(file_folder)
+            lyrics_file = file_folder + 'lyrics.txt'
+            with open(f'{lyrics_file}', 'w', encoding='utf-8') as f:
+                f.write(lyrics_data.value)
+            ui.notification(f'Saving lyrics to {lyrics_file} for helping analysis ...', position='center',
+                            type='info')
+        else:
+            ui.notification(f'Nothing to save ...', position='center', type='warning')
+
+
     def show_lyrics():
         """
         Displays a dialog for viewing and saving song lyrics.
@@ -1374,27 +1405,6 @@ async def main_page():
             None
 
         """
-
-        def save_lyrics():
-            if len(lyrics_data.value) > 0:
-                print('save lyrics')
-                # extract file name only
-                file_name = os.path.basename(audio_input.value)
-                file_info = os.path.splitext(file_name)
-                file = file_info[0]
-                file_folder = app_config['audio_folder'] + file + '/'
-                # check if folder not exist
-                if not os.path.isdir(file_folder):
-                    ui.notify(f'folder {file_folder} does not exist, creating ...')
-                    os.mkdir(file_folder)
-                lyrics_file = file_folder + 'lyrics.txt'
-                with open(f'{lyrics_file}', 'w', encoding='utf-8') as f:
-                    f.write(lyrics_data.value)
-                ui.notification(f'Saving lyrics to {lyrics_file} for helping analysis ...', position='center',
-                                type='info')
-            else:
-                ui.notification(f'Nothing to save ...', position='center', type='warning')
-
         with (ui.dialog() as lyrics_dialog, ui.card(align_items='center').classes('w-full')):
             lyrics_dialog.open()
             lyrics = ui.textarea('LYRICS', value=lyrics_data.value)
@@ -1403,8 +1413,8 @@ async def main_page():
             lyrics.style(add='text-align:center;')
             with ui.row():
                 ui.button('close', on_click=lyrics_dialog.close)
-                save_lyrics = ui.button('save', on_click=save_lyrics)
-                save_lyrics.tooltip('Save lyrics for analysis')
+                sav_lyrics = ui.button('save', on_click=save_lyrics)
+                sav_lyrics.tooltip('Save lyrics for analysis')
 
     def song_info(file_name):
         """
@@ -1520,20 +1530,17 @@ async def main_page():
             None
 
         """
-        def run_it():
-            LipAPI.mouth_carousel.move(target_container=LipAPI.preview_area)
-
         prev_hide.set_value(False)
 
         if container == 'left':
             LipAPI.preview_area = card_left_preview
-            run_it()
         elif container == 'top':
             LipAPI.preview_area = card_top_preview
-            run_it()
         elif container == 'right':
             LipAPI.preview_area = card_right_preview
-            run_it()
+
+        LipAPI.mouth_carousel.move(target_container=LipAPI.preview_area)
+
 
     def show_preview(prev):
         """
