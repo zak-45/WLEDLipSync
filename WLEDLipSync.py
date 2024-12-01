@@ -23,6 +23,8 @@
 # nuitka-project: --include-raw-dir=media=media
 # nuitka-project: --include-raw-dir=audiomass=audiomass
 # nuitka-project: --include-raw-dir=output=output
+# nuitka-project: --include-raw-dir=chataigne=chataigne
+
 """
 a: zak-45
 d: 09/10/2024
