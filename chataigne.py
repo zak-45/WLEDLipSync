@@ -61,6 +61,7 @@ class ChataigneWrapper:
         self.headless = headless
         self.open_gl = open_gl
         self.callback = callback
+        self.process = None  # Store the subprocess reference
         if sys.platform.lower() == 'win32':
             self.working_directory = working_directory + '\chataigne\win'
         elif sys.platform.lower() == 'linux':
@@ -100,7 +101,7 @@ class ChataigneWrapper:
 
         self.command = command
         # Run the command in a separate process
-        process = subprocess.Popen(command,
+        self.process = subprocess.Popen(command,
                                    env=dict(os.environ, USERPROFILE=f"{self.working_directory}"),
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
@@ -108,11 +109,26 @@ class ChataigneWrapper:
                                    cwd=self.working_directory)
 
         # Start threads to read stdout and stderr
-        threading.Thread(target=self._read_output, args=(process.stdout, False)).start()
-        threading.Thread(target=self._read_output, args=(process.stderr, True)).start()
+        threading.Thread(target=self._read_output, args=(self.process.stdout, False)).start()
+        threading.Thread(target=self._read_output, args=(self.process.stderr, True)).start()
 
         # Wait for the process to complete in a separate thread
-        threading.Thread(target=self._wait_for_process, args=(process,)).start()
+        threading.Thread(target=self._wait_for_process, args=(self.process,)).start()
+
+    def stop_process(self):
+        """
+        Stops the running Chataigne process if it is currently active.
+
+        This method checks if the process is running and terminates it, updating the instance state accordingly.
+
+        Returns:
+            None
+        """
+        if self.process and self._instance_running:
+            self.process.terminate()  # Terminate the process
+            self.process = None  # Clear the process reference
+            self._instance_running = False  # Update the instance state
+            print("Chataigne process has been stopped.")
 
     def _read_output(self, pipe, is_error):
         """
@@ -192,7 +208,7 @@ class ChataigneWrapper:
         """
         if self._instance_running:
             raise RuntimeError("An instance of Chataigne is already running.")
-        self.load_file = f'{self.working_directory}/{file_name}'
+        self.load_file = file_name
         self.reset = reset
         self.headless = headless
         self.open_gl = open_gl

@@ -214,7 +214,7 @@ async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
     Loads mouth images from a specified folder into the LipAPI buffer.
 
     This function scans the given folder for image files, loads them asynchronously,
-    and stores them in the LipAPI's mouth image buffers. It also checks if enough images
+    and stores them in the LipAPI mouth image buffers. It also checks if enough images
     have been loaded and triggers the creation of a carousel if successful.
 
     Args:
@@ -277,11 +277,11 @@ async def create_carousel_slide(index: int):
     """Creates a carousel slide for displaying a mouth image.
 
     This function generates a slide in the carousel UI that displays a mouth image
-    from the LipAPI's mouth_images_buffer at the specified index. It also includes
+    from the LipAPI mouth_images_buffer at the specified index. It also includes
     an interactive button that shows the image dimensions and serves as a tooltip.
 
     Args:
-        index (int): The index of the mouth image in the LipAPI's mouth_images_buffer.
+        index (int): The index of the mouth image in the LipAPI mouth_images_buffer.
 
     Returns:
         None
@@ -306,7 +306,7 @@ async def create_thumbnail(index: int):
     appended to the mouths buffer for later use.
 
     Args:
-        index (int): The index of the mouth image in the LipAPI's mouth_images_buffer.
+        index (int): The index of the mouth image in the LipAPI mouth_images_buffer.
 
     Returns:
         None
@@ -342,7 +342,7 @@ def get_index_from_letter(letter):
     Return the index associated with the given letter.
 
     This function retrieves the index corresponding to a specified letter
-    from the LipAPI's mouth_to_image mapping. If the letter is not found,
+    from the LipAPI mouth_to_image mapping. If the letter is not found,
     it returns a default index of 8.
 
     Args:
@@ -360,7 +360,7 @@ def get_letter_from_index(ndx):
     Return the letter associated with the given index.
 
     This function retrieves the letter corresponding to the specified index
-    from the LipAPI's mouth_to_image mapping. If the index does not correspond
+    from the LipAPI mouth_to_image mapping. If the index does not correspond
     to any letter, it returns 'X' as a default value.
 
     Args:
@@ -379,7 +379,6 @@ def get_letter_from_index(ndx):
         'X',
     )
 
-
 def save_data(force: bool = False):
     """
     Saves the current mouth times buffer to a JSON file.
@@ -397,20 +396,23 @@ def save_data(force: bool = False):
     """
 
     def run_it():
-        with open(f'{LipAPI.output_file}', 'w', encoding='utf-8') as f:
-            json.dump(LipAPI.mouth_times_buffer, f, ensure_ascii=False, indent=4)
-            LipAPI.data_changed = False
+        try:
+            with open(LipAPI.output_file, 'w', encoding='utf-8') as file:
+                json.dump(LipAPI.mouth_times_buffer, file, ensure_ascii=False, indent=4)
+                LipAPI.data_changed = False
+            ui.notify('Data saved successfully.')
+        except Exception as e:
+            ui.notify(f'Failed to save data: {e}')
         dialog.close()
 
-    if LipAPI.output_file != '' and (LipAPI.data_changed is True or force):
+    if LipAPI.output_file and (LipAPI.data_changed or force):
         with ui.dialog() as dialog, ui.card():
             dialog.open()
             with ui.row():
-                ui.button('save changes to file', on_click=run_it)
-                ui.button('Exit', on_click=dialog.close)
+                ui.button('Save changes to file', on_click=run_it)
+                ui.button('Exit without saving', on_click=dialog.close)
     else:
-        ui.notify('nothing to do')
-
+        ui.notify('Nothing to save.')
 
 async def edit_mouth_time_buffer():
     """
@@ -442,7 +444,7 @@ async def set_audio_duration():
     Updates the audio duration for the vocal player.
 
     This function loads the audio element for the vocal player and retrieves
-    its current duration, storing it in the LipAPI's audio_duration attribute.
+    its current duration, storing it in the LipAPI audio_duration attribute.
 
     Returns:
         None
@@ -561,9 +563,9 @@ async def modify_letter(start_time, letter_lbl):
 
     def upd_letter(new_letter):
         """ update label and buffer """
-        for cue in LipAPI.mouth_times_buffer['mouthCues']:
-            if cue['start'] == start_time:
-                cue['value'] = new_letter
+        for i_cue in LipAPI.mouth_times_buffer['mouthCues']:
+            if i_cue['start'] == start_time:
+                i_cue['value'] = new_letter
                 letter_lbl.style(add='color:orange')
                 LipAPI.data_changed = True
                 logger.debug(f'new letter set {new_letter}')
@@ -657,6 +659,7 @@ async def main_page():
                 link_cha.props(add="color=yellow")
                 LipAPI.cha_client.stop()
                 LipAPI.cha_client = None
+                spleeter.disable()
 
         if wvs_activate.value is False and osc_activate.value is False and cha_activate is False:
             link_wvs.props(remove="color=green")
@@ -701,12 +704,14 @@ async def main_page():
             # send init message
             cha_msg = {"action": {"type": "init_cha", "param": {"connection": "true", "WLEDLipSync": "true"}}}
             LipAPI.cha_client.send_message(cha_msg)
+            spleeter.enable()
 
         else:
             # we stop the client
             if LipAPI.cha_client is not None:
                 LipAPI.cha_client.stop()
             LipAPI.cha_client = None
+            spleeter.disable()
             link_cha.props(remove="color=green")
             link_cha.props(remove="color=yellow")
             # if timer is active, stop it or not
@@ -801,10 +806,6 @@ async def main_page():
     async def validate_file(file_name):
         """ file input validation """
 
-        # disable button
-        load_mouth_button.disable()
-        edit_mouth_buffer.disable()
-
         # check some requirements
         if file_name == '':
             ui.notify('Blank value not allowed')
@@ -833,6 +834,9 @@ async def main_page():
                                 position='center', type='info', timeout=10, close_button=True)
             else:
                 dialog.close()
+                # disable button
+                load_mouth_button.disable()
+                edit_mouth_buffer.disable()
                 await set_file_name()
 
         with ui.dialog() as dialog, ui.card():
@@ -848,29 +852,12 @@ async def main_page():
         set file name from file input audio
         check if corresponding media entries exist
         """
-
-        def file_alone():
-            """ no stems """
-            ui.notify(f'Analysis done from audio source file {file_name}.')
-            out = app_config['output_folder'] + file + '/' + 'rhubarb.json'
-            if os.path.isfile(out):
-                ui.notify(f'Found an existing analysis file ...  {out}.')
-            # convert mp3 to wav
-            utils.convert_audio(file_path, file_folder + file + '.wav')
-            player_vocals.set_source(file_path)
-            audio_vocals.tooltip(file_path)
-            audio_vocals.update()
-            player_accompaniment.set_source('')
-            audio_accompaniment.tooltip('TBD')
-            audio_accompaniment.update()
-            LipAPI.file_to_analyse = file_folder + file + '.wav'
-            LipAPI.lyrics_file = file_folder + 'lyrics.txt'
-
         #  set some init value
         player_vocals.seek(0)
         player_accompaniment.seek(0)
         spinner_accompaniment.set_visibility(False)
         spinner_vocals.set_visibility(False)
+        stems.set_visibility(False)
         LipAPI.mouth_times_buffer = {}
         LipAPI.mouth_times_selected = []
         try:
@@ -899,12 +886,27 @@ async def main_page():
                     ui.notify(f'folder {file_folder} does not exist, creating ...')
                     os.mkdir(file_folder)
                 # in this case, source file is supposed not been separated in stems
-                file_alone()
+                ui.notify(f'Analysis done from audio source file {file_name}.')
+                out = app_config['output_folder'] + file + '/' + 'rhubarb.json'
+                if os.path.isfile(out):
+                    ui.notify(f'Found an existing analysis file ...  {out}.')
+                # convert mp3 to wav
+                utils.convert_audio(file_path, file_folder + file + '.wav')
+                player_vocals.set_source(file_path)
+                audio_vocals.tooltip(file_path)
+                audio_vocals.update()
+                player_accompaniment.set_source('')
+                audio_accompaniment.tooltip('TBD')
+                audio_accompaniment.update()
+                LipAPI.file_to_analyse = file_folder + file + '.wav'
+                LipAPI.lyrics_file = file_folder + 'lyrics.txt'
+                #
                 ui.timer(1, set_audio_duration, once=True)
 
             else:
                 #  vocals.mp3 exist so stems
                 ui.notify('We will do analysis from stems files ...')
+                stems.set_visibility(True)
                 # specific case for vocals
                 # always (re)generate wav from mp3, rhubarb will need it
                 utils.convert_audio(file_folder + 'vocals.mp3', file_folder + 'vocals.wav')
@@ -955,10 +957,25 @@ async def main_page():
             if len(result) > 0:
                 result = './' + result
             if await validate_file(result):
+                # disable button
+                load_mouth_button.disable()
+                edit_mouth_buffer.disable()
                 audio_input.value = result
                 await check_audio_input(result)
 
-    def run_analyse(dialog):
+    async def run_spleeter(dialog):
+        # Get the absolute path of the current file
+        audio_absolute_path = Path(audio_input.value).resolve()
+        logger.debug(audio_absolute_path)
+        # send action message
+        cha_msg = {"action": {"type": "runSpleeter", "param": {"fileName": str(audio_absolute_path)}}}
+        if LipAPI.cha_client is not None:
+            LipAPI.cha_client.send_message(cha_msg)
+            ui.notify('initiate Spleeter ....', type='warning')
+        dialog.close()
+
+
+    async def run_analyse(dialog):
         if rub._instance_running:
             ui.notification('Already running instance', type='negative', position='center')
         elif LipAPI.data_changed is True:
@@ -996,8 +1013,17 @@ async def main_page():
             LipAPI.mouth_times_selected = []
             dialog.close()
 
+    async def split_audio():
+        if await validate_file(audio_input.value):
+            with ui.dialog() as dialog, ui.card():
+                dialog.open()
+                ui.label(f'Split file "{audio_input.value}" into stems with Spleeter')
+                ui.label('Are You Sure ?')
+                with ui.row():
+                    ui.button('Yes', on_click=lambda: run_spleeter(dialog))
+                    ui.button('No', on_click=dialog.close)
 
-    def analyse_audio():
+    async def analyse_audio():
         """
         Initiates the audio analysis process using the Rhubarb tool.
 
@@ -1117,9 +1143,30 @@ async def main_page():
             rem.set_visibility(True)
             card.update()
 
+
         async def play_until(start_time: float):
+            """
+            Play audio from a specified start time until the next cue or the end of the audio.
+
+            This function seeks to the given start time in the audio player and plays the audio until it reaches
+            the next cue time or the end of the audio duration.
+            It pauses the player once the playback duration is complete.
+
+            Args:
+                start_time (float): The time in seconds to start playback from.
+
+            Returns:
+                None
+
+            Raises:
+                None
+
+            Examples:
+                await play_until(10.5)
+            """
+
             player_vocals.seek(start_time)
-            end_cue = next((cue for cue in LipAPI.mouth_times_selected if cue > start_time), LipAPI.audio_duration)
+            end_cue = next((i_cue for i_cue in LipAPI.mouth_times_selected if i_cue > start_time), LipAPI.audio_duration)
             duration = end_cue - start_time
             end_time = time.time() + duration
             player_vocals.play()
@@ -1136,7 +1183,6 @@ async def main_page():
             card.classes(remove='bg-red-400')
             card.classes(add='bg-cyan-700')
             rem.set_visibility(False)
-            card.update()
             logger.debug(LipAPI.mouth_times_selected)
 
         # Scroll area with timeline/images
@@ -1375,24 +1421,50 @@ async def main_page():
             None
         """
 
-        if len(lyrics_data.value) > 0:
-            print('save lyrics')
-            # extract file name only
-            file_name = os.path.basename(audio_input.value)
-            file_info = os.path.splitext(file_name)
-            file = file_info[0]
-            file_folder = app_config['audio_folder'] + file + '/'
-            # check if folder not exist
-            if not os.path.isdir(file_folder):
-                ui.notify(f'folder {file_folder} does not exist, creating ...')
-                os.mkdir(file_folder)
-            lyrics_file = file_folder + 'lyrics.txt'
-            with open(f'{lyrics_file}', 'w', encoding='utf-8') as f:
-                f.write(lyrics_data.value)
-            ui.notification(f'Saving lyrics to {lyrics_file} for helping analysis ...', position='center',
-                            type='info')
+        if lyrics_data.value:
+            try:
+                print('save lyrics')
+                # extract file name only
+                file_name = os.path.basename(audio_input.value)
+                file_info = os.path.splitext(file_name)
+                file = file_info[0]
+                file_folder = str(os.path.join(app_config['audio_folder'], file))
+                # check if folder not exist
+                if not os.path.isdir(file_folder):
+                    ui.notify(f'folder {file_folder} does not exist, creating ...')
+                    os.mkdir(file_folder)
+                lyrics_file =  os.path.join(file_folder, 'lyrics.txt')
+                with open(f'{lyrics_file}', 'w', encoding='utf-8') as f:
+                    f.write(lyrics_data.value)
+                ui.notification(f'Saving lyrics to {lyrics_file} for helping analysis ...', position='center',
+                                type='info')
+            except Exception as e:
+                ui.notify(f'Failed to save lyrics: {e}', position='center', type='negative')
         else:
             ui.notification(f'Nothing to save ...', position='center', type='warning')
+
+
+    def show_dialog():
+        """
+        Displays a dialog for viewing dialog text.
+        This function allows users to see dialog in a text area.
+
+        Returns:
+            None
+
+        """
+        with (ui.dialog() as lyrics_dialog, ui.card(align_items='center').classes('w-full')):
+            lyrics_dialog.open()
+            try:
+                with open(LipAPI.lyrics_file, 'r', encoding='UTF-8') as f:
+                    text = f.read()
+                    lyrics = ui.textarea('DIALOG', value=text)
+                    lyrics.classes('w-full')
+                    lyrics.props(add='autogrow bg-color=blue-grey-4')
+                    lyrics.style(add='text-align:center;')
+            except Exception as e:
+                print(f"Not able to open file : {e}")
+            ui.button('close', on_click=lyrics_dialog.close)
 
 
     def show_lyrics():
@@ -1689,7 +1761,7 @@ async def main_page():
 
                 with ui.row().classes('self-center'):
                     with ui.column():
-                        # player for vocals part, better mp3 file
+                        # player for vocals part, need mp3 file
                         player_vocals = ui.audio('').props('id=player_vocals')
                         player_vocals.props('preload=auto')
                         player_vocals.on('timeupdate', lambda: player_time_action())
@@ -1699,7 +1771,15 @@ async def main_page():
                         spinner_vocals = ui.spinner('audio', size='lg', color='green')
                         spinner_vocals.set_visibility(False)
                         audio_vocals = ui.label('VOCALS').classes('self-center').tooltip('TBD')
-
+                        with ui.row():
+                            song_dialog = ui.icon('lyrics', size='sm')
+                            song_dialog.style(add='cursor: pointer')
+                            song_dialog.on('click', lambda: show_dialog())
+                            folder_list = ui.icon('list', size='sm')
+                            folder_list.on('click', lambda: LocalFilePicker(os.path.dirname(LipAPI.output_file)))
+                            folder_list.style(add='cursor: pointer')
+                            stems = ui.icon('thumb_up_alt', size='sm')
+                            stems.set_visibility(False)
 
                     # card area center
                     control_area_v = ui.card(align_items='center').classes('w-45 h-85 border bg-cyan-900')
@@ -1726,7 +1806,7 @@ async def main_page():
                                 ui.label('WVS')
                                 ui.label('CHA')
                                 ui.label('OSC')
-                            with ui.row().classes('self-center') as net_row:
+                            with ui.row().classes('self-center'):
                                 link_wvs = ui.icon('link', size='xs')
                                 link_wvs.style(add="padding-right:10px")
                                 link_cha = ui.icon('link', size='xs')
@@ -1752,15 +1832,13 @@ async def main_page():
                 folder.style(add='margin:10px')
                 # made necessary checks
                 folder.on('click', lambda: pick_file_to_analyze())
-                #
-                audio_input_card = ui.card().tight().classes('no-border no-shadow')
-                audio_input_card.props(add='id="drop_zone"')
-                audio_input_card.props(add='ondrop="dropHandler(event);"')
-                audio_input_card.props(add='ondragover="dragOverHandler(event);"')
                 # Add an input field for the audio file name
-                with audio_input_card:
-                    audio_input = ui.input(placeholder='Audio file to analyse', label='Audio File Name')
-                    audio_input.on('focusout', lambda: check_audio_input(audio_input.value))
+                audio_input = ui.input(placeholder='Audio file to analyse', label='Audio File Name')
+                audio_input.on('focusout', lambda: check_audio_input(audio_input.value))
+                # Add a Spleeter button to create stems
+                spleeter = ui.button('spleeter', on_click=split_audio)
+                spleeter.style("margin:10px;")
+                spleeter.disable()
                 # Add an OK button to refresh the waveform and set all players and data
                 ok_button = ui.button('OK', on_click=approve_set_file_name)
                 ok_button.style("margin:10px;")
@@ -1802,29 +1880,29 @@ async def main_page():
                             song_artist = ui.label('Artist : ')
                             artist_img = ui.image('').classes('w-80 border')
                         artist_desc = ui.label('info: ')
-                        artist_top5 = ui.label('Top 5 : ')
+                        ui.label('Top 5 : ')
                         with ui.row():
-                            song1_ndx = ui.label('1')
+                            ui.label('1')
                             with ui.column():
                                 song1_img = ui.image('').classes('w-20 border')
                                 song1_title = ui.label('')
                                 song1_title.style('max-width:8em')
-                            song2_ndx = ui.label('2')
+                            ui.label('2')
                             with ui.column():
                                 song2_img = ui.image('').classes('w-20 border')
                                 song2_title = ui.label('')
                                 song2_title.style('max-width:8em')
-                            song3_ndx = ui.label('3')
+                            ui.label('3')
                             with ui.column():
                                 song3_img = ui.image('').classes('w-20 border')
                                 song3_title = ui.label('')
                                 song3_title.style('max-width:8em')
-                            song4_ndx = ui.label('4')
+                            ui.label('4')
                             with ui.column():
                                 song4_img = ui.image('').classes('w-20 border')
                                 song4_title = ui.label('')
                                 song4_title.style('max-width:8em')
-                            song5_ndx = ui.label('5')
+                            ui.label('5')
                             with ui.column():
                                 song5_img = ui.image('').classes('w-20 border')
                                 song5_title = ui.label('')
@@ -1917,6 +1995,7 @@ async def main_page():
             cha_exp = ui.expansion('Chataigne').classes('bg-cyan-500')
             with cha_exp:
                 with ui.column():
+                    ui.toggle(['run','stop' ], value='stop', on_change=lambda e: utils.run_chataigne(e.value))
                     cha_ip = ui.input('Server IP', value='127.0.0.1')
                     with ui.row():
                         cha_port = ui.number('Port', value=8080)

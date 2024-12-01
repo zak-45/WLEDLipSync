@@ -13,11 +13,93 @@ import ipaddress
 import re
 import socket
 import traceback
-
 import cv2
+import chataigne
+
+
 from str2bool import str2bool
 from PIL import Image
 from nicegui import ui
+
+cha = chataigne.ChataigneWrapper()
+
+def run_chataigne(action):
+    """
+    Run or Stop chataigne
+
+    """
+
+    if action == 'run':
+        print('start chataigne')
+        cha.run(headless=False,file_name='C:\\Users\\zak-4\\PycharmProjects\\WLEDLipSync\\chataigne\\WLEDLipSync.noisette')
+
+    elif action == 'stop':
+        print('stop chataigne')
+        cha.stop_process()
+
+def access_or_set_dict_value(data_dict, input_string, new_value=None):
+    """
+    Accesses or sets a value in a nested dictionary using a dot-separated string with array indices.
+
+    This function allows for dynamic access to dictionary values based on a specified path, which can include
+    both dictionary keys and array indices. If a new value is provided, it sets the value at the specified path;
+    otherwise, it retrieves the current value.
+
+    example usage:
+    input_string = "projectSettings.containers.dashboardSettings.parameters[0].controlAddress"
+
+    # Access
+    value = access_or_set_dict_value(data_dict, input_string)
+    print(value)  # Output: 'old_value'
+
+    # Set a new value
+    new_value = "new_value"
+    access_or_set_dict_value(data_dict, input_string, new_value)
+    print(data_dict['projectSettings']['containers']['dashboardSettings']['parameters'][0]['controlAddress'])
+                # Output: 'new_value'
+
+    Args:
+        data_dict (dict): The dictionary to access or modify.
+        input_string (str): The dot-separated string representing the path to the desired value.
+        new_value: The new value to set at the specified path (default is None).
+
+    Returns:
+        The value at the specified path if new_value is None; otherwise, returns None after setting the value.
+    """
+
+    # Split the input string by dots and array indices
+    parts = re.split(r'(\.|\[\d+\])', input_string)
+
+    # Remove empty strings from the list
+    parts = [part for part in parts if part not in ['.', '']]
+
+    # Initialize the current level of the dictionary
+    current_level = data_dict
+
+    # Iterate through the parts, but stop before the last part
+    for part in parts[:-1]:
+        if part.startswith('[') and part.endswith(']'):
+            # If part is an index (e.g., [0]), convert to integer
+            index = int(part[1:-1])
+            current_level = current_level[index]
+        else:
+            # Otherwise, it's a dictionary key
+            current_level = current_level[part]
+
+    # Access or set the value at the last part
+    last_part = parts[-1]
+    if last_part.startswith('[') and last_part.endswith(']'):
+        index = int(last_part[1:-1])
+        if new_value is None:
+            return current_level[index]
+        else:
+            current_level[index] = new_value
+    else:
+        if new_value is None:
+            return current_level[last_part]
+        else:
+            current_level[last_part] = new_value
+
 
 async def check_udp_port(ip_address, port=80, timeout=2):
     """
