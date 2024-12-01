@@ -68,15 +68,46 @@ def download_github_directory_as_zip(repo_url: str, destination: str, directory_
         print('Error: The downloaded file is not a valid ZIP file.')
 
 
-def download_chataigne():
-    print('downloading data ...')
+def extract_from_lip_sync(source, destination, msg):
+        # Download the ZIP file
+    response = requests.get(source)
+    response.raise_for_status()  # Raise an error for bad responses
+        # Extract the ZIP file
+    with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
+        zip_file.extractall(destination)
+        print(msg)
+
+
+def download_spleeter():
+    print('downloading data for Spleeter ...')
     download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module','./chataigne/modules')
-    print('downloaded Spleeter')
+    print('Module Spleeter downloaded')
+    try:
+        extract_from_lip_sync(
+            'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/PySpleeter-win.zip',
+            './chataigne/win/Documents/Chataigne/xtra',
+            'PySpleeter downloaded',
+        )
+    except requests.RequestException as e:
+        print(f'Error downloading repository: {e}')
+    except zipfile.BadZipFile:
+        print('Error: The downloaded file is not a valid ZIP file.')
 
 
-def unzip_chataigne():
-    print('unzip data')
-
+def download_chataigne():
+    print('downloading data for Chataigne...')
+    download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module','./chataigne/modules')
+    print('Spleeter downloaded')
+    try:
+        extract_from_lip_sync(
+            'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip',
+            './chataigne/win',
+            'chataigne downloaded',
+        )
+    except requests.RequestException as e:
+        print(f'Error downloading repository: {e}')
+    except zipfile.BadZipFile:
+        print('Error: The downloaded file is not a valid ZIP file.')
 
 def finalize_chataigne():
     print('finalize')
@@ -85,10 +116,10 @@ def finalize_chataigne():
 async def run_install_chataigne(obj, dialog):
     print('install it...')
     dialog.close()
-    ui.notify('download data')
+    ui.notify('download data for chataigne')
     await run.io_bound(download_chataigne)
-    ui.notify('unzip data')
-    await run.io_bound(unzip_chataigne)
+    ui.notify('download data for spleeter')
+    await run.io_bound(download_spleeter)
     ui.notify('finalize')
     await run.io_bound(finalize_chataigne)
     obj.sender.props(remove='loading')

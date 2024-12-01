@@ -1993,7 +1993,7 @@ async def main_page():
         with ui.card().tight().classes('bg-cyan-400'):
             ui.label(' ')
             cha_exp = ui.expansion('Chataigne').classes('bg-cyan-500')
-            if os.path.isdir('./chataigne'):
+            if os.path.isdir('./chataigne/modules/SpleeterGUI-Chataigne-Module-main'):
                 with cha_exp:
                     with ui.column():
                         ui.toggle(['run','stop' ], value='stop', on_change=lambda e: utils.run_chataigne(e.value))
