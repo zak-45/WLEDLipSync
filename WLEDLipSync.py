@@ -1993,14 +1993,17 @@ async def main_page():
         with ui.card().tight().classes('bg-cyan-400'):
             ui.label(' ')
             cha_exp = ui.expansion('Chataigne').classes('bg-cyan-500')
-            with cha_exp:
-                with ui.column():
-                    ui.toggle(['run','stop' ], value='stop', on_change=lambda e: utils.run_chataigne(e.value))
-                    cha_ip = ui.input('Server IP', value='127.0.0.1')
-                    with ui.row():
-                        cha_port = ui.number('Port', value=8080)
-                        cha_path = ui.input('Path (opt)', value='')
-                        cha_activate = ui.checkbox('activate', on_change=manage_cha_client)
+            if os.path.isdir('./chatzaigne'):
+                with cha_exp:
+                    with ui.column():
+                        ui.toggle(['run','stop' ], value='stop', on_change=lambda e: utils.run_chataigne(e.value))
+                        cha_ip = ui.input('Server IP', value='127.0.0.1')
+                        with ui.row():
+                            cha_port = ui.number('Port', value=8080)
+                            cha_path = ui.input('Path (opt)', value='')
+                            cha_activate = ui.checkbox('activate', on_change=manage_cha_client)
+            else:
+                cha_install = ui.button('install', icon='settings', on_click=lambda e:utils.install_chataigne(e))
 
             ui.label(' ')
             ui.separator()

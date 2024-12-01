@@ -1,5 +1,4 @@
 import asyncio
-
 import av
 import base64
 import io
@@ -16,26 +15,135 @@ import traceback
 import cv2
 import chataigne
 
+import requests
+import zipfile
+import io
+
+
 
 from str2bool import str2bool
 from PIL import Image
-from nicegui import ui
+from nicegui import ui, run
+from pathlib import Path
 
 cha = chataigne.ChataigneWrapper()
+
+
+def download_github_directory_as_zip(repo_url: str, destination: str, directory_path: str = '*'):
+    """
+    Downloads a specific directory from a GitHub repository as a ZIP file.
+    # Example usage
+    download_github_directory_as_zip('https://github.com/user/repo', 'path/to/directory/', 'local_directory')
+
+    Args:
+        repo_url (str): The URL of the GitHub repository (e.g., 'https://github.com/user/repo').
+        destination (str): The local directory where the ZIP file will be extracted.
+        directory_path (str): The path of the directory within the repository to download.
+            if = * full extract
+
+    Returns:
+        None
+    """
+    # Construct the ZIP file URL for the specific directory
+    zip_url = f"{repo_url}/archive/refs/heads/main.zip"  # Adjust branch name if necessary
+
+    try:
+        # Download the ZIP file
+        response = requests.get(zip_url)
+        response.raise_for_status()  # Raise an error for bad responses
+
+        # Extract the ZIP file
+        with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
+            if directory_path != '*':
+                # Extract only the specific directory
+                for file_info in zip_file.infolist():
+                    if file_info.filename.startswith(directory_path):
+                        zip_file.extract(file_info, destination)
+            else:
+                zip_file.extractall(destination)
+            print(f'Directory "{directory_path}" from repo {repo_url} downloaded and extracted to {destination}')
+    except requests.RequestException as e:
+        print(f'Error downloading repository: {e}')
+    except zipfile.BadZipFile:
+        print('Error: The downloaded file is not a valid ZIP file.')
+
+
+def download_chataigne():
+    print('downloading data ...')
+    download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module','./chataigne/modules')
+    print('downloaded Spleeter')
+
+
+def unzip_chataigne():
+    print('unzip data')
+
+
+def finalize_chataigne():
+    print('finalize')
+
+
+async def run_install_chataigne(obj, dialog):
+    print('install it...')
+    dialog.close()
+    ui.notify('download data')
+    await run.io_bound(download_chataigne)
+    ui.notify('unzip data')
+    await run.io_bound(unzip_chataigne)
+    ui.notify('finalize')
+    await run.io_bound(finalize_chataigne)
+    obj.sender.props(remove='loading')
+
+async def install_chataigne(obj):
+    def stop():
+        obj.sender.props(remove='loading')
+        dialog.close()
+
+    print('install chataigne')
+    obj.sender.props(add='loading')
+    with ui.dialog() as dialog, ui.card():
+        dialog.open()
+        ui.label('This will install portable Chataigne - Spleeter')
+        ui.label('Need some space ....')
+        ui.label('Are You Sure ?')
+        with ui.row():
+            ui.button('Yes', on_click=lambda: run_install_chataigne(obj, dialog))
+            ui.button('No', on_click=stop)
+
+
+def find_tmp_folder():
+    """
+    retrieve tmp folder in the same way as Spleeter.js
+    used for mp3 tags
+    
+    """
+    path_tmp = os.getenv('TMP')
+    path_tmpdir = os.getenv('TMPDIR')
+    path_temp = os.getenv('TEMP')
+
+    if path_tmp is not None:
+        return path_tmp
+    elif path_tmpdir is not None:
+        return path_tmpdir
+    elif path_temp is not None:
+        return path_temp
+    else:
+        return None
+
 
 def run_chataigne(action):
     """
     Run or Stop chataigne
 
     """
-
     if action == 'run':
+        noisette = str(Path('./chataigne/WLEDLipSync.noisette').resolve())
+        cha.run(headless=True, file_name=noisette)
         print('start chataigne')
-        cha.run(headless=False,file_name='C:\\Users\\zak-4\\PycharmProjects\\WLEDLipSync\\chataigne\\WLEDLipSync.noisette')
 
     elif action == 'stop':
-        print('stop chataigne')
         cha.stop_process()
+        print('stop chataigne')
+
 
 def access_or_set_dict_value(data_dict, input_string, new_value=None):
     """
@@ -173,6 +281,7 @@ async def check_ip_alive(ip_address, port=80, timeout=2):
         if sock:
             # Close the socket
             sock.close()
+
 
 def validate_ip_address(ip_string):
     """
@@ -351,7 +460,6 @@ def apply_custom():
                            'background-position: center;')
 
 
-
 async def load_image_async(img_path: str):
     """
     Loads an image asynchronously from the specified file path.
@@ -380,7 +488,7 @@ async def get_audio_duration(player: str = ''):
     :return: duration
     """
 
-    return await ui.run_javascript(f'document.getElementById("{player}").duration;',timeout=2)
+    return await ui.run_javascript(f'document.getElementById("{player}").duration;', timeout=2)
 
 
 async def wavesurfer():
@@ -417,6 +525,7 @@ async def wavesurfer():
     </script>    
     ''')
 
+
 async def drag_drop():
     ui.add_body_html('''    
     <script src="/assets/js/dragdrop.js"></script>    
@@ -440,7 +549,7 @@ def find_cue_point(time_cue, cue_points):
     """ find mouth card near provided time """
 
     if not cue_points or 'mouthCues' not in cue_points:
-        return [{"start": "None", "end": "None", "value": "None"},{"start": "None", "end": "None", "value": "None"}]
+        return [{"start": "None", "end": "None", "value": "None"}, {"start": "None", "end": "None", "value": "None"}]
 
     threshold = 5
     actual_cue = {"start": "None", "end": "None", "value": "None"}
@@ -491,14 +600,14 @@ async def mouth_time_buffer_edit():
 
     """
     buffer_dialog = ui.dialog() \
-            .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
+        .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
 
     with buffer_dialog:
         buffer_dialog.open()
         editor_card = ui.card().classes('w-full')
         with editor_card:
             ui.html(
-            '''                
+                '''                
             <iframe src="/edit" frameborder="0" 
             style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;
                     height:100%;width:100%;
@@ -509,15 +618,14 @@ async def mouth_time_buffer_edit():
             )
             with ui.page_sticky(position='top-right', x_offset=85, y_offset=28):
                 with ui.row():
-                    new_editor = ui.button(icon='edit',color='yellow')
-                    new_editor.on('click', lambda :ui.navigate.to('/edit', new_tab=True))
+                    new_editor = ui.button(icon='edit', color='yellow')
+                    new_editor.on('click', lambda: ui.navigate.to('/edit', new_tab=True))
                     new_editor.props(add='round outline size="8px"')
                     new_editor.tooltip('Open editor in new tab')
-                    close = ui.button(icon='close',color='red')
-                    close.on('click', lambda :buffer_dialog.close())
+                    close = ui.button(icon='close', color='red')
+                    close.on('click', lambda: buffer_dialog.close())
                     close.props(add='round outline size="8px"')
                     close.tooltip('Close editor')
-
 
 
 class AnimatedElement:
@@ -558,7 +666,6 @@ class AnimatedElement:
         self.animation_name_out = animation_name_out
         self.duration = duration
 
-
     def generate_animation_classes(self, animation_name):
         """
         Generates CSS classes for animations based on the specified animation name and duration. 
@@ -576,7 +683,6 @@ class AnimatedElement:
         animation_class = f'animate__{animation_name}'
         duration_class = f'custom-duration-{self.duration}s'
         return animation_class, duration_class
-
 
     def add_custom_css(self):
         """
@@ -598,7 +704,6 @@ class AnimatedElement:
         """
         ui.add_head_html(custom_css)
 
-
     def create_element(self, *args, **kwargs):
         """ Add class for in """
         self.add_custom_css()
@@ -606,7 +711,6 @@ class AnimatedElement:
         element = self.element_type(*args, **kwargs)
         element.classes(f'animate__animated {animation_class} {duration_class}')
         return element
-
 
     def delete_element(self, element):
         """ Add class for out and delete """
@@ -635,5 +739,3 @@ if "NUITKA_ONEFILE_PARENT" not in os.environ:
     app_config = lip_config[1]  # app key
     color_config = lip_config[2]  # colors key
     custom_config = lip_config[3]  # custom key
-
-
