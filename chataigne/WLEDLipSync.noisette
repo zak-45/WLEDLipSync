@@ -69,7 +69,7 @@
                     {
                       "type": 0,
                       "width": 368,
-                      "height": 325,
+                      "height": 271,
                       "currentContent": "Modules",
                       "tabs": [
                         {
@@ -80,7 +80,7 @@
                     {
                       "type": 0,
                       "width": 368,
-                      "height": 121,
+                      "height": 175,
                       "currentContent": "Sequences",
                       "tabs": [
                         {
@@ -131,7 +131,7 @@
               "shifters": [
                 {
                   "type": 0,
-                  "width": 416,
+                  "width": 890,
                   "height": 315,
                   "currentContent": "Sequence Editor",
                   "tabs": [
@@ -142,7 +142,7 @@
                 },
                 {
                   "type": 0,
-                  "width": 1114,
+                  "width": 640,
                   "height": 315,
                   "currentContent": "Logger",
                   "tabs": [
@@ -168,6 +168,16 @@
   "modules": {
     "items": [
       {
+        "parameters": [
+          {
+            "value": true,
+            "controlAddress": "/logIncoming"
+          },
+          {
+            "value": true,
+            "controlAddress": "/logOutgoing"
+          }
+        ],
         "niceName": "Spleeter",
         "type": "Spleeter",
         "scripts": {
@@ -197,7 +207,7 @@
             "spleeterParams": {
               "parameters": [
                 {
-                  "value": "C:/Users/zak-4/PycharmProjects/WLEDLipSync/chataigne/modules/Spleeter/spleeter.cmd",
+                  "value": "C:/Users/zak-4/PycharmProjects/WLEDLipSync/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd",
                   "controlAddress": "/spleeterCommand"
                 },
                 {
@@ -217,6 +227,7 @@
           }
         },
         "templates": {
+          "editorIsCollapsed": true,
           "viewOffset": [
             0,
             0

@@ -137,7 +137,7 @@ def run_chataigne(action):
     """
     if action == 'run':
         noisette = str(Path('./chataigne/WLEDLipSync.noisette').resolve())
-        cha.run(headless=True, file_name=noisette)
+        cha.run(headless=False, file_name=noisette)
         print('start chataigne')
 
     elif action == 'stop':
