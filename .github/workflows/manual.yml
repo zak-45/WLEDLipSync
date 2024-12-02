@@ -131,19 +131,42 @@ jobs:
             favicon.ico=favicon.ico
             splash-screen.png=splash-screen.png
 
-      - name: Upload Artifacts
+      - name: Upload Artifacts Win/Linux
+        if: matrix.os == 'windows-latest' || matrix.os == 'linux-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{runner.os}} Build
+          name: ${{runner.os}} ${{ env.ARCHITECTURE }} Build
           if-no-files-found: warn
           overwrite: true
           include-hidden-files: true
           path: 'build/WLEDLipSync-${{runner.os}}_${{ env.ARCHITECTURE }}**'
-            
-      - name: Create Release ${{github.event.inputs.mytag}} with Builds from Nuitka
+
+      - name: Upload Artifacts MacOS
+        if: matrix.os contains 'macos'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{runner.os}} ${{ env.ARCHITECTURE }} Build
+          if-no-files-found: warn
+          overwrite: true
+          include-hidden-files: true
+          path: 'build/WLEDLipSync.app/Contents/MacOS/WLEDLipSync-${{runner.os}}_${{ env.ARCHITECTURE }}**'
+
+
+      - name: Create Release ${{github.event.inputs.mytag}} with Builds from Nuitka for Win/Linux
+        if: matrix.os == 'windows-latest' || matrix.os == 'linux-latest'
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
           commit: main
           tag: ${{github.event.inputs.mytag}}
           artifacts: 'build/WLEDLipSync-${{runner.os}}_${{ env.ARCHITECTURE }}**'
+
+      - name: Create Release ${{github.event.inputs.mytag}} with Builds from Nuitka for MacOS
+        if: matrix.os contains 'macos'
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          commit: main
+          tag: ${{github.event.inputs.mytag}}
+          artifacts: 'build/WLEDLipSync.app/Contents/MacOS/WLEDLipSync-${{runner.os}}_${{ env.ARCHITECTURE }}**'
+
