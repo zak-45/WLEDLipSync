@@ -116,13 +116,14 @@ def finalize_chataigne():
 async def run_install_chataigne(obj, dialog):
     print('install it...')
     dialog.close()
-    ui.notify('download data for chataigne')
+    ui.notify('download data for chataigne', position='center', type='info')
     await run.io_bound(download_chataigne)
-    ui.notify('download data for spleeter')
+    ui.notify('download data for spleeter',position='center', type='info')
     await run.io_bound(download_spleeter)
-    ui.notify('finalize')
+    ui.notify('finalize', position='center', type='info')
     await run.io_bound(finalize_chataigne)
     obj.sender.props(remove='loading')
+    ui.notify('Restart your APP to use Chataigne/Spleeter', position='center', type='warning')
 
 async def install_chataigne(obj):
     def stop():
