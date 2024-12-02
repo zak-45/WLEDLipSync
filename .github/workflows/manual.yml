@@ -132,7 +132,7 @@ jobs:
             splash-screen.png=splash-screen.png
 
       - name: Upload Artifacts Win/Linux
-        if: matrix.os == 'windows-latest' || matrix.os == 'linux-latest'
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ${{runner.os}} ${{ env.ARCHITECTURE }} Build
@@ -153,7 +153,7 @@ jobs:
 
 
       - name: Create Release ${{github.event.inputs.mytag}} with Builds from Nuitka for Win/Linux
-        if: matrix.os == 'windows-latest' || matrix.os == 'linux-latest'
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
