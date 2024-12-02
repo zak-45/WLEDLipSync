@@ -907,7 +907,7 @@ async def main_page():
 
             else:
                 #  vocals.mp3 exist so stems
-                ui.notify('We will do analysis from stems files ...')
+                ui.notify('We will do analysis from stems files ...', position='top')
                 stems.set_visibility(True)
                 # specific case for vocals
                 # always (re)generate wav from mp3, rhubarb will need it
@@ -965,17 +965,6 @@ async def main_page():
                 audio_input.value = result
                 await check_audio_input(result)
 
-    async def run_spleeter(dialog):
-        # Get the absolute path of the current file
-        audio_absolute_path = Path(audio_input.value).resolve()
-        logger.debug(audio_absolute_path)
-        # send action message
-        cha_msg = {"action": {"type": "runSpleeter", "param": {"fileName": str(audio_absolute_path)}}}
-        if LipAPI.cha_client is not None:
-            LipAPI.cha_client.send_message(cha_msg)
-            ui.notify('initiate Spleeter ....', type='warning')
-        dialog.close()
-
     async def run_analyse(dialog):
         if rub._instance_running:
             ui.notification('Already running instance', type='negative', position='center')
@@ -1014,7 +1003,47 @@ async def main_page():
             LipAPI.mouth_times_selected = []
             dialog.close()
 
+    async def run_spleeter(dialog):
+        """
+        Initiates the Spleeter processing for the specified audio file.
+
+        This function constructs a message to run Spleeter with the absolute path of the audio file and sends it to the
+        Chataigne client. It also notifies the user of the initiation and checks if Spleeter is running, closing the dialog afterward.
+
+        Args:
+            dialog: The dialog to be closed once the Spleeter process is initiated.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+        # Get the absolute path of the current file
+        audio_absolute_path = Path(audio_input.value).resolve()
+        logger.debug(audio_absolute_path)
+        # send action message
+        cha_msg = {"action": {"type": "runSpleeter", "param": {"fileName": str(audio_absolute_path)}}}
+        if LipAPI.cha_client is not None:
+            LipAPI.cha_client.send_message(cha_msg)
+            ui.notify('initiate Spleeter ....', type='warning')
+            spleeter.props(add='loading')
+        dialog.close()
+        await run.io_bound(utils.check_spleeter_is_running, spleeter, audio_input.value, 2.0)
+
     async def split_audio():
+        """
+        Prompts the user to confirm the splitting of an audio file into stems using Spleeter.
+
+        This function validates the specified audio file and opens a dialog to ask the user for confirmation
+        before proceeding with the audio splitting process. It provides options to either confirm or cancel the action.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         if await validate_file(audio_input.value):
             with ui.dialog() as dialog, ui.card():
                 dialog.open()
@@ -1048,7 +1077,21 @@ async def main_page():
                 ui.button('No', on_click=dialog.close)
 
     def load_cues(dialog=None):
+        """
+        Loads mouth cues from a specified output file and updates the user interface accordingly.
 
+        This function clears any existing mouth area, resets the mouth times buffer, and checks if a source file is set.
+        If the output file exists, it reads the data and populates the mouth times buffer, notifying the user of the process.
+
+        Args:
+            dialog: An optional dialog to be closed before loading cues.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         if dialog is not None:
             dialog.close()
 
@@ -1081,8 +1124,18 @@ async def main_page():
             ui.notify('Source file blank ... load a new file')
 
     async def load_mouth_cue():
-        """ initiate mouth card cue creation """
+        """
+        Prompts the user to confirm loading mouth cues if there are unsaved changes.
 
+        This function checks if the data has changed and, if so, opens a dialog to ask the user for confirmation
+        before loading the mouth cues. If there are no changes, it directly loads the cues without prompting.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         if LipAPI.data_changed is True:
             with ui.dialog() as dialog, ui.card():
                 dialog.open()
@@ -1095,8 +1148,19 @@ async def main_page():
             load_cues()
 
     async def load_mouth_model():
-        """ load images from model folder into a carousel """
+        """
+        Loads a mouth model from a specified directory and updates the user interface accordingly.
 
+        This function allows the user to select a directory containing mouth images, and if valid, it deletes any existing
+        mouth carousel and generates a new one based on the selected images. It also updates the preview area with the
+        first image from the loaded model.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         result = await LocalFilePicker('./media/image/model', multiple=False)
 
         ui.notify(f'Selected :  {result}')
@@ -1125,14 +1189,60 @@ async def main_page():
                 logger.debug('you need to select folder')
 
     async def generate_mouth_cue():
-        """Generate graphical view of json file, could be time-consuming if display thumbs."""
+        """
+        Generates and displays mouth cues based on the current audio playback.
+
+        This function sets up the user interface for displaying mouth cues, allowing users to interact with the cues
+        by clicking on them to play audio or modify the associated letters. It manages the playback of audio segments
+        and updates the visual representation of the cues in the UI.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
 
         async def select_letter(start_time: float, letter_lbl: ui.label):
+            """
+            Selects a letter associated with a specific start time and updates the label.
+
+            This function logs the start time and the label, then calls another function to modify the letter based on the
+            provided start time. It is intended to facilitate user interaction with the audio cues in the application.
+
+            Args:
+                start_time (float): The time in seconds associated with the letter selection.
+                letter_lbl (ui.label): The label UI component that displays the selected letter.
+
+            Returns:
+                None
+
+            Raises:
+                None
+            """
             logger.debug(start_time, letter_lbl)
             await modify_letter(start_time, letter_lbl)
 
         def position_player(seek_time: float, card: ui.card, rem: ui.icon, marker: str = 'X'):
-            """Set players to the specified time."""
+            """
+            Seeks the audio players to a specified time and updates the user interface accordingly.
+
+            This function adjusts the playback position of both the vocal and accompaniment audio players to the given
+            seek time. It also updates the visual representation of the associated UI card and creates a marker at the
+            specified time, ensuring that the user interface reflects the current playback state.
+
+            Args:
+                seek_time (float): The time in seconds to seek the audio players.
+                card (ui.card): The UI card to be updated with the new state.
+                rem (ui.icon): The icon to be made visible after seeking.
+                marker (str): The marker to be created at the specified time (default is 'X').
+
+            Returns:
+                None
+
+            Raises:
+                None
+            """
             player_vocals.seek(seek_time)
             player_accompaniment.seek(seek_time)
             if seek_time not in LipAPI.mouth_times_selected:
@@ -1179,7 +1289,24 @@ async def main_page():
             logger.debug('End of play_until loop.')
 
         def set_default(seek_time: float, card: ui.card, rem: ui.icon):
-            """Reset time card to default color."""
+            """
+            Resets the visual state of a UI card and removes the specified seek time from the selected mouth times.
+
+            This function updates the UI by changing the card's background color and hiding the associated icon.
+            It also removes the specified seek time from the list of selected mouth times, ensuring that the UI reflects
+            the current state of the playback.
+
+            Args:
+                seek_time (float): The time in seconds to be removed from the selected mouth times.
+                card (ui.card): The UI card to be updated with the default state.
+                rem (ui.icon): The icon to be hidden after resetting the state.
+
+            Returns:
+                None
+
+            Raises:
+                None
+            """
             LipAPI.mouth_times_selected.remove(seek_time)
             card.classes(remove='bg-red-400')
             card.classes(add='bg-cyan-700')

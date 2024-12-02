@@ -14,12 +14,11 @@ import socket
 import traceback
 import cv2
 import chataigne
+import time
+import json
 
 import requests
 import zipfile
-import io
-
-
 
 from str2bool import str2bool
 from PIL import Image
@@ -27,6 +26,33 @@ from nicegui import ui, run
 from pathlib import Path
 
 cha = chataigne.ChataigneWrapper()
+
+
+def check_spleeter_is_running(obj, file_path, check_interval: float = 1.0):
+    """
+    Continuously checks for the existence of a specific file in a specified folder.
+    Use to know if Chataigne - Spleeter has finished as it run in a separate process.
+
+    Args:
+        obj: nicegui element : spleeter button
+        file_path (str): The full path of the file to check for.
+        check_interval (float): The time in seconds to wait between checks. Defaults to 1.0.
+
+    Returns:
+        None
+    """
+    # extract file name only
+    file_name = os.path.basename(file_path)
+    file_info = os.path.splitext(file_name)
+    file = file_info[0]
+    file_folder = app_config['audio_folder'] + file + '/'
+    file_to_check = f"{file_folder}vocals.mp3"
+    #
+    while not os.path.isfile(file_to_check):
+        logger.debug(f"Waiting for {file_to_check} to be created...")
+        time.sleep(check_interval)
+    logger.debug(f"File {file_to_check} exists!")
+    obj.props(remove='loading')
 
 
 def download_github_directory_as_zip(repo_url: str, destination: str, directory_path: str = '*'):
@@ -69,18 +95,33 @@ def download_github_directory_as_zip(repo_url: str, destination: str, directory_
 
 
 def extract_from_lip_sync(source, destination, msg):
-        # Download the ZIP file
+    # Download the ZIP file
     response = requests.get(source)
     response.raise_for_status()  # Raise an error for bad responses
-        # Extract the ZIP file
+    # Extract the ZIP file
     with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
         zip_file.extractall(destination)
         print(msg)
 
 
 def download_spleeter():
+    """
+    Downloads necessary data for the Spleeter application from specified GitHub repositories.
+
+    This function first downloads the SpleeterGUI-Chataigne-Module directory as a ZIP file and extracts it to the
+    specified local path. It then attempts to download and extract a specific version of the PySpleeter application,
+    handling any errors that may occur during the download or extraction process.
+
+    Returns:
+        None
+
+    Raises:
+        requests.RequestException: If there is an error during the download of the repository.
+        zipfile.BadZipFile: If the downloaded file is not a valid ZIP file.
+    """
+
     print('downloading data for Spleeter ...')
-    download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module','./chataigne/modules')
+    download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module', './chataigne/modules')
     print('Module Spleeter downloaded')
     try:
         extract_from_lip_sync(
@@ -95,9 +136,20 @@ def download_spleeter():
 
 
 def download_chataigne():
+    """
+    Downloads the Chataigne application from a specified GitHub release.
+
+    This function attempts to download a ZIP file containing the Chataigne application and extracts it to the
+    specified local directory. It handles potential errors that may occur during the download or extraction process.
+
+    Returns:
+        None
+
+    Raises:
+        requests.RequestException: If there is an error during the download of the repository.
+        zipfile.BadZipFile: If the downloaded file is not a valid ZIP file.
+    """
     print('downloading data for Chataigne...')
-    download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module','./chataigne/modules')
-    print('Spleeter downloaded')
     try:
         extract_from_lip_sync(
             'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip',
@@ -109,23 +161,68 @@ def download_chataigne():
     except zipfile.BadZipFile:
         print('Error: The downloaded file is not a valid ZIP file.')
 
-def finalize_chataigne():
-    print('finalize')
+
+def chataigne_settings():
+
+    audio_folder = str(Path(app_config['audio_folder']).resolve())
+    app_folder = os.getcwd()
+
+    with open(f'{app_folder}/chataigne/WLEDLipSync.noisette','r', encoding='utf-8') as settings:
+        data = json.load(settings)
+
+    access_or_set_dict_value(data_dict=data,
+                             input_string='modules.items[0].params.containers.spleeterParams.parameters[0].value',
+                             new_value=f'{app_folder}/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd')
+
+    access_or_set_dict_value(data_dict=data,
+                             input_string='modules.items[0].params.containers.spleeterParams.parameters[2].value',
+                             new_value=f'{audio_folder}')
+
+    access_or_set_dict_value(data_dict=data,
+                             input_string='modules.items[3].scripts.items[0].parameters[0].value',
+                             new_value=f'{app_folder}/chataigne/LipSync.js')
+
+    with open(f'{app_folder}/chataigne/WLEDLipSync.noisette', 'w', encoding='utf-8') as new_settings:
+        json.dump(data, new_settings, ensure_ascii=False, indent=4)
+
+
+    print('Put chataigne settings')
 
 
 async def run_install_chataigne(obj, dialog):
-    print('run chataigne installation')
+    """
+    Manages the asynchronous installation process for the Chataigne application.
+
+    This function orchestrates the download and installation of Chataigne and its dependencies, including Spleeter.
+    It updates the user interface to notify the user of the installation progress and finalizes the installation process.
+
+    Args:
+        obj: An object that contains the sender for UI updates.
+        dialog: The dialog to be closed once the installation process starts.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
+    logger.debug('run chataigne installation')
     dialog.close()
+    #
     ui.notify('Download data for chataigne', position='center', type='info')
     await run.io_bound(download_chataigne)
-    ui.notify('Download data for spleeter... take some time',position='center', type='info')
+    #
+    ui.notify('Download data for spleeter... take some time', position='center', type='info')
     await run.io_bound(download_spleeter)
+    #
     ui.notify('Finalize Chataigne installation', position='center', type='info')
-    await run.io_bound(finalize_chataigne)
+    await run.io_bound(chataigne_settings)
+    #
     obj.sender.props(remove='loading')
     obj.sender.set_text('RELOAD APP')
-    obj.sender.on('click', lambda : ui.navigate.to('/'))
+    obj.sender.on('click', lambda: ui.navigate.to('/'))
     ui.notify('Reload your APP to use Chataigne/Spleeter', position='center', type='warning')
+
 
 async def install_chataigne(obj):
     def stop():

@@ -11,15 +11,6 @@
             "value": "",
             "controlAddress": "/showDashboardOnStartup",
             "enabled": false
-          },
-          {
-            "value": true,
-            "controlAddress": "/enableDashboardServer"
-          },
-          {
-            "value": 9999,
-            "hexMode": false,
-            "controlAddress": "/serverPort"
           }
         ]
       },
@@ -44,32 +35,32 @@
   "layout": {
     "mainLayout": {
       "type": 1,
-      "width": 1536,
-      "height": 773,
+      "width": 1197,
+      "height": 635,
       "direction": 2,
       "shifters": [
         {
           "type": 1,
-          "width": 1536,
-          "height": 773,
+          "width": 1197,
+          "height": 635,
           "direction": 2,
           "shifters": [
             {
               "type": 1,
-              "width": 1536,
-              "height": 452,
+              "width": 1197,
+              "height": 383,
               "direction": 1,
               "shifters": [
                 {
                   "type": 1,
                   "width": 368,
-                  "height": 452,
+                  "height": 383,
                   "direction": 2,
                   "shifters": [
                     {
                       "type": 0,
                       "width": 368,
-                      "height": 271,
+                      "height": 237,
                       "currentContent": "Modules",
                       "tabs": [
                         {
@@ -80,7 +71,7 @@
                     {
                       "type": 0,
                       "width": 368,
-                      "height": 175,
+                      "height": 140,
                       "currentContent": "Sequences",
                       "tabs": [
                         {
@@ -92,8 +83,8 @@
                 },
                 {
                   "type": 0,
-                  "width": 465,
-                  "height": 452,
+                  "width": 507,
+                  "height": 383,
                   "currentContent": "Dashboard",
                   "tabs": [
                     {
@@ -112,8 +103,8 @@
                 },
                 {
                   "type": 0,
-                  "width": 691,
-                  "height": 452,
+                  "width": 310,
+                  "height": 383,
                   "currentContent": "Inspector",
                   "tabs": [
                     {
@@ -125,14 +116,14 @@
             },
             {
               "type": 1,
-              "width": 1536,
-              "height": 315,
+              "width": 1197,
+              "height": 246,
               "direction": 1,
               "shifters": [
                 {
                   "type": 0,
-                  "width": 890,
-                  "height": 315,
+                  "width": 882,
+                  "height": 246,
                   "currentContent": "Sequence Editor",
                   "tabs": [
                     {
@@ -142,8 +133,8 @@
                 },
                 {
                   "type": 0,
-                  "width": 640,
-                  "height": 315,
+                  "width": 309,
+                  "height": 246,
                   "currentContent": "Logger",
                   "tabs": [
                     {
@@ -207,7 +198,7 @@
             "spleeterParams": {
               "parameters": [
                 {
-                  "value": "C:/Users/zak-4/PycharmProjects/WLEDLipSync/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd",
+                  "value": "WLEDLipSync/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd",
                   "controlAddress": "/spleeterCommand"
                 },
                 {
@@ -215,7 +206,7 @@
                   "controlAddress": "/spleeterOptions"
                 },
                 {
-                  "value": "C:/Users/zak-4/PycharmProjects/WLEDLipSync/media/audio",
+                  "value": "WLEDLipSync/media/audio",
                   "controlAddress": "/outputFolder"
                 },
                 {
@@ -368,7 +359,7 @@
             {
               "parameters": [
                 {
-                  "value": "C:/Users/zak-4/PycharmProjects/WLEDLipSync/chataigne/LipSync.js",
+                  "value": "WLEDLipSync/chataigne/LipSync.js",
                   "controlAddress": "/filePath"
                 },
                 {
@@ -379,7 +370,6 @@
               "niceName": "LipSync",
               "type": "BaseItem",
               "scriptParams": {
-                "hideInEditor": true
               }
             }
           ],
