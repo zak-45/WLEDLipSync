@@ -26,9 +26,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        # os: [macos-13, macos-latest, ubuntu-latest, windows-latest]
-        os: [macos-latest, macos-13, ubuntu-latest, windows-latest]
-
+        os: [macos-13, macos-latest, ubuntu-latest, windows-latest]
     env:
       DEBUG_COMPILATION: yes
       COMP_VERSION: ${{github.event.inputs.mytag}}

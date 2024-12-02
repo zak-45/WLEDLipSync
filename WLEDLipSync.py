@@ -11,7 +11,7 @@
 # nuitka-project-if: os.getenv("DEBUG_COMPILATION", "no") == "yes":
 #    nuitka-project: --force-stdout-spec=WLEDLipSync.out.txt
 #    nuitka-project: --force-stderr-spec=WLEDLipSync.err.txt
-# nuitka-project: --mode=app
+# nuitka-project: --mode=onefile
 # nuitka-project: --nofollow-import-to=doctest
 # nuitka-project: --noinclude-default-mode=error
 # nuitka-project: --include-raw-dir=tmp=tmp
