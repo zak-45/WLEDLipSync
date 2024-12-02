@@ -379,6 +379,7 @@ def get_letter_from_index(ndx):
         'X',
     )
 
+
 def save_data(force: bool = False):
     """
     Saves the current mouth times buffer to a JSON file.
@@ -413,6 +414,7 @@ def save_data(force: bool = False):
                 ui.button('Exit without saving', on_click=dialog.close)
     else:
         ui.notify('Nothing to save.')
+
 
 async def edit_mouth_time_buffer():
     """
@@ -974,7 +976,6 @@ async def main_page():
             ui.notify('initiate Spleeter ....', type='warning')
         dialog.close()
 
-
     async def run_analyse(dialog):
         if rub._instance_running:
             ui.notification('Already running instance', type='negative', position='center')
@@ -990,7 +991,7 @@ async def main_page():
 
             # run analyzer
             # rhubarb will append file extension
-            analysis_output = LipAPI.output_file.replace('.json','')
+            analysis_output = LipAPI.output_file.replace('.json', '')
             rub.run(file_name=LipAPI.file_to_analyse, dialog_file=LipAPI.lyrics_file, output=analysis_output)
 
             # set some GUI
@@ -1043,7 +1044,7 @@ async def main_page():
             ui.label(f'This will overwrite : {LipAPI.output_file}')
             ui.label('Are You Sure ?')
             with ui.row():
-                ui.button('Yes', on_click=lambda : run_analyse(dialog))
+                ui.button('Yes', on_click=lambda: run_analyse(dialog))
                 ui.button('No', on_click=dialog.close)
 
     def load_cues(dialog=None):
@@ -1065,7 +1066,7 @@ async def main_page():
             ui.notification('this could take some times .....', position='center', type='warning', spinner=True)
 
             if os.path.isfile(LipAPI.output_file):
-                with open(LipAPI.output_file , 'r') as data:
+                with open(LipAPI.output_file, 'r') as data:
                     LipAPI.mouth_times_buffer = json.loads(data.read())
 
                 ui.timer(1, generate_mouth_cue, once=True)
@@ -1143,7 +1144,6 @@ async def main_page():
             rem.set_visibility(True)
             card.update()
 
-
         async def play_until(start_time: float):
             """
             Play audio from a specified start time until the next cue or the end of the audio.
@@ -1166,7 +1166,8 @@ async def main_page():
             """
 
             player_vocals.seek(start_time)
-            end_cue = next((i_cue for i_cue in LipAPI.mouth_times_selected if i_cue > start_time), LipAPI.audio_duration)
+            end_cue = next((i_cue for i_cue in LipAPI.mouth_times_selected if i_cue > start_time),
+                           LipAPI.audio_duration)
             duration = end_cue - start_time
             end_time = time.time() + duration
             player_vocals.play()
@@ -1410,7 +1411,6 @@ async def main_page():
             ui.json_editor({'content': {'json': tags_data.text}})
             ui.button('close', on_click=tags_dialog.close)
 
-
     def save_lyrics():
         """
         Saves the lyrics from the input data to a specified text file.
@@ -1433,7 +1433,7 @@ async def main_page():
                 if not os.path.isdir(file_folder):
                     ui.notify(f'folder {file_folder} does not exist, creating ...')
                     os.mkdir(file_folder)
-                lyrics_file =  os.path.join(file_folder, 'lyrics.txt')
+                lyrics_file = os.path.join(file_folder, 'lyrics.txt')
                 with open(f'{lyrics_file}', 'w', encoding='utf-8') as f:
                     f.write(lyrics_data.value)
                 ui.notification(f'Saving lyrics to {lyrics_file} for helping analysis ...', position='center',
@@ -1442,7 +1442,6 @@ async def main_page():
                 ui.notify(f'Failed to save lyrics: {e}', position='center', type='negative')
         else:
             ui.notification(f'Nothing to save ...', position='center', type='warning')
-
 
     def show_dialog():
         """
@@ -1465,7 +1464,6 @@ async def main_page():
             except Exception as e:
                 print(f"Not able to open file : {e}")
             ui.button('close', on_click=lyrics_dialog.close)
-
 
     def show_lyrics():
         """
@@ -1612,7 +1610,6 @@ async def main_page():
             LipAPI.preview_area = card_right_preview
 
         LipAPI.mouth_carousel.move(target_container=LipAPI.preview_area)
-
 
     def show_preview(prev):
         """
@@ -1996,14 +1993,14 @@ async def main_page():
             if os.path.isdir('./chataigne/modules/SpleeterGUI-Chataigne-Module-main'):
                 with cha_exp:
                     with ui.column():
-                        ui.toggle(['run','stop' ], value='stop', on_change=lambda e: utils.run_chataigne(e.value))
+                        ui.toggle(['run', 'stop'], value='stop', on_change=lambda e: utils.run_chataigne(e.value))
                         cha_ip = ui.input('Server IP', value='127.0.0.1')
                         with ui.row():
                             cha_port = ui.number('Port', value=8080)
                             cha_path = ui.input('Path (opt)', value='')
                             cha_activate = ui.checkbox('activate', on_change=manage_cha_client)
             else:
-                cha_install = ui.button('install', icon='settings', on_click=lambda e:utils.install_chataigne(e))
+                cha_install = ui.button('install', icon='settings', on_click=lambda e: utils.install_chataigne(e))
 
             ui.label(' ')
             ui.separator()
