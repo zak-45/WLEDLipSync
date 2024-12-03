@@ -75,6 +75,7 @@ import logging
 import concurrent_log_handler
 import taglib
 import niceutils
+import chataigne
 
 from str2bool import str2bool
 from OSCClient import OSCClient
@@ -98,6 +99,8 @@ if sys.platform.lower() == 'win32':
 rub = RhubarbWrapper()
 # music info
 retriever = MusicInfoRetriever()
+# chataigne
+cha = chataigne.ChataigneWrapper()
 
 """
 When this env var exist, this mean run from the one-file executable (compressed file).
@@ -209,6 +212,23 @@ class LipAPI:
         'H': 7,
         'X': 8
     }
+
+
+
+
+def run_chataigne(action):
+    """
+    Run or Stop chataigne
+
+    """
+    if action == 'run':
+        noisette = str(Path('./chataigne/WLEDLipSync.noisette').resolve())
+        cha.run(headless=False, file_name=noisette)
+        print('start chataigne')
+
+    elif action == 'stop':
+        cha.stop_process()
+        print('stop chataigne')
 
 
 async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
@@ -2139,7 +2159,7 @@ async def main_page():
             if os.path.isdir('./chataigne/modules/SpleeterGUI-Chataigne-Module-main'):
                 with cha_exp:
                     with ui.column():
-                        ui.toggle(['run', 'stop'], value='stop', on_change=lambda e: utils.run_chataigne(e.value))
+                        ui.toggle(['run', 'stop'], value='stop', on_change=lambda e: run_chataigne(e.value))
                         cha_ip = ui.input('Server IP', value='127.0.0.1')
                         with ui.row():
                             cha_port = ui.number('Port', value=8080)
@@ -2223,9 +2243,19 @@ async def audio_editor():
 
 async def startup_actions():
     print('startup actions')
+    utils.chataigne_settings()
 
 def shutdown_actions():
+    """
+    Executes actions that are intended to be performed during the shutdown of the application.
+    This function prints a message indicating that shutdown actions are taking place and stops any ongoing processes.
+
+    Returns:
+        None
+    """
+
     print('shutdown actions')
+    cha.stop_process()
 
 """
 app specific param

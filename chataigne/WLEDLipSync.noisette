@@ -35,32 +35,32 @@
   "layout": {
     "mainLayout": {
       "type": 1,
-      "width": 1197,
-      "height": 635,
+      "width": 1200,
+      "height": 780,
       "direction": 2,
       "shifters": [
         {
           "type": 1,
-          "width": 1197,
-          "height": 635,
+          "width": 1200,
+          "height": 780,
           "direction": 2,
           "shifters": [
             {
               "type": 1,
-              "width": 1197,
-              "height": 383,
+              "width": 1200,
+              "height": 455,
               "direction": 1,
               "shifters": [
                 {
                   "type": 1,
                   "width": 368,
-                  "height": 383,
+                  "height": 455,
                   "direction": 2,
                   "shifters": [
                     {
                       "type": 0,
                       "width": 368,
-                      "height": 237,
+                      "height": 273,
                       "currentContent": "Modules",
                       "tabs": [
                         {
@@ -71,7 +71,7 @@
                     {
                       "type": 0,
                       "width": 368,
-                      "height": 140,
+                      "height": 176,
                       "currentContent": "Sequences",
                       "tabs": [
                         {
@@ -83,8 +83,8 @@
                 },
                 {
                   "type": 0,
-                  "width": 507,
-                  "height": 383,
+                  "width": 513,
+                  "height": 455,
                   "currentContent": "Dashboard",
                   "tabs": [
                     {
@@ -103,8 +103,8 @@
                 },
                 {
                   "type": 0,
-                  "width": 310,
-                  "height": 383,
+                  "width": 307,
+                  "height": 455,
                   "currentContent": "Inspector",
                   "tabs": [
                     {
@@ -116,14 +116,14 @@
             },
             {
               "type": 1,
-              "width": 1197,
-              "height": 246,
+              "width": 1200,
+              "height": 318,
               "direction": 1,
               "shifters": [
                 {
                   "type": 0,
-                  "width": 882,
-                  "height": 246,
+                  "width": 885,
+                  "height": 318,
                   "currentContent": "Sequence Editor",
                   "tabs": [
                     {
@@ -134,7 +134,7 @@
                 {
                   "type": 0,
                   "width": 309,
-                  "height": 246,
+                  "height": 318,
                   "currentContent": "Logger",
                   "tabs": [
                     {
@@ -370,6 +370,7 @@
               "niceName": "LipSync",
               "type": "BaseItem",
               "scriptParams": {
+                "hideInEditor": true
               }
             }
           ],
@@ -400,6 +401,11 @@
             {
               "value": true,
               "controlAddress": "/firstValueIsTheName"
+            },
+            {
+              "value": 8080,
+              "hexMode": false,
+              "controlAddress": "/localPort"
             }
           ],
           "containers": {

@@ -21,7 +21,6 @@ import re
 import socket
 import traceback
 import cv2
-import chataigne
 import time
 import json
 
@@ -32,8 +31,6 @@ from str2bool import str2bool
 from PIL import Image
 from nicegui import ui, run
 from pathlib import Path
-
-cha = chataigne.ChataigneWrapper()
 
 
 def check_spleeter_is_running(obj, file_path, check_interval: float = 1.0):
@@ -175,26 +172,26 @@ def chataigne_settings():
     audio_folder = str(Path(app_config['audio_folder']).resolve())
     app_folder = os.getcwd()
 
-    with open(f'{app_folder}/chataigne/WLEDLipSync.noisette','r', encoding='utf-8') as settings:
-        data = json.load(settings)
+    if os.path.isfile(f'{app_folder}/chataigne/WLEDLipSync.noisette'):
+        with open(f'{app_folder}/chataigne/WLEDLipSync.noisette','r', encoding='utf-8') as settings:
+            data = json.load(settings)
 
-    access_or_set_dict_value(data_dict=data,
-                             input_string='modules.items[0].params.containers.spleeterParams.parameters[0].value',
-                             new_value=f'{app_folder}/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd')
+        access_or_set_dict_value(data_dict=data,
+                                 input_string='modules.items[0].params.containers.spleeterParams.parameters[0].value',
+                                 new_value=f'{app_folder}/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd')
 
-    access_or_set_dict_value(data_dict=data,
-                             input_string='modules.items[0].params.containers.spleeterParams.parameters[2].value',
-                             new_value=f'{audio_folder}')
+        access_or_set_dict_value(data_dict=data,
+                                 input_string='modules.items[0].params.containers.spleeterParams.parameters[2].value',
+                                 new_value=f'{audio_folder}')
 
-    access_or_set_dict_value(data_dict=data,
-                             input_string='modules.items[3].scripts.items[0].parameters[0].value',
-                             new_value=f'{app_folder}/chataigne/LipSync.js')
+        access_or_set_dict_value(data_dict=data,
+                                 input_string='modules.items[3].scripts.items[0].parameters[0].value',
+                                 new_value=f'{app_folder}/chataigne/LipSync.js')
 
-    with open(f'{app_folder}/chataigne/WLEDLipSync.noisette', 'w', encoding='utf-8') as new_settings:
-        json.dump(data, new_settings, ensure_ascii=False, indent=4)
+        with open(f'{app_folder}/chataigne/WLEDLipSync.noisette', 'w', encoding='utf-8') as new_settings:
+            json.dump(data, new_settings, ensure_ascii=False, indent=4)
 
-
-    print('Put chataigne settings')
+        print('Put chataigne settings')
 
 
 async def run_install_chataigne(obj, dialog):
@@ -267,22 +264,6 @@ def find_tmp_folder():
         return path_temp
     else:
         return None
-
-
-def run_chataigne(action):
-    """
-    Run or Stop chataigne
-
-    """
-    if action == 'run':
-        chataigne_settings()
-        noisette = str(Path('./chataigne/WLEDLipSync.noisette').resolve())
-        cha.run(headless=False, file_name=noisette)
-        print('start chataigne')
-
-    elif action == 'stop':
-        cha.stop_process()
-        print('stop chataigne')
 
 
 def access_or_set_dict_value(data_dict, input_string, new_value=None):
