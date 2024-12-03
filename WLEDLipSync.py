@@ -2162,7 +2162,7 @@ async def main_page():
                         ui.toggle(['run', 'stop'], value='stop', on_change=lambda e: run_chataigne(e.value))
                         cha_ip = ui.input('Server IP', value='127.0.0.1')
                         with ui.row():
-                            cha_port = ui.number('Port', value=8080)
+                            cha_port = ui.number('Port', value=8080, on_change=lambda e:utils.chataigne_settings(e.value))
                             cha_path = ui.input('Path (opt)', value='')
                             cha_activate = ui.checkbox('activate', on_change=manage_cha_client)
             else:

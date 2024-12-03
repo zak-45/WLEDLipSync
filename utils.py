@@ -167,7 +167,7 @@ def download_chataigne():
         print('Error: The downloaded file is not a valid ZIP file.')
 
 
-def chataigne_settings():
+def chataigne_settings(port=None):
 
     audio_folder = str(Path(app_config['audio_folder']).resolve())
     app_folder = os.getcwd()
@@ -176,17 +176,24 @@ def chataigne_settings():
         with open(f'{app_folder}/chataigne/WLEDLipSync.noisette','r', encoding='utf-8') as settings:
             data = json.load(settings)
 
-        access_or_set_dict_value(data_dict=data,
-                                 input_string='modules.items[0].params.containers.spleeterParams.parameters[0].value',
-                                 new_value=f'{app_folder}/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd')
+        if port is not None:
+            access_or_set_dict_value(data_dict=data,
+                                     input_string='modules.items[3].params.parameters[5].value',
+                                     new_value=int(port))
+        else:
 
-        access_or_set_dict_value(data_dict=data,
-                                 input_string='modules.items[0].params.containers.spleeterParams.parameters[2].value',
-                                 new_value=f'{audio_folder}')
+            access_or_set_dict_value(data_dict=data,
+                                     input_string='modules.items[0].params.containers.spleeterParams.parameters[0].value',
+                                     new_value=f'{app_folder}/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd')
 
-        access_or_set_dict_value(data_dict=data,
-                                 input_string='modules.items[3].scripts.items[0].parameters[0].value',
-                                 new_value=f'{app_folder}/chataigne/LipSync.js')
+            access_or_set_dict_value(data_dict=data,
+                                     input_string='modules.items[0].params.containers.spleeterParams.parameters[2].value',
+                                     new_value=f'{audio_folder}')
+
+            access_or_set_dict_value(data_dict=data,
+                                     input_string='modules.items[3].scripts.items[0].parameters[0].value',
+                                     new_value=f'{app_folder}/chataigne/LipSync.js')
+
 
         with open(f'{app_folder}/chataigne/WLEDLipSync.noisette', 'w', encoding='utf-8') as new_settings:
             json.dump(data, new_settings, ensure_ascii=False, indent=4)
