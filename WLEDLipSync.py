@@ -168,7 +168,7 @@ class LipAPI:
         file_to_analyse (str): Path to the file to analyse.
         wave_show (bool): Flag indicating if the wave should be shown.
         mouth_cue_show (bool): Flag indicating if mouth cues should be shown.
-        net_status_timer: Timer for network status.
+        status_timer: Timer for network status.
         osc_client: OSC client for communication.
         wvs_client: WVS client for communication.
         data_changed (bool): Indicates if data has been changed by the user.
@@ -194,7 +194,7 @@ class LipAPI:
     lyrics_file = ''
     wave_show = True
     mouth_cue_show = True
-    net_status_timer = None
+    status_timer = None
     osc_client = None
     wvs_client = None
     cha_client = None
@@ -213,22 +213,6 @@ class LipAPI:
         'X': 8
     }
 
-
-
-
-def run_chataigne(action):
-    """
-    Run or Stop chataigne
-
-    """
-    if action == 'run':
-        noisette = str(Path('./chataigne/WLEDLipSync.noisette').resolve())
-        cha.run(headless=False, file_name=noisette)
-        print('start chataigne')
-
-    elif action == 'stop':
-        cha.stop_process()
-        print('stop chataigne')
 
 
 async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
@@ -632,9 +616,27 @@ async def main_page():
         None
     """
 
-    async def check_net_status():
+    def run_chataigne(action):
+        """
+        Run or Stop chataigne
+
+        """
+        if action == 'run':
+            noisette = str(Path('./chataigne/WLEDLipSync.noisette').resolve())
+            cha.run(headless=False, file_name=noisette)
+            print('start chataigne')
+
+        elif action == 'stop':
+            cha.stop_process()
+            cha_status.props(remove='color=green')
+            cha_status.props(add='color=black')
+            print('stop chataigne')
+
+
+    async def check_status():
         """
         Checks the network status of OSC and WVS clients.
+        Check chataigne status.
 
         This function verifies the connectivity of the OSC and WVS clients by checking
         the status of their respective network ports. It updates the UI elements to reflect
@@ -644,7 +646,7 @@ async def main_page():
             None
         """
 
-        print('net check status')
+        print('check status')
 
         if LipAPI.osc_client is not None:
             # check net status UDP port, can provide false positive
@@ -685,6 +687,11 @@ async def main_page():
                 LipAPI.cha_client = None
                 spleeter.disable()
 
+        if cha.status():
+            print('chataigne running')
+            cha_status.props(add='color=green')
+
+
         if wvs_activate.value is False and osc_activate.value is False and cha_activate is False:
             link_wvs.props(remove="color=green")
             link_wvs.props(remove="color=yellow")
@@ -692,14 +699,14 @@ async def main_page():
             link_cha.props(remove="color=yellow")
             link_osc.props(remove="color=yellow")
             link_osc.props(remove="color=green")
-            LipAPI.net_status_timer.active = False
+            LipAPI.status_timer.active = False
 
-    async def net_timer():
-        # create or activate net timer
-        if LipAPI.net_status_timer is None:
-            LipAPI.net_status_timer = ui.timer(5, check_net_status)
+    async def status_timer():
+        # create or activate status  timer
+        if LipAPI.status_timer is None:
+            LipAPI.status_timer = ui.timer(5, check_status)
         else:
-            LipAPI.net_status_timer.active = True
+            LipAPI.status_timer.active = True
 
     async def manage_cha_client():
         """
@@ -716,7 +723,7 @@ async def main_page():
 
         logger.debug('CHA activation')
 
-        await net_timer()
+        await status_timer()
 
         if cha_activate.value is True:
             # we need to create a client if not exist
@@ -739,9 +746,9 @@ async def main_page():
             link_cha.props(remove="color=green")
             link_cha.props(remove="color=yellow")
             # if timer is active, stop it or not
-            if LipAPI.net_status_timer.active is True and osc_activate.value is False and wvs_activate.value is False:
+            if LipAPI.status_timer.active is True and osc_activate.value is False and wvs_activate.value is False:
                 logger.debug('stop timer')
-                LipAPI.net_status_timer.active = False
+                LipAPI.status_timer.active = False
 
     async def manage_wvs_client():
         """
@@ -758,7 +765,7 @@ async def main_page():
 
         logger.debug('WVS activation')
 
-        await net_timer()
+        await status_timer()
 
         if wvs_activate.value is True:
             # we need to create a client if not exist
@@ -783,9 +790,9 @@ async def main_page():
             link_wvs.props(remove="color=green")
             link_wvs.props(remove="color=yellow")
             # if timer is active, stop it or not
-            if LipAPI.net_status_timer.active is True and osc_activate.value is False and cha_activate.value is False:
+            if LipAPI.status_timer.active is True and osc_activate.value is False and cha_activate.value is False:
                 logger.debug('stop timer')
-                LipAPI.net_status_timer.active = False
+                LipAPI.status_timer.active = False
 
     async def manage_osc_client():
         """
@@ -802,7 +809,7 @@ async def main_page():
 
         logger.debug('OSC activation')
 
-        await net_timer()
+        await status_timer()
 
         if osc_activate.value is True:
             # we need to create a client if not exist
@@ -823,9 +830,9 @@ async def main_page():
             link_osc.props(remove="color=green")
             link_osc.props(remove="color=yellow")
             # if timer is active, stop it or not
-            if LipAPI.net_status_timer.active is True and wvs_activate.value is False and cha_activate.value is False:
+            if LipAPI.status_timer.active is True and wvs_activate.value is False and cha_activate.value is False:
                 logger.debug('stop timer')
-                LipAPI.net_status_timer.active = False
+                LipAPI.status_timer.active = False
 
     async def validate_file(file_name):
         """ file input validation """
@@ -2126,7 +2133,7 @@ async def main_page():
 
         with ui.card().tight().classes('bg-cyan-400'):
             ui.label(' ')
-            wvs_exp = ui.expansion('WledVideoSync').classes('bg-cyan-500')
+            wvs_exp = ui.expansion('WledVideoSync').classes('bg-cyan-600')
             with wvs_exp:
                 with ui.column():
                     wvs_ip = ui.input('Server IP', value='127.0.0.1')
@@ -2139,7 +2146,7 @@ async def main_page():
             ui.label(' ')
             ui.separator()
 
-            osc_exp = ui.expansion('OSC').classes('bg-cyan-500')
+            osc_exp = ui.expansion('OSC').classes('bg-cyan-600')
             with osc_exp:
                 with ui.column():
                     osc_address = ui.input('Address', value='/WLEDLipSync')
@@ -2155,11 +2162,13 @@ async def main_page():
 
         with ui.card().tight().classes('bg-cyan-400'):
             ui.label(' ')
-            cha_exp = ui.expansion('Chataigne').classes('bg-cyan-500')
+            cha_exp = ui.expansion('Chataigne').classes('bg-cyan-600')
             if os.path.isdir('./chataigne/modules/SpleeterGUI-Chataigne-Module-main'):
                 with cha_exp:
                     with ui.column():
-                        ui.toggle(['run', 'stop'], value='stop', on_change=lambda e: run_chataigne(e.value))
+                        with ui.row():
+                            ui.toggle(['run', 'stop'], value='stop', on_change=lambda e: run_chataigne(e.value))
+                            cha_status = ui.icon('online_prediction', size='sm')
                         cha_ip = ui.input('Server IP', value='127.0.0.1')
                         with ui.row():
                             cha_port = ui.number('Port', value=8080, on_change=lambda e:utils.chataigne_settings(e.value))
@@ -2186,11 +2195,11 @@ async def main_page():
         audio_input.value = LipAPI.source_file
         await set_file_name()
 
-    if LipAPI.net_status_timer is not None:
+    if LipAPI.status_timer is not None:
         LipAPI.osc_client = None
         LipAPI.wvs_client = None
         LipAPI.cha_client = None
-        LipAPI.net_status_timer.active = False
+        LipAPI.status_timer.active = False
 
     await niceutils.wavesurfer()
 
