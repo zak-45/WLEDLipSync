@@ -11,12 +11,19 @@ import sys
 import os
 import cv2utils
 import utils
+import taglib
 
 from nicegui import ui, events
 from PIL import Image
 from pathlib import Path
 from typing import Optional
 
+async def show_tags(file):
+    with taglib.File(file) as song:
+        with ui.dialog() as tags_dialog, ui.card():
+            tags_dialog.open()
+            ui.json_editor({'content': {'json': song.tags}})
+            ui.button('close', on_click=tags_dialog.close)
 
 def apply_custom():
     """

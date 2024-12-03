@@ -862,6 +862,7 @@ async def main_page():
         spinner_accompaniment.set_visibility(False)
         spinner_vocals.set_visibility(False)
         stems.set_visibility(False)
+        analyse_file.set_visibility(False)
         LipAPI.mouth_times_buffer = {}
         LipAPI.mouth_times_selected = []
         try:
@@ -942,6 +943,8 @@ async def main_page():
             # set params
             LipAPI.source_file = audio_input.value
             LipAPI.output_file = app_config['output_folder'] + file + '/' + 'rhubarb.json'
+            if os.path.isfile(LipAPI.output_file):
+                analyse_file.set_visibility(True)
             edit_mouth_buffer.enable()
             load_mouth_button.enable()
             run_icon.tooltip(f'Click here to analyse {LipAPI.file_to_analyse} with rhubarb')
@@ -1525,7 +1528,7 @@ async def main_page():
         elif event == 'play':
             spinner_accompaniment.set_visibility(True)
 
-    def show_tags():
+    def show_song_tags():
         """
         Displays a dialog for viewing and editing song tags in JSON format.
         This function opens a dialog containing a JSON editor pre-filled with the current tags,
@@ -1595,7 +1598,7 @@ async def main_page():
                 print(f"Not able to open file : {e}")
             ui.button('close', on_click=lyrics_dialog.close)
 
-    def show_lyrics():
+    def show_song_lyrics():
         """
         Displays a dialog for viewing and saving song lyrics.
         This function allows users to edit the lyrics in a text area and provides an option
@@ -1899,14 +1902,24 @@ async def main_page():
                         spinner_vocals.set_visibility(False)
                         audio_vocals = ui.label('VOCALS').classes('self-center').tooltip('TBD')
                         with ui.row():
-                            song_dialog = ui.icon('lyrics', size='sm')
-                            song_dialog.style(add='cursor: pointer')
-                            song_dialog.on('click', lambda: show_dialog())
                             folder_list = ui.icon('list', size='sm')
+                            folder_list.tooltip('folder')
                             folder_list.on('click', lambda: LocalFilePicker(os.path.dirname(LipAPI.output_file)))
                             folder_list.style(add='cursor: pointer')
+                            audio_dialog = ui.icon('lyrics', size='sm')
+                            audio_dialog.tooltip('dialog')
+                            audio_dialog.style(add='cursor: pointer')
+                            audio_dialog.on('click', lambda: show_dialog())
+                            audio_tags = ui.icon('tags', size='sm')
+                            audio_tags.tooltip('mp3 tags')
+                            audio_tags.style(add='cursor: pointer')
+                            audio_tags.on('click', lambda: niceutils.show_tags(LipAPI.source_file))
                             stems = ui.icon('thumb_up_alt', size='sm')
+                            stems.tooltip('vocals')
                             stems.set_visibility(False)
+                            analyse_file = ui.icon('thumb_up_alt', size='sm')
+                            analyse_file.tooltip('analyse')
+                            analyse_file.set_visibility(False)
 
                     # card area center
                     control_area_v = ui.card(align_items='center').classes('w-45 h-85 border bg-cyan-900')
@@ -1923,9 +1936,12 @@ async def main_page():
                             scroll_time.tooltip('check to auto scroll graphic mouth cue')
                             scroll_time.bind_value(LipAPI, 'scroll_graphic')
                         with ui.row():
-                            ui.button(on_click=lambda: sync_player('play'), icon='play_circle').props('outline')
-                            ui.button(on_click=lambda: sync_player('pause'), icon='pause_circle').props('outline')
+                            sp_1 = ui.button(on_click=lambda: sync_player('play'), icon='play_circle').props('outline')
+                            sp_1.tooltip('Play players')
+                            sp_2 = ui.button(on_click=lambda: sync_player('pause'), icon='pause_circle').props('outline')
+                            sp_2.tooltip('Pause players')
                         sync_player_button = ui.button(on_click=lambda: sync_player('sync'), icon='sync')
+                        sync_player_button.tooltip('Sync accompaniment with vocals')
                         sync_player_button.classes('w-10')
                         sync_player_button.props('outline')
                         with ui.column():
@@ -1993,13 +2009,13 @@ async def main_page():
                         with ui.row():
                             song_lyrics = ui.icon('lyrics', size='sm')
                             song_lyrics.style(add='cursor: pointer')
-                            song_lyrics.on('click', lambda: show_lyrics())
+                            song_lyrics.on('click', lambda: show_song_lyrics())
                             lyrics_data = ui.textarea(value='')
                             lyrics_data.set_visibility(False)
                         with ui.row():
                             song_tags = ui.icon('tag', size='sm')
                             song_tags.style(add='cursor: pointer')
-                            song_tags.on('click', lambda: show_tags())
+                            song_tags.on('click', lambda: show_song_tags())
                             tags_data = ui.label('')
                             tags_data.set_visibility(False)
                     with ui.column():
