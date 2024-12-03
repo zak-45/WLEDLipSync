@@ -31,10 +31,10 @@ class MusicInfoRetriever:
     if __name__ == "__main__":
         retriever = MusicInfoRetriever()
         artist_info = retriever.get_artist_info('century lover')
-        print(artist_info)
+        logger.info(artist_info)
 
         info = retriever.get_song_info_with_lyrics('why', 'century lover')
-        print(info)
+        logger.info(info)
     """
 
     def __init__(self):
@@ -165,7 +165,7 @@ Expected way to work.
 if "NUITKA_ONEFILE_PARENT" not in os.environ:
     # read config
     # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.utils')
+    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.ytmusic')
 
     lip_config = utils.read_config()
 

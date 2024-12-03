@@ -479,7 +479,7 @@ Expected way to work.
 if "NUITKA_ONEFILE_PARENT" not in os.environ:
     # read config
     # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.utils')
+    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.niceutils')
 
     lip_config = utils.read_config()
 

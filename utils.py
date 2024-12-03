@@ -92,11 +92,11 @@ def download_github_directory_as_zip(repo_url: str, destination: str, directory_
                         zip_file.extract(file_info, destination)
             else:
                 zip_file.extractall(destination)
-            print(f'Directory "{directory_path}" from repo {repo_url} downloaded and extracted to {destination}')
+            logger.info(f'Directory "{directory_path}" from repo {repo_url} downloaded and extracted to {destination}')
     except requests.RequestException as e:
-        print(f'Error downloading repository: {e}')
+        logger.info(f'Error downloading repository: {e}')
     except zipfile.BadZipFile:
-        print('Error: The downloaded file is not a valid ZIP file.')
+        logger.info('Error: The downloaded file is not a valid ZIP file.')
 
 
 def extract_from_lip_sync(source, destination, msg):
@@ -106,7 +106,7 @@ def extract_from_lip_sync(source, destination, msg):
     # Extract the ZIP file
     with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
         zip_file.extractall(destination)
-        print(msg)
+        logger.info(msg)
 
 
 def download_spleeter():
@@ -125,9 +125,9 @@ def download_spleeter():
         zipfile.BadZipFile: If the downloaded file is not a valid ZIP file.
     """
 
-    print('downloading data for Spleeter ...')
+    logger.info('downloading data for Spleeter ...')
     download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module', './chataigne/modules')
-    print('Module Spleeter downloaded')
+    logger.info('Module Spleeter downloaded')
     try:
         extract_from_lip_sync(
             'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/PySpleeter-win.zip',
@@ -135,9 +135,9 @@ def download_spleeter():
             'PySpleeter downloaded',
         )
     except requests.RequestException as e:
-        print(f'Error downloading repository: {e}')
+        logger.info(f'Error downloading repository: {e}')
     except zipfile.BadZipFile:
-        print('Error: The downloaded file is not a valid ZIP file.')
+        logger.info('Error: The downloaded file is not a valid ZIP file.')
 
 
 def download_chataigne():
@@ -154,7 +154,7 @@ def download_chataigne():
         requests.RequestException: If there is an error during the download of the repository.
         zipfile.BadZipFile: If the downloaded file is not a valid ZIP file.
     """
-    print('downloading data for Chataigne...')
+    logger.info('downloading data for Chataigne...')
     try:
         extract_from_lip_sync(
             'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip',
@@ -162,9 +162,9 @@ def download_chataigne():
             'chataigne downloaded',
         )
     except requests.RequestException as e:
-        print(f'Error downloading repository: {e}')
+        logger.info(f'Error downloading repository: {e}')
     except zipfile.BadZipFile:
-        print('Error: The downloaded file is not a valid ZIP file.')
+        logger.info('Error: The downloaded file is not a valid ZIP file.')
 
 
 def chataigne_settings(port=None):
@@ -198,7 +198,7 @@ def chataigne_settings(port=None):
         with open(f'{app_folder}/chataigne/WLEDLipSync.noisette', 'w', encoding='utf-8') as new_settings:
             json.dump(data, new_settings, ensure_ascii=False, indent=4)
 
-        print('Put chataigne settings')
+        logger.info('Put chataigne settings')
 
 
 async def run_install_chataigne(obj, dialog):
@@ -241,7 +241,7 @@ async def install_chataigne(obj):
         obj.sender.props(remove='loading')
         dialog.close()
 
-    print('install chataigne')
+    logger.info('install chataigne')
     obj.sender.props(add='loading')
     with ui.dialog() as dialog, ui.card():
         dialog.open()
@@ -286,12 +286,12 @@ def access_or_set_dict_value(data_dict, input_string, new_value=None):
 
     # Access
     value = access_or_set_dict_value(data_dict, input_string)
-    print(value)  # Output: 'old_value'
+    logger.info(value)  # Output: 'old_value'
 
     # Set a new value
     new_value = "new_value"
     access_or_set_dict_value(data_dict, input_string, new_value)
-    print(data_dict['projectSettings']['containers']['dashboardSettings']['parameters'][0]['controlAddress'])
+    logger.info(data_dict['projectSettings']['containers']['dashboardSettings']['parameters'][0]['controlAddress'])
                 # Output: 'new_value'
 
     Args:

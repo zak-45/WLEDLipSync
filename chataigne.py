@@ -86,7 +86,7 @@ class ChataigneWrapper:
             None
 
         """
-        print(self.load_file)
+        logger.info(self.load_file)
         command = [ChataigneWrapper._exe_name, self.load_file]
 
         # Add arguments to the command
@@ -132,7 +132,7 @@ class ChataigneWrapper:
             self.process.terminate()  # Terminate the process
             self.process = None  # Clear the process reference
             self._instance_running = False  # Update the instance state
-            print("Chataigne process has been stopped.")
+            logger.info("Chataigne process has been stopped.")
 
     def _read_output(self, pipe, is_error):
         """
@@ -156,7 +156,7 @@ class ChataigneWrapper:
         """
         Processes a line of output from a subprocess, attempting to parse it as JSON.
         This method handles the parsed data by invoking a callback function if provided,
-        and prints the line if it cannot be decoded as JSON.
+        and logger.infos the line if it cannot be decoded as JSON.
 
         Args:
             line (str): The output line to be processed.
@@ -171,7 +171,7 @@ class ChataigneWrapper:
             if self.callback is not None:
                 self.callback(data, is_stderr)
         except json.JSONDecodeError:
-            print(f"msg: {line}")
+            logger.info(f"msg: {line}")
 
     def _wait_for_process(self, process):
         """
@@ -189,7 +189,7 @@ class ChataigneWrapper:
         process.wait()
         self._instance_running = False
         self.return_code = process.returncode
-        print("Return code:", self.return_code, self.command)
+        logger.info(f"Return code : {self.return_code} {self.command}")
 
     def run(self, reset=False, file_name='', headless=True, open_gl=True):
         """
@@ -234,7 +234,7 @@ Expected way to work.
 if "NUITKA_ONEFILE_PARENT" not in os.environ:
     # read config
     # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.utils')
+    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.chataigne')
 
     lip_config = utils.read_config()
 

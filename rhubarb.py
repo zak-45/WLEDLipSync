@@ -170,7 +170,7 @@ class RhubarbWrapper:
         """
         Processes a line of output from a subprocess, attempting to parse it as JSON.
         This method handles the parsed data by invoking a callback function if provided,
-        and prints the line if it cannot be decoded as JSON.
+        and logger.infos the line if it cannot be decoded as JSON.
 
         Args:
             line (str): The output line to be processed.
@@ -186,7 +186,7 @@ class RhubarbWrapper:
             if self.callback is not None:
                 self.callback(data, is_stderr)
         except json.JSONDecodeError:
-            print(f"msg: {line}")
+            logger.info(f"msg: {line}")
 
     def _wait_for_process(self, process):
         """
@@ -205,7 +205,7 @@ class RhubarbWrapper:
         process.wait()
         self._instance_running = False
         self.return_code = process.returncode
-        print("Return code:", self.return_code, self.command)
+        logger.info(f"Return code: {self.return_code} {self.command}")
 
     def run(self, file_name, dialog_file, output):
         """
@@ -247,7 +247,7 @@ Expected way to work.
 if "NUITKA_ONEFILE_PARENT" not in os.environ:
     # read config
     # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.utils')
+    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.rhubarb')
 
     lip_config = utils.read_config()
 

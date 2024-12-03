@@ -506,7 +506,7 @@ def loop_mouth_cue(osc_address):
                                                "duration_number": 1}}}
 
                 LipAPI.wvs_client.send_message(ws_msg)
-            print(player_2digit, value, round(time.time() * 1000))
+            logger.info(str(player_2digit) + " " + str(value) + " " + str(round(time.time() * 1000)))
             if str2bool(app_config['send_only_once']):
                 triggered_values.add(cue_to_test)
 
@@ -624,13 +624,13 @@ async def main_page():
         if action == 'run':
             noisette = str(Path('./chataigne/WLEDLipSync.noisette').resolve())
             cha.run(headless=False, file_name=noisette)
-            print('start chataigne')
+            logger.info('start chataigne')
 
         elif action == 'stop':
             cha.stop_process()
             cha_status.props(remove='color=green')
             cha_status.props(add='color=black')
-            print('stop chataigne')
+            logger.info('stop chataigne')
 
 
     async def check_status():
@@ -646,7 +646,7 @@ async def main_page():
             None
         """
 
-        print('check status')
+        logger.info('check status')
 
         if LipAPI.osc_client is not None:
             # check net status UDP port, can provide false positive
@@ -688,7 +688,7 @@ async def main_page():
                 spleeter.disable()
 
         if cha.is_running():
-            print('chataigne running')
+            logger.info('chataigne running')
             cha_status.props(add='color=green')
 
 
@@ -1253,7 +1253,7 @@ async def main_page():
             Raises:
                 None
             """
-            logger.debug(start_time, letter_lbl)
+            logger.debug(str(start_time) + " " + str(letter_lbl))
             await modify_letter(start_time, letter_lbl)
 
         def position_player(seek_time: float, card: ui.card, rem: ui.icon, marker: str = 'X'):
@@ -1583,7 +1583,7 @@ async def main_page():
 
         if lyrics_data.value:
             try:
-                print('save lyrics')
+                logger.info('save lyrics')
                 # extract file name only
                 file_name = os.path.basename(audio_input.value)
                 file_info = os.path.splitext(file_name)
@@ -1622,7 +1622,7 @@ async def main_page():
                     lyrics.props(add='autogrow bg-color=blue-grey-4')
                     lyrics.style(add='text-align:center;')
             except Exception as e:
-                print(f"Not able to open file : {e}")
+                logger.error(f"Not able to open file : {e}")
             ui.button('close', on_click=lyrics_dialog.close)
 
     def show_song_lyrics():
@@ -1665,7 +1665,7 @@ async def main_page():
 
         # read tag data of the mp3 file
         with taglib.File(file_name) as song:
-            print(song.tags)
+            logger.info(song.tags)
             # set info from tags
             artist_tag = 'None'
             title_tag = 'None'
@@ -1703,7 +1703,7 @@ async def main_page():
         song5_title.set_text('')
         # get info from ytmusicapi
         info_from_yt = retriever.get_song_info_with_lyrics(title_tag, artist_tag)
-        print(info_from_yt)
+        logger.info(info_from_yt)
 
         try:
             if info_from_yt is not None:
@@ -1732,15 +1732,15 @@ async def main_page():
                     song5_title.set_text(info_from_yt['artistInfo']['top_5'][4]['title'])
 
                 except IndexError:
-                    print('Error to retrieve top5 from ytmusicapi')
+                    logger.info('Error to retrieve top5 from ytmusicapi')
 
             else:
-                print('nothing from ytmusicapi')
+                logger.info('nothing from ytmusicapi')
 
         except IndexError:
-            print('Error to retrieve info from ytmusicapi')
+            logger.info('Error to retrieve info from ytmusicapi')
         except Exception as e:
-            print(f'Error to retrieve info from ytmusicapi {e}')
+            logger.info(f'Error to retrieve info from ytmusicapi {e}')
         finally:
             pass
 
@@ -2251,19 +2251,19 @@ async def audio_editor():
     ui.navigate.to(f'/audiomass/src/index.html?WLEDLipSyncFilePath={audiomass_file}')
 
 async def startup_actions():
-    print('startup actions')
+    logger.info('startup actions')
     utils.chataigne_settings()
 
 def shutdown_actions():
     """
     Executes actions that are intended to be performed during the shutdown of the application.
-    This function prints a message indicating that shutdown actions are taking place and stops any ongoing processes.
+    This function logger.infos a message indicating that shutdown actions are taking place and stops any ongoing processes.
 
     Returns:
         None
     """
 
-    print('shutdown actions')
+    logger.info('shutdown actions')
     cha.stop_process()
 
 """
