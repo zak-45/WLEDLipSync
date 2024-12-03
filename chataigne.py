@@ -115,7 +115,7 @@ class ChataigneWrapper:
         # Wait for the process to complete in a separate thread
         threading.Thread(target=self._wait_for_process, args=(self.process,)).start()
 
-    def status(self):
+    def is_running(self):
 
         return self._instance_running
 

@@ -687,7 +687,7 @@ async def main_page():
                 LipAPI.cha_client = None
                 spleeter.disable()
 
-        if cha.status():
+        if cha.is_running():
             print('chataigne running')
             cha_status.props(add='color=green')
 
@@ -2162,7 +2162,7 @@ async def main_page():
 
         with ui.card().tight().classes('bg-cyan-400'):
             ui.label(' ')
-            cha_exp = ui.expansion('Chataigne').classes('bg-cyan-600')
+            cha_exp = ui.expansion('CHAtaigne').classes('bg-cyan-600')
             if os.path.isdir('./chataigne/modules/SpleeterGUI-Chataigne-Module-main'):
                 with cha_exp:
                     with ui.column():
