@@ -5,7 +5,7 @@ v: 1.0.0.0
 
 A class to run chataigne as portable version.
     This will execute a 'pseudo' portable version by redirecting USERPROFILE to the working directory (env)
-    Desktop & Documents folder need to exist to have it running in this way (Win OS)
+    Desktop & Documents folder need to exist to have it running on this way (Win OS)
 
 """
 
@@ -14,7 +14,6 @@ import subprocess
 import json
 import sys
 import threading
-
 
 class ChataigneWrapper:
     """
@@ -208,6 +207,7 @@ class ChataigneWrapper:
         """
         if self._instance_running:
             raise RuntimeError("An instance of Chataigne is already running.")
+        #
         self.load_file = file_name
         self.reset = reset
         self.headless = headless
@@ -216,4 +216,5 @@ class ChataigneWrapper:
         self.return_code = 999  # set default return code, if all Ok will be set to 0 after process finished
         run_thread = threading.Thread(target=self.run_command_in_subprocess)
         run_thread.daemon = True
+        #
         run_thread.start()

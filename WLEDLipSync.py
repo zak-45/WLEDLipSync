@@ -1902,10 +1902,10 @@ async def main_page():
                         spinner_vocals.set_visibility(False)
                         audio_vocals = ui.label('VOCALS').classes('self-center').tooltip('TBD')
                         with ui.row():
-                            folder_list = ui.icon('list', size='sm')
-                            folder_list.tooltip('folder')
-                            folder_list.on('click', lambda: LocalFilePicker(os.path.dirname(LipAPI.output_file)))
-                            folder_list.style(add='cursor: pointer')
+                            folder_out_list = ui.icon('list', size='sm')
+                            folder_out_list.tooltip('folder')
+                            folder_out_list.on('click', lambda: LocalFilePicker(os.path.dirname(LipAPI.output_file)))
+                            folder_out_list.style(add='cursor: pointer')
                             audio_dialog = ui.icon('lyrics', size='sm')
                             audio_dialog.tooltip('dialog')
                             audio_dialog.style(add='cursor: pointer')
@@ -2152,10 +2152,19 @@ async def main_page():
             ui.label(' ')
             ui.separator()
 
+
+        ui.label(' ')
+        ui.separator()
+
+        stop = ui.button('STOP APP', on_click=app.shutdown, color='red').classes('self-center')
+        stop.tooltip('Immediate stop of the server/application')
+
+        ui.label(' ')
+        ui.separator()
+
     if LipAPI.source_file != '':
         audio_input.value = LipAPI.source_file
         await set_file_name()
-        # await load_mouth_cue()
 
     if LipAPI.net_status_timer is not None:
         LipAPI.osc_client = None
@@ -2212,6 +2221,11 @@ async def audio_editor():
     audiomass_file = audiomass_file.replace('./', '/')
     ui.navigate.to(f'/audiomass/src/index.html?WLEDLipSyncFilePath={audiomass_file}')
 
+async def startup_actions():
+    print('startup actions')
+
+def shutdown_actions():
+    print('shutdown actions')
 
 """
 app specific param
@@ -2222,6 +2236,9 @@ app.add_static_files('/output', 'output')
 app.add_static_files('/audiomass', 'audiomass')
 app.add_static_files('/assets', 'assets')
 app.add_static_files('/config', 'config')
+
+app.on_startup(startup_actions)
+app.on_shutdown(shutdown_actions)
 
 """
 run niceGUI

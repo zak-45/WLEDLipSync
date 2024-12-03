@@ -18,12 +18,25 @@ from PIL import Image
 from pathlib import Path
 from typing import Optional
 
+
 async def show_tags(file):
+    """
+    Asynchronously displays the tags of an audio file in a user interface dialog.
+    This function opens a dialog that shows the tags in JSON format and includes a button to close the dialog.
+
+    Args:
+        file (str): The path to the audio file from which to extract tags.
+
+    Returns:
+        None
+    """
+
     with taglib.File(file) as song:
         with ui.dialog() as tags_dialog, ui.card():
             tags_dialog.open()
             ui.json_editor({'content': {'json': song.tags}})
             ui.button('close', on_click=tags_dialog.close)
+
 
 def apply_custom():
     """
@@ -92,12 +105,6 @@ async def wavesurfer():
     ''')
 
 
-async def drag_drop():
-    ui.add_body_html('''    
-    <script src="/assets/js/dragdrop.js"></script>    
-    ''')
-
-
 async def get_player_time():
     """
     get player current playing time
@@ -129,7 +136,6 @@ def clear_markers():
     """ run java to clear all markers """
 
     ui.run_javascript('clear_markers();', timeout=5)
-
 
 
 async def mouth_time_buffer_edit():

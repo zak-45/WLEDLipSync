@@ -8,6 +8,9 @@ A class to retrieve music artist information and song lyrics using the YTMusic A
 """
 
 from ytmusicapi import YTMusic
+import os
+import utils
+
 
 class MusicInfoRetriever:
     """
@@ -60,7 +63,7 @@ class MusicInfoRetriever:
 
         artists = self.yt.search(artist_name, filter='artists')
         if not artists:
-            print(f"No artists found for '{artist_name}'.")
+            logger.debug(f"No artists found for '{artist_name}'.")
             return None
         # we take the first record as this is the most probable one
         artist = artists[0]
@@ -151,3 +154,23 @@ class MusicInfoRetriever:
                 return song_data
 
         return None
+
+"""
+When this env var exist, this mean run from the one-file compressed executable.
+Load of the config is not possible, folder config should not exist.
+This avoid FileNotFoundError.
+This env not exist when run from the extracted program.
+Expected way to work.
+"""
+if "NUITKA_ONEFILE_PARENT" not in os.environ:
+    # read config
+    # create logger
+    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.utils')
+
+    lip_config = utils.read_config()
+
+    # config keys
+    server_config = lip_config[0]  # server key
+    app_config = lip_config[1]  # app key
+    color_config = lip_config[2]  # colors key
+    custom_config = lip_config[3]  # custom key
