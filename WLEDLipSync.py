@@ -74,6 +74,7 @@ import utils
 import logging
 import concurrent_log_handler
 import taglib
+import niceutils
 
 from str2bool import str2bool
 from OSCClient import OSCClient
@@ -86,13 +87,14 @@ from niceutils import LocalFilePicker
 from typing import List, Union
 from math import trunc
 from ytmusic import MusicInfoRetriever
-from utils import AnimatedElement as Animate
+from niceutils import AnimatedElement as Animate
 
 if sys.platform.lower() == 'win32':
     from asyncio import WindowsSelectorEventLoopPolicy, set_event_loop_policy
 
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
+# rhubarb
 rub = RhubarbWrapper()
 # music info
 retriever = MusicInfoRetriever()
@@ -452,7 +454,7 @@ async def set_audio_duration():
         None
     """
 
-    LipAPI.audio_duration = await utils.get_audio_duration('player_vocals')
+    LipAPI.audio_duration = await niceutils.get_audio_duration('player_vocals')
 
 
 def add_all_markers():
@@ -462,7 +464,7 @@ def add_all_markers():
 
 
 async def mouth_cue_action(osc_address):
-    LipAPI.player_time = await utils.get_player_time()
+    LipAPI.player_time = await niceutils.get_player_time()
     await run.io_bound(loop_mouth_cue, osc_address)
 
 
@@ -942,6 +944,7 @@ async def main_page():
             LipAPI.output_file = app_config['output_folder'] + file + '/' + 'rhubarb.json'
             edit_mouth_buffer.enable()
             load_mouth_button.enable()
+            run_icon.tooltip(f'Click here to analyse {LipAPI.file_to_analyse} with rhubarb')
             ui.timer(1, set_audio_duration, once=True)
 
         else:
@@ -1106,7 +1109,7 @@ async def main_page():
         LipAPI.mouth_times_selected = []
 
         if LipAPI.source_file != '':
-            ui.notification('this could take some times .....', position='center', type='warning', spinner=True)
+            ui.notification('this could take some time .....', position='center', type='warning', spinner=True)
 
             if os.path.isfile(LipAPI.output_file):
                 with open(LipAPI.output_file, 'r') as data:
@@ -1248,7 +1251,7 @@ async def main_page():
             if seek_time not in LipAPI.mouth_times_selected:
                 LipAPI.mouth_times_selected.append(seek_time)
                 LipAPI.mouth_times_selected.sort()
-            utils.create_marker(seek_time, marker)
+            niceutils.create_marker(seek_time, marker)
             card.classes(remove='bg-cyan-700')
             card.classes(add='bg-red-400')
             rem.set_visibility(True)
@@ -1357,7 +1360,7 @@ async def main_page():
         LipAPI.mouth_area_h.move(target_container=card_mouth)
 
         # This could take some time
-        ui.timer(1, utils.run_gencuedata, once=True)
+        ui.timer(1, niceutils.run_gencuedata, once=True)
 
         LipAPI.data_changed = False
         edit_mouth_buffer.enable()
@@ -1369,7 +1372,7 @@ async def main_page():
         Send WVS / OSC msg
         """
 
-        LipAPI.player_time = await utils.get_player_time()
+        LipAPI.player_time = await niceutils.get_player_time()
 
         actual_cue_record, next_cue_record = utils.find_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
         letter = next_cue_record['value']
@@ -1384,7 +1387,7 @@ async def main_page():
         # scroll central mouth cues
         if LipAPI.player_status == 'play' and LipAPI.scroll_graphic is True:
             if LipAPI.audio_duration is None:
-                LipAPI.audio_duration = await utils.get_audio_duration('player_vocals')
+                LipAPI.audio_duration = await niceutils.get_audio_duration('player_vocals')
             if LipAPI.mouth_area_h is not None:
                 LipAPI.mouth_area_h.scroll_to(percent=((LipAPI.player_time * 100) / LipAPI.audio_duration) / 100,
                                               axis='horizontal')
@@ -1471,7 +1474,7 @@ async def main_page():
             player_vocals.pause()
             player_accompaniment.pause()
         elif action == 'sync':
-            play_time = await utils.get_player_time()
+            play_time = await niceutils.get_player_time()
             player_accompaniment.seek(play_time)
 
     async def event_player_vocals(event):
@@ -1769,7 +1772,7 @@ async def main_page():
     #
     # Main UI generation
     #
-    utils.apply_custom()
+    niceutils.apply_custom()
 
     # Add Animate.css to the HTML head
     ui.add_head_html("""
@@ -1818,13 +1821,13 @@ async def main_page():
                     edit_mouth_buffer = ui.chip('Edit mouth Cues',
                                                 icon='edit',
                                                 text_color='yellow',
-                                                on_click=utils.mouth_time_buffer_edit)
+                                                on_click=niceutils.mouth_time_buffer_edit)
                     edit_mouth_buffer.disable()
             with ui.row().classes('border'):
                 add_markers = ui.chip('Add', icon='add', color='red', on_click=lambda: add_all_markers())
                 add_markers.tooltip('Add all markers')
                 add_markers.bind_visibility(LipAPI, 'wave_show')
-                del_markers = ui.chip('Clear', icon='clear', color='red', on_click=lambda: utils.clear_markers())
+                del_markers = ui.chip('Clear', icon='clear', color='red', on_click=lambda: niceutils.clear_markers())
                 del_markers.tooltip('clear all markers')
                 del_markers.bind_visibility(LipAPI, 'wave_show')
                 ui.chip('Audio Editor', icon='edit', text_color='yellow', on_click=lambda: audio_edit())
@@ -1914,7 +1917,7 @@ async def main_page():
                             circular = ui.circular_progress(min=1, max=100)
                             run_icon = ui.icon('rocket', size='lg')
                             run_icon.style('cursor: pointer')
-                            run_icon.tooltip('Click to analyse audio with Rhubarb')
+                            run_icon.tooltip(f'Click to analyse {LipAPI.file_to_analyse} with Rhubarb')
                             run_icon.on('click', lambda: analyse_audio())
                             scroll_time = ui.checkbox('')
                             scroll_time.tooltip('check to auto scroll graphic mouth cue')
@@ -2127,7 +2130,8 @@ async def main_page():
                             cha_path = ui.input('Path (opt)', value='')
                             cha_activate = ui.checkbox('activate', on_change=manage_cha_client)
             else:
-                cha_install = ui.button('install', icon='settings', on_click=lambda e: utils.install_chataigne(e))
+
+                ui.button('install', icon='settings', on_click=lambda e: utils.install_chataigne(e))
 
             ui.label(' ')
             ui.separator()
@@ -2143,7 +2147,7 @@ async def main_page():
         LipAPI.cha_client = None
         LipAPI.net_status_timer.active = False
 
-    await utils.wavesurfer()
+    await niceutils.wavesurfer()
 
 
 @ui.page('/edit')
@@ -2156,7 +2160,7 @@ async def edit_cue_buffer():
         None
 
     """
-    utils.apply_custom()
+    niceutils.apply_custom()
     await edit_mouth_time_buffer()
 
 
@@ -2170,7 +2174,7 @@ async def preview_page():
         None
 
     """
-    utils.apply_custom()
+    niceutils.apply_custom()
     with ui.card(align_items='center').classes('w-full'):
         await create_carousel()
 
@@ -2181,12 +2185,13 @@ async def audio_editor():
     Navigates to the audio editor page of the application.
     This asynchronous function applies custom settings and constructs the file path for the audio file to be analyzed,
     then redirects the user to the Audiomass editor with the appropriate parameters.
+    Need take mp3 version instead wav one.
 
     Returns:
         None
 
     """
-    utils.apply_custom()
+    niceutils.apply_custom()
     audiomass_file = LipAPI.file_to_analyse.replace('.wav', '.mp3')
     audiomass_file = audiomass_file.replace('./', '/')
     ui.navigate.to(f'/audiomass/src/index.html?WLEDLipSyncFilePath={audiomass_file}')

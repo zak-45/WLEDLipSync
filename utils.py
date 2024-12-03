@@ -1,3 +1,11 @@
+"""
+a: zak-45
+d: 03/12/2024
+v: 1.0.0.0
+
+Utilities for WLEDLipSync
+
+"""
 import asyncio
 import av
 import base64
@@ -267,6 +275,7 @@ def run_chataigne(action):
 
     """
     if action == 'run':
+        chataigne_settings()
         noisette = str(Path('./chataigne/WLEDLipSync.noisette').resolve())
         cha.run(headless=False, file_name=noisette)
         print('start chataigne')
@@ -569,28 +578,6 @@ def image_array_to_base64(nparray):
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
 
-def apply_custom():
-    """
-    Layout Colors come from config file
-    bg image can be customized
-    :return:
-    """
-    ui.colors(primary=color_config['primary'],
-              secondary=color_config['secondary'],
-              accent=color_config['accent'],
-              dark=color_config['dark'],
-              positive=color_config['positive'],
-              negative=color_config['negative'],
-              info=color_config['info'],
-              warning=color_config['warning']
-              )
-
-    ui.query('body').style(f'background-image: url({custom_config["bg-image"]}); '
-                           'background-size: cover;'
-                           'background-repeat: no-repeat;'
-                           'background-position: center;')
-
-
 async def load_image_async(img_path: str):
     """
     Loads an image asynchronously from the specified file path.
@@ -610,70 +597,6 @@ async def load_image_async(img_path: str):
     if img is not None:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
-
-
-async def get_audio_duration(player: str = ''):
-    """
-    Get audio duration
-    :param player: ID of the player object (str)
-    :return: duration
-    """
-
-    return await ui.run_javascript(f'document.getElementById("{player}").duration;', timeout=2)
-
-
-async def wavesurfer():
-    """
-    Sets up the CSS and JavaScript for the wavesurfer component.
-
-    This function adds the necessary CSS styles for the waveform display and
-    includes the JavaScript module required for the wavesurfer functionality.
-    It ensures that the waveform is styled correctly and is interactive for user actions.
-
-    Returns:
-        None
-    """
-
-    ui.add_css('''
-    #waveform {
-    margin: 0 28px; /* waveform */
-    height: 192; /* Set a height for the waveform */
-    cursor: crosshair; /* Change cursor to indicate clickable area */
-    }
-    .blink {
-        animation: blinker 1s linear infinite;
-        color: yellow;
-    }
-
-    @keyframes blinker {
-        50% { opacity: 0; }
-    }
-    ''')
-
-    ui.add_body_html('''    
-    <script type="module">
-        import "/assets/js/wledlipsync.js"
-    </script>    
-    ''')
-
-
-async def drag_drop():
-    ui.add_body_html('''    
-    <script src="/assets/js/dragdrop.js"></script>    
-    ''')
-
-
-async def get_player_time():
-    """
-    get player current playing time
-    """
-
-    return round(
-        await ui.run_javascript(
-            "document.getElementById('player_vocals').currentTime;", timeout=3
-        ),
-        2,
-    )
 
 
 def find_cue_point(time_cue, cue_points):
@@ -698,158 +621,6 @@ def find_cue_point(time_cue, cue_points):
             nearest_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
 
     return actual_cue, nearest_cue
-
-
-async def run_gencuedata():
-    """
-    execute javascript function to generate
-    data when click on waveform for focus on the mouth card
-    """
-    await ui.run_javascript('genCueData();', timeout=5)
-
-
-def create_marker(position, value):
-    """ run java to add marker on the waveform """
-
-    ui.run_javascript(f'add_marker({position},"{value}");', timeout=5)
-
-
-def clear_markers():
-    """ run java to clear all markers """
-
-    ui.run_javascript('clear_markers();', timeout=5)
-
-
-async def mouth_time_buffer_edit():
-    """
-    Displays a dialog for editing the mouth time buffer in the application. 
-    This asynchronous function creates a full-screen dialog containing an iframe for the editor and 
-    provides buttons to open the editor in a new tab or to close the dialog.
-
-    Returns:
-        None
-
-    """
-    buffer_dialog = ui.dialog() \
-        .props(add='full-width full-height transition-show="slide-up" transition-hide="slide-down"')
-
-    with buffer_dialog:
-        buffer_dialog.open()
-        editor_card = ui.card().classes('w-full')
-        with editor_card:
-            ui.html(
-                '''                
-            <iframe src="/edit" frameborder="0" 
-            style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;
-                    height:100%;width:100%;
-                    position:absolute;top:0px;left:0px;right:0px;bottom:0px" 
-            height="100%" width="100%">
-            </iframe>
-            '''
-            )
-            with ui.page_sticky(position='top-right', x_offset=85, y_offset=28):
-                with ui.row():
-                    new_editor = ui.button(icon='edit', color='yellow')
-                    new_editor.on('click', lambda: ui.navigate.to('/edit', new_tab=True))
-                    new_editor.props(add='round outline size="8px"')
-                    new_editor.tooltip('Open editor in new tab')
-                    close = ui.button(icon='close', color='red')
-                    close.on('click', lambda: buffer_dialog.close())
-                    close.props(add='round outline size="8px"')
-                    close.tooltip('Close editor')
-
-
-class AnimatedElement:
-    """
-    Add animation to UI Element, in / out
-        In for create element
-        Out for delete element
-    Following is necessary as it's based on Animate.css
-    # Add Animate.css to the HTML head
-    ui.add_head_html(""
-    <link rel="stylesheet" href="./assets/css/animate.min.css"/>
-    "")
-    app.add_static_files('/assets', 'assets')
-    Param:
-        element_type : nicegui element e.g. card, label, ...
-        animation_name : see https://animate.style/
-        duration : custom animation delay
-    """
-
-    def __init__(self, element_type: type[any], animation_name_in='fadeIn', animation_name_out='fadeOut', duration=1.5):
-        """
-        Initializes a new instance of the animation class with specified parameters. 
-        This constructor sets up the element type, animation names for entering and exiting, 
-        and the duration of the animations.
-
-        Args:
-            element_type (str): The type of element to which the animation will be applied.
-            animation_name_in (str): The name of the animation for the entry effect. Defaults to 'fadeIn'.
-            animation_name_out (str): The name of the animation for the exit effect. Defaults to 'fadeOut'.
-            duration (float): The duration of the animation in seconds. Defaults to 1.5.
-
-        Returns:
-            None
-
-        """
-        self.element_type = element_type
-        self.animation_name_in = animation_name_in
-        self.animation_name_out = animation_name_out
-        self.duration = duration
-
-    def generate_animation_classes(self, animation_name):
-        """
-        Generates CSS classes for animations based on the specified animation name and duration. 
-        This method constructs the animation class and duration class strings, 
-        which can be used to apply animations to elements in a user interface.
-
-        Args:
-            animation_name (str): The name of the animation to be applied.
-
-        Returns:
-            tuple: A tuple containing the animation class and the duration class.
-
-        """
-        # Generate the animation and duration classes
-        animation_class = f'animate__{animation_name}'
-        duration_class = f'custom-duration-{self.duration}s'
-        return animation_class, duration_class
-
-    def add_custom_css(self):
-        """
-        Adds custom CSS to the user interface for specifying animation duration. 
-        This method generates a style block that sets the animation duration based 
-        on the instance's duration attribute and injects it into the HTML head of the UI.
-
-        Returns:
-            None
-
-        """
-        # Add custom CSS for animation duration
-        custom_css = f"""
-        <style>
-        .custom-duration-{self.duration}s {{
-          animation-duration: {self.duration}s;
-        }}
-        </style>
-        """
-        ui.add_head_html(custom_css)
-
-    def create_element(self, *args, **kwargs):
-        """ Add class for in """
-        self.add_custom_css()
-        animation_class, duration_class = self.generate_animation_classes(self.animation_name_in)
-        element = self.element_type(*args, **kwargs)
-        element.classes(f'animate__animated {animation_class} {duration_class}')
-        return element
-
-    def delete_element(self, element):
-        """ Add class for out and delete """
-        animation_class, duration_class = self.generate_animation_classes(self.animation_name_out)
-        element.classes(f'animate__animated {animation_class} {duration_class}')
-        # Delay the actual deletion to allow the animation to complete
-        ui.timer(self.duration, lambda: element.delete(), once=True)
-
 
 """
 When this env var exist, this mean run from the one-file compressed executable.
