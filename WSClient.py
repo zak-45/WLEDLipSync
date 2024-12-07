@@ -1,11 +1,13 @@
+import logging
+import concurrent_log_handler
 import websocket
 import threading
 import queue
 import logging
 import time
 import json  # Import json for serialization
-
-logging.basicConfig(level=logging.DEBUG)  # Set to DEBUG for detailed logs
+import utils
+import os
 
 
 class WebSocketClient:
@@ -67,7 +69,7 @@ class WebSocketClient:
                 with self._lock:
                     self.status = "connecting"
                 self._ws = websocket.create_connection(self.ws_address)
-                logging.info(f"Connected to {self.ws_address}")
+                logger.info(f"Connected to {self.ws_address}")
                 with self._lock:
                     self.status = "connected"
 
@@ -90,19 +92,19 @@ class WebSocketClient:
             except (websocket.WebSocketConnectionClosedException, ConnectionError) as e:
                 with self._lock:
                     self.status = "retrying"
-                logging.warning(f"WebSocket connection closed: {e}")
-                logging.info(f"Retrying connection in {self.retry_interval} seconds...")
+                logger.warning(f"WebSocket connection closed: {e}")
+                logger.info(f"Retrying connection in {self.retry_interval} seconds...")
                 time.sleep(self.retry_interval)
             except Exception as e:
                 with self._lock:
                     self.status = "error"
-                logging.error(f"Unexpected error: {e}")
+                logger.error(f"Unexpected error: {e}")
                 break
 
         # Final cleanup
         with self._lock:
             self.status = "disconnected" if self._running else "stopped"
-        logging.info("Max retry time reached or stopped. Exiting connection loop.")
+        logger.info("Max retry time reached or stopped. Exiting connection loop.")
 
     def _receive(self):
         """
@@ -117,12 +119,12 @@ class WebSocketClient:
         while self._running:
             try:
                 message = self._ws.recv()
-                logging.info(f"Received: {message}")
+                logger.info(f"Received: {message}")
             except websocket.WebSocketConnectionClosedException:
-                logging.warning("Connection closed while receiving.")
+                logger.warning("Connection closed while receiving.")
                 break
             except Exception as e:
-                logging.error(f"Error in receive: {e}")
+                logger.error(f"Error in receive: {e}")
                 break
 
     def _send(self):
@@ -145,18 +147,18 @@ class WebSocketClient:
                         if isinstance(message, dict):
                             message = json.dumps(message)
                         self._ws.send(message)
-                        logging.info(f"Sent: {message}")
+                        logger.info(f"Sent: {message}")
                     else:
-                        logging.warning("Message not sent, client not connected.")
+                        logger.warning("Message not sent, client not connected.")
                         # self._message_queue.put(message)  # Re-enqueue the message
             except queue.Empty:
                 continue  # No message to send, keep checking
             except websocket.WebSocketConnectionClosedException:
-                logging.warning("Connection closed while sending.")
+                logger.warning("Connection closed while sending.")
                 # self._message_queue.put(message)  # Re-enqueue the message
                 break
             except Exception as e:
-                logging.error(f"Error in send: {e}")
+                logger.error(f"Error in send: {e}")
                 # self._message_queue.put(message)  # Re-enqueue the message
                 break
 
@@ -174,7 +176,7 @@ class WebSocketClient:
             time.sleep(self.queue_check_interval)
             queue_length = self._message_queue.qsize()
             if queue_length > 0:
-                logging.warning(f"Message queue length is {queue_length}. Messages are not being sent.")
+                logger.warning(f"Message queue length is {queue_length}. Messages are not being sent.")
 
     def run(self):
         """
@@ -191,7 +193,7 @@ class WebSocketClient:
             self._connect_thread = threading.Thread(target=self._connect)
             self._connect_thread.daemon = True  # Set as daemon
             self._connect_thread.start()
-            logging.info("WebSocket client started")
+            logger.info("WebSocket client started")
 
     def stop(self):
         """
@@ -224,7 +226,7 @@ class WebSocketClient:
             self._send_thread.join(timeout=2)
         if self._queue_monitor_thread:
             self._queue_monitor_thread.join(timeout=2)
-        logging.info("WebSocket client stopped")
+        logger.info("WebSocket client stopped")
 
     def send_message(self, message):
         """
@@ -242,9 +244,9 @@ class WebSocketClient:
         with self._lock:
             if self.status == "connected":
                 self._message_queue.put(message)
-                logging.info(f"Message queued: {message}")
+                logger.info(f"Message queued: {message}")
             else:
-                logging.warning("Cannot send message: WebSocket client is not connected.")
+                logger.warning("Cannot send message: WebSocket client is not connected.")
 
     def get_status(self):
         """
@@ -257,3 +259,23 @@ class WebSocketClient:
         """
         with self._lock:
             return self.status
+
+"""
+When this env var exist, this mean run from the one-file compressed executable.
+Load of the config is not possible, folder config should not exist.
+This avoid FileNotFoundError.
+This env not exist when run from the extracted program.
+Expected way to work.
+"""
+if "NUITKA_ONEFILE_PARENT" not in os.environ:
+    # read config
+    # create logger
+    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.wvs')
+
+    lip_config = utils.read_config()
+
+    # config keys
+    server_config = lip_config[0]  # server key
+    app_config = lip_config[1]  # app key
+    color_config = lip_config[2]  # colors key
+    custom_config = lip_config[3]  # custom key

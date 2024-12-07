@@ -7,6 +7,8 @@ Nice Utilities for WLEDLipSync
 
 """
 
+import logging
+import concurrent_log_handler
 import sys
 import os
 import cv2utils
