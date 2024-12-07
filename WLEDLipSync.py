@@ -2265,6 +2265,9 @@ async def audio_editor():
 async def startup_actions():
     logger.info('startup actions')
     utils.chataigne_settings()
+    if not os.path.isfile(rub._exe_name):
+        logger.info('rhubarb missing... proceed to installation')
+        await utils.run_install_rhubarb()
 
 def shutdown_actions():
     """

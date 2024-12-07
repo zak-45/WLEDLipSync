@@ -3,9 +3,20 @@ import subprocess
 import json
 import threading
 import utils
+import sys
 
 from typing import Literal
 
+
+def exe_name():
+    if sys.platform.lower() == 'win32':
+        return './rhubarb/win/Rhubarb-Lip-Sync-1.13.0-Windows/rhubarb.exe'
+    elif sys.platform.lower() == 'linux':
+        return './rhubarb/linux/Rhubarb-Lip-Sync-1.13.0-Linux/rhubarb'
+    elif sys.platform.lower() == 'macos':
+        return './rhubarb/mac/Rhubarb-Lip-Sync-1.13.0-macOS/rhubarb'
+    else:
+        return None
 
 class RhubarbWrapper:
     """
@@ -40,7 +51,7 @@ class RhubarbWrapper:
 
     """
 
-    _exe_name = './rhubarb/win/rhubarb.exe'
+    _exe_name = exe_name()
     _instance_running = False
 
     def __init__(self,

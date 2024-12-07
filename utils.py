@@ -215,6 +215,20 @@ def download_chataigne():
         logger.info('Error: The downloaded file is not a valid ZIP file.')
 
 
+def download_rhubarb():
+    logger.info('Downloading Portable Rhubarb...')
+    try:
+        extract_from_url(
+            f'{rhubarb_url()}',
+            f'{rhubarb_folder()}',
+            'rhubarb downloaded',
+        )
+    except requests.RequestException as e:
+        logger.info(f'Error downloading repository: {e}')
+    except zipfile.BadZipFile:
+        logger.info('Error: The downloaded file is not a valid ZIP file.')
+
+
 def chataigne_settings(port=None):
     audio_folder = str(Path(app_config['audio_folder']).resolve())
     app_folder = os.getcwd()
@@ -280,6 +294,27 @@ def chataigne_folder():
         return 'chataigne/linux/Chataigne'
     elif sys.platform.lower() == 'macos':
         return 'chataigne/mac/Chataigne'
+    else:
+        return 'unknown'
+
+def rhubarb_folder():
+    if sys.platform.lower() == 'win32':
+        return 'rhubarb/win'
+    elif sys.platform.lower() == 'linux':
+        return 'rhubarb/linux'
+    elif sys.platform.lower() == 'macos':
+        return 'rhubarb/mac'
+    else:
+        return 'unknown'
+
+
+def rhubarb_url():
+    if sys.platform.lower() == 'win32':
+        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Windows.zip'
+    elif sys.platform.lower() == 'linux':
+        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Linux.zip'
+    elif sys.platform.lower() == 'macos':
+        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-macOS.zip'
     else:
         return 'unknown'
 
@@ -349,6 +384,14 @@ async def run_install_chataigne(obj, dialog):
     obj.sender.set_text('RELOAD APP')
     obj.sender.on('click', lambda: ui.navigate.to('/'))
     ui.notify('Reload your APP to use Chataigne/Spleeter', position='center', type='warning')
+
+
+async def run_install_rhubarb():
+    logger.debug('run rhubarb installation')
+    #
+    ui.notify('Download data for rhubarb', position='center', type='info')
+    await run.io_bound(download_rhubarb)
+    #
 
 
 async def install_chataigne(obj):

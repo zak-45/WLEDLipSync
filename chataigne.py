@@ -16,6 +16,17 @@ import sys
 import threading
 import utils
 
+
+def exe_name():
+    if sys.platform.lower() == 'win32':
+        return './chataigne/win/chataigne.exe'
+    elif sys.platform.lower() == 'linux':
+        return './chataigne/linux/chataigne'
+    elif sys.platform.lower() == 'macos':
+        return './chataigne/mac/chataigne'
+    else:
+        return None
+
 class ChataigneWrapper:
     """
     Simple Chataigne wrapper to run it from python.
@@ -29,12 +40,7 @@ class ChataigneWrapper:
     (forceNoGL can be handy when having problem with graphics drivers)
 
     """
-    if sys.platform.lower() == 'win32':
-        _exe_name = './chataigne/win/chataigne.exe'
-    elif sys.platform.lower() == 'linux':
-        _exe_name = './chataigne/linux/chataigne'
-    elif sys.platform.lower() == 'macos':
-        _exe_name = './chataigne/mac/chataigne'
+    _exe_name = exe_name()
     _instance_running = False
 
     def __init__(self,
