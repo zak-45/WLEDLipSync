@@ -94,7 +94,7 @@ def download_github_directory_as_zip(repo_url: str, destination: str, directory_
                         zip_file.extract(file_info, destination)
             else:
                 zip_file.extractall(destination)
-            logger.info(f'Directory "{directory_path}" from repo {repo_url} downloaded and extracted to {destination}')
+            logger.info(f'Download {repo_url}, extract "{directory_path}" to {destination}')
     except requests.RequestException as e:
         logger.info(f'Error downloading repository: {e}')
     except zipfile.BadZipFile:
@@ -115,9 +115,12 @@ def extract_zip_with_7z(zip_file, destination):
     Raises:
         subprocess.CalledProcessError: If the extraction process fails.
     """
-    z_path = "./chataigne/modules/SpleeterGUI-Chataigne-Module-main/xtra/win/7-ZipPortable/App/7-Zip64/7z.exe"
 
-    subprocess.run([z_path, 'x', zip_file, f'-o{destination}', '-y'], check=True)
+    z_path = f"{chataigne_modules_folder()}/SpleeterGUI-Chataigne-Module-main/xtra/win/7-ZipPortable/App/7-Zip64/7z.exe"
+    try:
+        subprocess.run([z_path, 'x', zip_file, f'-o{destination}', '-y'], check=True)
+    except Exception as e:
+        logger.error(f'Error with 7zip {e}')
 
 
 def extract_from_url(source, destination, msg, seven_zip: bool = False):
@@ -174,7 +177,9 @@ def download_spleeter():
     logger.info('downloading data for Spleeter ...')
     download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module', chataigne_modules_folder())
     logger.info('Chataigne Module Spleeter downloaded')
-    # python portable spleeter
+    # wait a few sec
+    time.sleep(3)
+    #  extract python portable spleeter
     try:
         extract_from_url(
             f'https://github.com/zak-45/SpleeterGUI-Chataigne-Module/releases/download/0.0.0.0/{python_portable_zip()}',
@@ -254,10 +259,6 @@ def chataigne_settings(port=None):
             access_or_set_dict_value(data_dict=data,
                                      input_string='modules.items[3].scripts.items[0].parameters[0].value',
                                      new_value=f'{app_folder}/chataigne/LipSync.js')
-
-            # remove python portable that has been downloaded during installation
-            if os.path.isfile('tmp/Pysp310.zip'):
-                os.remove('tmp/Pysp310.zip')
 
         with open(f'{app_folder}/chataigne/WLEDLipSync.noisette', 'w', encoding='utf-8') as new_settings:
             json.dump(data, new_settings, ensure_ascii=False, indent=4)
@@ -371,15 +372,22 @@ async def run_install_chataigne(obj, dialog):
     logger.debug('run chataigne installation')
     dialog.close()
     #
-    ui.notify('Download data for chataigne', position='center', type='info')
+    ui.notify('Download Portable Chataigne', position='center', type='info')
     await run.io_bound(download_chataigne)
     #
-    ui.notify('Download data for spleeter... take some time', position='center', type='info')
+    # we will wait a few sec before continue
+    time.sleep(2)
+    #
+    ui.notify('Download data for spleeter... this will take some time', position='center', type='info')
     await run.io_bound(download_spleeter)
+    #
+    # we will wait a few sec before continue
+    time.sleep(1)
     #
     ui.notify('Finalize Chataigne installation', position='center', type='info')
     await run.io_bound(chataigne_settings)
     #
+    # set UI after installation
     obj.sender.props(remove='loading')
     obj.sender.set_text('RELOAD APP')
     obj.sender.on('click', lambda: ui.navigate.to('/'))

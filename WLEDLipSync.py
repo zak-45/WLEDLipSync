@@ -2279,7 +2279,13 @@ def shutdown_actions():
     """
 
     logger.info('shutdown actions')
+    # stop Chataigne
     cha.stop_process()
+    logger.info('stop chataigne')
+    # remove python portable that has been downloaded during installation
+    logger.info('clean tmp')
+    if os.path.isfile('tmp/Pysp310.zip'):
+        os.remove('tmp/Pysp310.zip')
 
 """
 app specific param
