@@ -691,6 +691,8 @@ async def main_page():
             logger.info('chataigne running')
             cha_status.props(add='color=green')
 
+        if not os.path.isdir(f'{utils.chataigne_modules_folder()}/SpleeterGUI-Chataigne-Module-main'):
+            spleeter.disable()
 
         if wvs_activate.value is False and osc_activate.value is False and cha_activate is False:
             link_wvs.props(remove="color=green")
@@ -701,7 +703,17 @@ async def main_page():
             link_osc.props(remove="color=green")
             LipAPI.status_timer.active = False
 
-    async def status_timer():
+    async def manage_status_timer():
+        """
+        Manage the status timer for the LipAPI.
+
+        This asynchronous function creates a new status timer if one does not
+        already exist, or activates the existing timer. The timer is set to check
+        the status at regular intervals.
+
+        Returns:
+            None
+        """
         # create or activate status  timer
         if LipAPI.status_timer is None:
             LipAPI.status_timer = ui.timer(5, check_status)
@@ -723,7 +735,7 @@ async def main_page():
 
         logger.debug('CHA activation')
 
-        await status_timer()
+        await manage_status_timer()
 
         if cha_activate.value is True:
             # we need to create a client if not exist
@@ -765,7 +777,7 @@ async def main_page():
 
         logger.debug('WVS activation')
 
-        await status_timer()
+        await manage_status_timer()
 
         if wvs_activate.value is True:
             # we need to create a client if not exist
@@ -809,7 +821,7 @@ async def main_page():
 
         logger.debug('OSC activation')
 
-        await status_timer()
+        await manage_status_timer()
 
         if osc_activate.value is True:
             # we need to create a client if not exist
@@ -2163,7 +2175,7 @@ async def main_page():
         with ui.card().tight().classes('bg-cyan-400'):
             ui.label(' ')
             cha_exp = ui.expansion('CHAtaigne').classes('bg-cyan-600')
-            if os.path.isdir('./chataigne/modules/SpleeterGUI-Chataigne-Module-main'):
+            if os.path.isfile(utils.chataigne_exe_file()):
                 with cha_exp:
                     with ui.column():
                         with ui.row():
@@ -2186,7 +2198,7 @@ async def main_page():
         ui.separator()
 
         stop = ui.button('STOP APP', on_click=app.shutdown, color='red').classes('self-center')
-        stop.tooltip('Immediate stop of the server/application')
+        stop.tooltip('Shutdown server/application')
 
         ui.label(' ')
         ui.separator()

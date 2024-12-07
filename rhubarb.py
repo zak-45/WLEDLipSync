@@ -147,6 +147,18 @@ class RhubarbWrapper:
         # Wait for the process to complete in a separate thread
         threading.Thread(target=self._wait_for_process, args=(process,)).start()
 
+    def is_running(self):
+        """Check if the instance is currently running.
+
+        This method returns the status of the instance, indicating whether it is
+        currently active or not.
+
+        Returns:
+            bool: True if the instance is running, False otherwise.
+        """
+
+        return self._instance_running
+
     def _read_output(self, pipe, is_error):
         """
         Reads output from a subprocess pipe and processes each line.

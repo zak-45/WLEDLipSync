@@ -1,562 +1,553 @@
 {
-  "metaData": {
-    "version": "1.9.24",
-    "versionNumber": 67864
-  },
-  "projectSettings": {
-    "containers": {
-      "dashboardSettings": {
-        "parameters": [
-          {
-            "value": "",
-            "controlAddress": "/showDashboardOnStartup",
-            "enabled": false
-          }
-        ]
-      },
-      "customDefinitions": {
-      }
-    }
-  },
-  "dashboardManager": {
-    "viewOffset": [
-      0,
-      0
-    ],
-    "viewZoom": 1.0
-  },
-  "parrots": {
-    "viewOffset": [
-      0,
-      0
-    ],
-    "viewZoom": 1.0
-  },
-  "layout": {
-    "mainLayout": {
-      "type": 1,
-      "width": 1200,
-      "height": 780,
-      "direction": 2,
-      "shifters": [
-        {
-          "type": 1,
-          "width": 1200,
-          "height": 780,
-          "direction": 2,
-          "shifters": [
-            {
-              "type": 1,
-              "width": 1200,
-              "height": 455,
-              "direction": 1,
-              "shifters": [
-                {
-                  "type": 1,
-                  "width": 368,
-                  "height": 455,
-                  "direction": 2,
-                  "shifters": [
-                    {
-                      "type": 0,
-                      "width": 368,
-                      "height": 273,
-                      "currentContent": "Modules",
-                      "tabs": [
-                        {
-                          "name": "Modules"
-                        }
-                      ]
-                    },
-                    {
-                      "type": 0,
-                      "width": 368,
-                      "height": 176,
-                      "currentContent": "Sequences",
-                      "tabs": [
-                        {
-                          "name": "Sequences"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "type": 0,
-                  "width": 513,
-                  "height": 455,
-                  "currentContent": "Dashboard",
-                  "tabs": [
-                    {
-                      "name": "State Machine"
-                    },
-                    {
-                      "name": "Dashboard"
-                    },
-                    {
-                      "name": "Module Router"
-                    },
-                    {
-                      "name": "Morpher"
-                    }
-                  ]
-                },
-                {
-                  "type": 0,
-                  "width": 307,
-                  "height": 455,
-                  "currentContent": "Inspector",
-                  "tabs": [
-                    {
-                      "name": "Inspector"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": 1,
-              "width": 1200,
-              "height": 318,
-              "direction": 1,
-              "shifters": [
-                {
-                  "type": 0,
-                  "width": 885,
-                  "height": 318,
-                  "currentContent": "Sequence Editor",
-                  "tabs": [
-                    {
-                      "name": "Sequence Editor"
-                    }
-                  ]
-                },
-                {
-                  "type": 0,
-                  "width": 309,
-                  "height": 318,
-                  "currentContent": "Logger",
-                  "tabs": [
-                    {
-                      "name": "Help"
-                    },
-                    {
-                      "name": "Logger"
-                    },
-                    {
-                      "name": "Warnings"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
+    "metaData": {
+        "version": "1.9.24",
+        "versionNumber": 67864
     },
-    "windows": null
-  },
-  "modules": {
-    "items": [
-      {
-        "parameters": [
-          {
-            "value": true,
-            "controlAddress": "/logIncoming"
-          },
-          {
-            "value": true,
-            "controlAddress": "/logOutgoing"
-          }
+    "projectSettings": {
+        "containers": {
+            "dashboardSettings": {
+                "parameters": [
+                    {
+                        "value": "",
+                        "controlAddress": "/showDashboardOnStartup",
+                        "enabled": false
+                    }
+                ]
+            },
+            "customDefinitions": {}
+        }
+    },
+    "dashboardManager": {
+        "viewOffset": [
+            0,
+            0
         ],
-        "niceName": "Spleeter",
-        "type": "Spleeter",
-        "scripts": {
-          "items": [
+        "viewZoom": 1.0
+    },
+    "parrots": {
+        "viewOffset": [
+            0,
+            0
+        ],
+        "viewZoom": 1.0
+    },
+    "layout": {
+        "mainLayout": {
+            "type": 1,
+            "width": 1200,
+            "height": 780,
+            "direction": 2,
+            "shifters": [
+                {
+                    "type": 1,
+                    "width": 1200,
+                    "height": 780,
+                    "direction": 2,
+                    "shifters": [
+                        {
+                            "type": 1,
+                            "width": 1200,
+                            "height": 455,
+                            "direction": 1,
+                            "shifters": [
+                                {
+                                    "type": 1,
+                                    "width": 368,
+                                    "height": 455,
+                                    "direction": 2,
+                                    "shifters": [
+                                        {
+                                            "type": 0,
+                                            "width": 368,
+                                            "height": 273,
+                                            "currentContent": "Modules",
+                                            "tabs": [
+                                                {
+                                                    "name": "Modules"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": 0,
+                                            "width": 368,
+                                            "height": 176,
+                                            "currentContent": "Sequences",
+                                            "tabs": [
+                                                {
+                                                    "name": "Sequences"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": 0,
+                                    "width": 513,
+                                    "height": 455,
+                                    "currentContent": "Dashboard",
+                                    "tabs": [
+                                        {
+                                            "name": "State Machine"
+                                        },
+                                        {
+                                            "name": "Dashboard"
+                                        },
+                                        {
+                                            "name": "Module Router"
+                                        },
+                                        {
+                                            "name": "Morpher"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": 0,
+                                    "width": 307,
+                                    "height": 455,
+                                    "currentContent": "Inspector",
+                                    "tabs": [
+                                        {
+                                            "name": "Inspector"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": 1,
+                            "width": 1200,
+                            "height": 318,
+                            "direction": 1,
+                            "shifters": [
+                                {
+                                    "type": 0,
+                                    "width": 885,
+                                    "height": 318,
+                                    "currentContent": "Sequence Editor",
+                                    "tabs": [
+                                        {
+                                            "name": "Sequence Editor"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": 0,
+                                    "width": 309,
+                                    "height": 318,
+                                    "currentContent": "Logger",
+                                    "tabs": [
+                                        {
+                                            "name": "Help"
+                                        },
+                                        {
+                                            "name": "Logger"
+                                        },
+                                        {
+                                            "name": "Warnings"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "windows": null
+    },
+    "modules": {
+        "items": [
             {
-              "parameters": [
-                {
-                  "value": true,
-                  "controlAddress": "/enableLog"
-                }
-              ],
-              "niceName": "Spleeter",
-              "type": "BaseItem",
-              "scriptParams": {
-                "hideInEditor": true
-              }
-            }
-          ],
-          "viewOffset": [
-            0,
-            0
-          ],
-          "viewZoom": 1.0
-        },
-        "params": {
-          "containers": {
-            "spleeterParams": {
-              "parameters": [
-                {
-                  "value": "WLEDLipSync/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd",
-                  "controlAddress": "/spleeterCommand"
+                "parameters": [
+                    {
+                        "value": true,
+                        "controlAddress": "/logIncoming"
+                    },
+                    {
+                        "value": true,
+                        "controlAddress": "/logOutgoing"
+                    }
+                ],
+                "niceName": "Spleeter",
+                "type": "Spleeter",
+                "scripts": {
+                    "items": [
+                        {
+                            "parameters": [
+                                {
+                                    "value": true,
+                                    "controlAddress": "/enableLog"
+                                }
+                            ],
+                            "niceName": "Spleeter",
+                            "type": "BaseItem",
+                            "scriptParams": {
+                                "hideInEditor": true
+                            }
+                        }
+                    ],
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
                 },
-                {
-                  "value": "separate -c mp3",
-                  "controlAddress": "/spleeterOptions"
+                "params": {
+                    "containers": {
+                        "spleeterParams": {
+                            "parameters": [
+                                {
+                                    "value": "C:\\Users\\zak-4\\PycharmProjects\\WLEDLipSync/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd",
+                                    "controlAddress": "/spleeterCommand"
+                                },
+                                {
+                                    "value": "separate -c mp3",
+                                    "controlAddress": "/spleeterOptions"
+                                },
+                                {
+                                    "value": "C:\\Users\\zak-4\\PycharmProjects\\WLEDLipSync\\media\\audio",
+                                    "controlAddress": "/outputFolder"
+                                },
+                                {
+                                    "value": true,
+                                    "controlAddress": "/verbose"
+                                }
+                            ]
+                        }
+                    }
                 },
-                {
-                  "value": "WLEDLipSync/media/audio",
-                  "controlAddress": "/outputFolder"
+                "templates": {
+                    "editorIsCollapsed": true,
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
                 },
-                {
-                  "value": true,
-                  "controlAddress": "/verbose"
+                "values": {}
+            },
+            {
+                "niceName": "OS",
+                "type": "OS",
+                "scripts": {
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
+                },
+                "params": {
+                    "containers": {
+                        "appControl": {},
+                        "pingIPs": {}
+                    }
+                },
+                "templates": {
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
+                },
+                "values": {
+                    "containers": {
+                        "osInfos": {},
+                        "networkInfos": {},
+                        "appControl": {
+                            "owned": true,
+                            "niceName": "appControl"
+                        },
+                        "pingStatus": {
+                            "owned": true,
+                            "niceName": "pingStatus"
+                        }
+                    }
                 }
-              ]
-            }
-          }
-        },
-        "templates": {
-          "editorIsCollapsed": true,
-          "viewOffset": [
-            0,
-            0
-          ],
-          "viewZoom": 1.0
-        },
-        "values": {
-        }
-      },
-      {
-        "niceName": "OS",
-        "type": "OS",
-        "scripts": {
-          "viewOffset": [
-            0,
-            0
-          ],
-          "viewZoom": 1.0
-        },
-        "params": {
-          "containers": {
-            "appControl": {
             },
-            "pingIPs": {
-            }
-          }
-        },
-        "templates": {
-          "viewOffset": [
-            0,
-            0
-          ],
-          "viewZoom": 1.0
-        },
-        "values": {
-          "containers": {
-            "osInfos": {
-            },
-            "networkInfos": {
-            },
-            "appControl": {
-              "owned": true,
-              "niceName": "appControl"
-            },
-            "pingStatus": {
-              "owned": true,
-              "niceName": "pingStatus"
-            }
-          }
-        }
-      },
-      {
-        "niceName": "Sound Card",
-        "type": "Sound Card",
-        "scripts": {
-          "viewOffset": [
-            0,
-            0
-          ],
-          "viewZoom": 1.0
-        },
-        "params": {
-          "containers": {
-            "inputVolumes": {
-            },
-            "outputVolumes": {
-              "editorIsCollapsed": true
-            },
-            "monitor": {
-              "parameters": [
-                {
-                  "value": false,
-                  "controlAddress": "/enabled"
+            {
+                "niceName": "Sound Card",
+                "type": "Sound Card",
+                "scripts": {
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
+                },
+                "params": {
+                    "containers": {
+                        "inputVolumes": {},
+                        "outputVolumes": {
+                            "editorIsCollapsed": true
+                        },
+                        "monitor": {
+                            "parameters": [
+                                {
+                                    "value": false,
+                                    "controlAddress": "/enabled"
+                                }
+                            ]
+                        },
+                        "fftAnalysis": {
+                            "parameters": [
+                                {
+                                    "value": false,
+                                    "controlAddress": "/enabled"
+                                }
+                            ],
+                            "editorIsCollapsed": true,
+                            "viewOffset": [
+                                0,
+                                0
+                            ],
+                            "viewZoom": 1.0
+                        },
+                        "ltc": {
+                            "parameters": [
+                                {
+                                    "value": false,
+                                    "controlAddress": "/enabled"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "templates": {
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
+                },
+                "analyzer": {
+                    "parameters": [
+                        {
+                            "value": false,
+                            "controlAddress": "/enabled"
+                        }
+                    ],
+                    "editorIsCollapsed": true,
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
                 }
-              ]
             },
-            "fftAnalysis": {
-              "parameters": [
-                {
-                  "value": false,
-                  "controlAddress": "/enabled"
-                }
-              ],
-              "editorIsCollapsed": true,
-              "viewOffset": [
+            {
+                "parameters": [
+                    {
+                        "value": true,
+                        "controlAddress": "/logIncoming"
+                    },
+                    {
+                        "value": true,
+                        "controlAddress": "/logOutgoing"
+                    }
+                ],
+                "niceName": "WebSocket Server",
+                "type": "WebSocket Server",
+                "scripts": {
+                    "items": [
+                        {
+                            "parameters": [
+                                {
+                                    "value": "C:\\Users\\zak-4\\PycharmProjects\\WLEDLipSync/chataigne/LipSync.js",
+                                    "controlAddress": "/filePath"
+                                },
+                                {
+                                    "value": true,
+                                    "controlAddress": "/enableLog"
+                                }
+                            ],
+                            "niceName": "LipSync",
+                            "type": "BaseItem",
+                            "scriptParams": {
+                                "hideInEditor": true
+                            }
+                        }
+                    ],
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
+                },
+                "params": {
+                    "parameters": [
+                        {
+                            "value": "JSON",
+                            "controlAddress": "/protocol"
+                        },
+                        {
+                            "value": false,
+                            "controlAddress": "/autoAdd"
+                        },
+                        {
+                            "value": "",
+                            "controlAddress": "/messageStructure"
+                        },
+                        {
+                            "value": "|",
+                            "controlAddress": "/customSeparator"
+                        },
+                        {
+                            "value": true,
+                            "controlAddress": "/firstValueIsTheName"
+                        },
+                        {
+                            "value": 8080,
+                            "hexMode": false,
+                            "controlAddress": "/localPort"
+                        }
+                    ],
+                    "containers": {
+                        "pass_through": {}
+                    }
+                },
+                "templates": {
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
+                },
+                "values": {}
+            }
+        ],
+        "viewOffset": [
+            0,
+            0
+        ],
+        "viewZoom": 1.0
+    },
+    "customVariables": {
+        "viewOffset": [
+            0,
+            0
+        ],
+        "viewZoom": 1.0
+    },
+    "states": {
+        "viewOffset": [
+            0,
+            0
+        ],
+        "viewZoom": 1.0,
+        "transitions": {
+            "hideInEditor": true,
+            "viewOffset": [
                 0,
                 0
-              ],
-              "viewZoom": 1.0
-            },
-            "ltc": {
-              "parameters": [
-                {
-                  "value": false,
-                  "controlAddress": "/enabled"
-                }
-              ]
-            }
-          }
+            ],
+            "viewZoom": 1.0
         },
-        "templates": {
-          "viewOffset": [
-            0,
-            0
-          ],
-          "viewZoom": 1.0
-        },
-        "analyzer": {
-          "parameters": [
-            {
-              "value": false,
-              "controlAddress": "/enabled"
-            }
-          ],
-          "editorIsCollapsed": true,
-          "viewOffset": [
-            0,
-            0
-          ],
-          "viewZoom": 1.0
+        "comments": {
+            "hideInEditor": true,
+            "viewOffset": [
+                0,
+                0
+            ],
+            "viewZoom": 1.0
         }
-      },
-      {
-        "parameters": [
-          {
-            "value": true,
-            "controlAddress": "/logIncoming"
-          },
-          {
-            "value": true,
-            "controlAddress": "/logOutgoing"
-          }
-        ],
-        "niceName": "WebSocket Server",
-        "type": "WebSocket Server",
-        "scripts": {
-          "items": [
-            {
-              "parameters": [
-                {
-                  "value": "WLEDLipSync/chataigne/LipSync.js",
-                  "controlAddress": "/filePath"
-                },
-                {
-                  "value": true,
-                  "controlAddress": "/enableLog"
-                }
-              ],
-              "niceName": "LipSync",
-              "type": "BaseItem",
-              "scriptParams": {
-                "hideInEditor": true
-              }
-            }
-          ],
-          "viewOffset": [
-            0,
-            0
-          ],
-          "viewZoom": 1.0
-        },
-        "params": {
-          "parameters": [
-            {
-              "value": "JSON",
-              "controlAddress": "/protocol"
-            },
-            {
-              "value": false,
-              "controlAddress": "/autoAdd"
-            },
-            {
-              "value": "",
-              "controlAddress": "/messageStructure"
-            },
-            {
-              "value": "|",
-              "controlAddress": "/customSeparator"
-            },
-            {
-              "value": true,
-              "controlAddress": "/firstValueIsTheName"
-            },
-            {
-              "value": 8080,
-              "hexMode": false,
-              "controlAddress": "/localPort"
-            }
-          ],
-          "containers": {
-            "pass_through": {
-            }
-          }
-        },
-        "templates": {
-          "viewOffset": [
-            0,
-            0
-          ],
-          "viewZoom": 1.0
-        },
-        "values": {
-        }
-      }
-    ],
-    "viewOffset": [
-      0,
-      0
-    ],
-    "viewZoom": 1.0
-  },
-  "customVariables": {
-    "viewOffset": [
-      0,
-      0
-    ],
-    "viewZoom": 1.0
-  },
-  "states": {
-    "viewOffset": [
-      0,
-      0
-    ],
-    "viewZoom": 1.0,
-    "transitions": {
-      "hideInEditor": true,
-      "viewOffset": [
-        0,
-        0
-      ],
-      "viewZoom": 1.0
     },
-    "comments": {
-      "hideInEditor": true,
-      "viewOffset": [
-        0,
-        0
-      ],
-      "viewZoom": 1.0
-    }
-  },
-  "sequences": {
-    "items": [
-      {
-        "parameters": [
-          {
-            "value": "",
-            "controlAddress": "/ltcSyncModule",
-            "enabled": false
-          }
-        ],
-        "niceName": "Sequence",
-        "type": "Sequence",
-        "layers": {
-          "hideInEditor": true,
-          "items": [
+    "sequences": {
+        "items": [
             {
-              "parameters": [
-                {
-                  "value": 60.0,
-                  "controlAddress": "/listSize"
-                }
-              ],
-              "niceName": "Trigger",
-              "type": "Trigger",
-              "triggers": {
-                "hideInEditor": true,
-                "viewOffset": [
-                  0,
-                  0
-                ],
-                "viewZoom": 1.0
-              }
-            },
-            {
-              "parameters": [
-                {
-                  "value": 80.0,
-                  "controlAddress": "/listSize"
-                },
-                {
-                  "value": 80,
-                  "hexMode": false,
-                  "controlAddress": "/uiHeight"
-                }
-              ],
-              "niceName": "Audio",
-              "type": "Audio",
-              "clips": {
-                "hideInEditor": true,
-                "viewOffset": [
-                  0,
-                  0
-                ],
-                "viewZoom": 1.0
-              },
-              "channels": {
                 "parameters": [
-                  {
-                    "value": true,
-                    "controlAddress": "/channelOutLeft"
-                  },
-                  {
-                    "value": true,
-                    "controlAddress": "/channelOutRight"
-                  }
-                ]
-              },
-              "audioModule": "soundCard"
+                    {
+                        "value": "",
+                        "controlAddress": "/ltcSyncModule",
+                        "enabled": false
+                    }
+                ],
+                "niceName": "Sequence",
+                "type": "Sequence",
+                "layers": {
+                    "hideInEditor": true,
+                    "items": [
+                        {
+                            "parameters": [
+                                {
+                                    "value": 60.0,
+                                    "controlAddress": "/listSize"
+                                }
+                            ],
+                            "niceName": "Trigger",
+                            "type": "Trigger",
+                            "triggers": {
+                                "hideInEditor": true,
+                                "viewOffset": [
+                                    0,
+                                    0
+                                ],
+                                "viewZoom": 1.0
+                            }
+                        },
+                        {
+                            "parameters": [
+                                {
+                                    "value": 80.0,
+                                    "controlAddress": "/listSize"
+                                },
+                                {
+                                    "value": 80,
+                                    "hexMode": false,
+                                    "controlAddress": "/uiHeight"
+                                }
+                            ],
+                            "niceName": "Audio",
+                            "type": "Audio",
+                            "clips": {
+                                "hideInEditor": true,
+                                "viewOffset": [
+                                    0,
+                                    0
+                                ],
+                                "viewZoom": 1.0
+                            },
+                            "channels": {
+                                "parameters": [
+                                    {
+                                        "value": true,
+                                        "controlAddress": "/channelOutLeft"
+                                    },
+                                    {
+                                        "value": true,
+                                        "controlAddress": "/channelOutRight"
+                                    }
+                                ]
+                            },
+                            "audioModule": "soundCard"
+                        }
+                    ],
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
+                },
+                "cues": {
+                    "hideInEditor": true,
+                    "viewOffset": [
+                        0,
+                        0
+                    ],
+                    "viewZoom": 1.0
+                }
             }
-          ],
-          "viewOffset": [
+        ],
+        "viewOffset": [
             0,
             0
-          ],
-          "viewZoom": 1.0
-        },
-        "cues": {
-          "hideInEditor": true,
-          "viewOffset": [
+        ],
+        "viewZoom": 1.0
+    },
+    "routers": {
+        "viewOffset": [
             0,
             0
-          ],
-          "viewZoom": 1.0
-        }
-      }
-    ],
-    "viewOffset": [
-      0,
-      0
-    ],
-    "viewZoom": 1.0
-  },
-  "routers": {
-    "viewOffset": [
-      0,
-      0
-    ],
-    "viewZoom": 1.0
-  }
+        ],
+        "viewZoom": 1.0
+    }
 }

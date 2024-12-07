@@ -23,6 +23,8 @@ import traceback
 import cv2
 import time
 import json
+import subprocess
+import sys
 
 import requests
 import zipfile
@@ -99,14 +101,58 @@ def download_github_directory_as_zip(repo_url: str, destination: str, directory_
         logger.info('Error: The downloaded file is not a valid ZIP file.')
 
 
-def extract_from_lip_sync(source, destination, msg):
+def extract_zip_with_7z(zip_file, destination):
+    """Extract a ZIP file using 7z.exe to a specified folder.
+
+    This function runs the 7z.exe command-line tool to extract the contents
+    of the provided ZIP file to the specified destination folder. It ensures
+    that the extraction process is executed in a subprocess.
+
+    Args:
+        zip_file (str): The path to the ZIP file to be extracted.
+        destination (str): The folder where the contents of the ZIP file will be extracted.
+
+    Raises:
+        subprocess.CalledProcessError: If the extraction process fails.
+    """
+    z_path = "./chataigne/modules/SpleeterGUI-Chataigne-Module-main/xtra/win/7-ZipPortable/App/7-Zip64/7z.exe"
+
+    subprocess.run([z_path, 'x', zip_file, f'-o{destination}', '-y'], check=True)
+
+
+def extract_from_url(source, destination, msg, seven_zip: bool = False):
+    """
+    Download and extract a ZIP file from a given URL.
+
+    This function retrieves a ZIP file from the specified source URL and
+    extracts its contents to the provided destination directory. It also logs
+    a message upon successful extraction.
+    With longPathName this could provide errors, better to use 7zip instead if available.
+    (7zip is provided with SpleeterGUI Chataigne module)
+
+    Args:
+        source (str): The URL of the ZIP file to download.
+        destination (str): The directory where the contents of the ZIP file will be extracted.
+        msg (str): The message to log after successful extraction.
+        seven_zip: default to False, if True, will use 7zip to extract (Win only).
+
+    Raises:
+        requests.HTTPError: If the HTTP request to download the ZIP file fails.
+    """
     # Download the ZIP file
     response = requests.get(source)
     response.raise_for_status()  # Raise an error for bad responses
     # Extract the ZIP file
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
-        zip_file.extractall(destination)
-        logger.info(msg)
+    if not seven_zip:
+        with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
+            zip_file.extractall(destination)
+    else:
+        file_path = 'tmp/Pysp310.zip'
+        with open(file_path, 'wb') as file:
+            file.write(response.content)
+        extract_zip_with_7z(file_path, destination)
+
+    logger.info(msg)
 
 
 def download_spleeter():
@@ -124,15 +170,17 @@ def download_spleeter():
         requests.RequestException: If there is an error during the download of the repository.
         zipfile.BadZipFile: If the downloaded file is not a valid ZIP file.
     """
-
+    # module
     logger.info('downloading data for Spleeter ...')
-    download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module', './chataigne/modules')
-    logger.info('Module Spleeter downloaded')
+    download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module', chataigne_modules_folder())
+    logger.info('Chataigne Module Spleeter downloaded')
+    # python portable spleeter
     try:
-        extract_from_lip_sync(
-            'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/PySpleeter-win.zip',
-            './chataigne/win/Documents/Chataigne/xtra',
+        extract_from_url(
+            f'https://github.com/zak-45/SpleeterGUI-Chataigne-Module/releases/download/0.0.0.0/{python_portable_zip()}',
+            f'{chataigne_folder()}/xtra',
             'PySpleeter downloaded',
+            True,
         )
     except requests.RequestException as e:
         logger.info(f'Error downloading repository: {e}')
@@ -154,9 +202,9 @@ def download_chataigne():
         requests.RequestException: If there is an error during the download of the repository.
         zipfile.BadZipFile: If the downloaded file is not a valid ZIP file.
     """
-    logger.info('downloading data for Chataigne...')
+    logger.info('Downloading Portable Chataigne...')
     try:
-        extract_from_lip_sync(
+        extract_from_url(
             'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip',
             './chataigne/win',
             'chataigne downloaded',
@@ -168,12 +216,11 @@ def download_chataigne():
 
 
 def chataigne_settings(port=None):
-
     audio_folder = str(Path(app_config['audio_folder']).resolve())
     app_folder = os.getcwd()
 
     if os.path.isfile(f'{app_folder}/chataigne/WLEDLipSync.noisette'):
-        with open(f'{app_folder}/chataigne/WLEDLipSync.noisette','r', encoding='utf-8') as settings:
+        with open(f'{app_folder}/chataigne/WLEDLipSync.noisette', 'r', encoding='utf-8') as settings:
             data = json.load(settings)
 
         if port is not None:
@@ -194,11 +241,79 @@ def chataigne_settings(port=None):
                                      input_string='modules.items[3].scripts.items[0].parameters[0].value',
                                      new_value=f'{app_folder}/chataigne/LipSync.js')
 
+            # remove python portable that has been downloaded during installation
+            if os.path.isfile('tmp/Pysp310.zip'):
+                os.remove('tmp/Pysp310.zip')
 
         with open(f'{app_folder}/chataigne/WLEDLipSync.noisette', 'w', encoding='utf-8') as new_settings:
             json.dump(data, new_settings, ensure_ascii=False, indent=4)
 
         logger.info('Put chataigne settings')
+
+
+def chataigne_exe_file():
+    """
+    Determine the executable file path based on the operating system.
+
+    This function checks the current platform and returns the appropriate
+    path to the Chataigne executable for Windows, Linux, or macOS. If the
+    platform is not recognized, it returns 'unknown'.
+
+    Returns:
+        str: The path to the Chataigne executable or 'unknown' if the platform is not supported.
+    """
+
+    if sys.platform.lower() == 'win32':
+        return 'chataigne/win/Chataigne.exe'
+    elif sys.platform.lower() == 'linux':
+        return 'chataigne/linux/chataigne'
+    elif sys.platform.lower() == 'macos':
+        return 'chataigne/mac/chataigne'
+    else:
+        return 'unknown'
+
+
+def chataigne_folder():
+    if sys.platform.lower() == 'win32':
+        return 'chataigne/win/Documents/Chataigne'
+    elif sys.platform.lower() == 'linux':
+        return 'chataigne/linux/Chataigne'
+    elif sys.platform.lower() == 'macos':
+        return 'chataigne/mac/Chataigne'
+    else:
+        return 'unknown'
+
+
+def python_portable_zip():
+    if sys.platform.lower() == 'win32':
+        return 'spleeter-portable-windows-x86_64.zip'
+    elif sys.platform.lower() == 'linux':
+        return 'spleeter-portable-linux-x86_64.zip'
+    elif sys.platform.lower() == 'macos':
+        return 'spleeter-portable-darwin-universal2.zip'
+    else:
+        return 'unknown'
+
+
+def chataigne_modules_folder():
+    """
+    Determine the Spleeter module folder path based on the operating system.
+
+    This function checks the current platform and returns the appropriate
+    path to the Spleeter module folder for Windows, Linux, or macOS. If the
+    platform is not recognized, it returns 'unknown'.
+
+    Returns:
+        str: The path to the Spleeter module folder or 'unknown' if the platform is not supported.
+    """
+    if sys.platform.lower() == 'win32':
+        return 'chataigne/win/Documents/Chataigne/modules'
+    elif sys.platform.lower() == 'linux':
+        return 'chataigne/linux/Chataigne/modules'
+    elif sys.platform.lower() == 'macos':
+        return 'chataigne/mac/Chataigne/modules'
+    else:
+        return 'unknown'
 
 
 async def run_install_chataigne(obj, dialog):
@@ -609,6 +724,7 @@ def find_cue_point(time_cue, cue_points):
             nearest_cue = {"start": cue['start'], "end": cue['end'], "value": cue['value']}
 
     return actual_cue, nearest_cue
+
 
 """
 When this env var exist, this mean run from the one-file compressed executable.

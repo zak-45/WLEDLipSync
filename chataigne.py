@@ -116,6 +116,14 @@ class ChataigneWrapper:
         threading.Thread(target=self._wait_for_process, args=(self.process,)).start()
 
     def is_running(self):
+        """Determine if the instance is currently active.
+
+        This method checks the internal state of the instance to see if it is
+        running. It provides a simple way to verify the operational status.
+
+        Returns:
+            bool: True if the instance is running, False otherwise.
+        """
 
         return self._instance_running
 
