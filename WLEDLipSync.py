@@ -2188,7 +2188,9 @@ async def main_page():
                             cha_activate = ui.checkbox('activate', on_change=manage_cha_client)
             else:
 
-                ui.button('install', icon='settings', on_click=lambda e: utils.install_chataigne(e))
+                ui.label(' ')
+                inst = ui.button('install', icon='settings', on_click=lambda e: utils.ask_install_chataigne(e))
+                inst.classes('self-center')
 
             ui.label(' ')
             ui.separator()

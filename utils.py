@@ -150,6 +150,7 @@ def extract_from_url(source, destination, msg, seven_zip: bool = False):
         with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
             zip_file.extractall(destination)
     else:
+        # specific to win32 for the long path name  problem
         file_path = 'tmp/Pysp310.zip'
         with open(file_path, 'wb') as file:
             file.write(response.content)
@@ -180,12 +181,13 @@ def download_spleeter():
     # wait a few sec
     time.sleep(3)
     #  extract python portable spleeter
+    seven_zip = sys.platform.lower() == 'win32'
     try:
         extract_from_url(
             f'https://github.com/zak-45/SpleeterGUI-Chataigne-Module/releases/download/0.0.0.0/{python_portable_zip()}',
             f'{chataigne_folder()}/xtra',
             'PySpleeter downloaded',
-            True,
+            seven_zip,
         )
     except requests.RequestException as e:
         logger.info(f'Error downloading repository: {e}')
@@ -382,7 +384,7 @@ async def run_install_chataigne(obj, dialog):
     await run.io_bound(download_spleeter)
     #
     # we will wait a few sec before continue
-    time.sleep(1)
+    time.sleep(2)
     #
     ui.notify('Finalize Chataigne installation', position='center', type='info')
     await run.io_bound(chataigne_settings)
@@ -402,7 +404,7 @@ async def run_install_rhubarb():
     #
 
 
-async def install_chataigne(obj):
+async def ask_install_chataigne(obj):
     def stop():
         obj.sender.props(remove='loading')
         dialog.close()
