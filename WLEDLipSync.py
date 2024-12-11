@@ -98,7 +98,7 @@ if sys.platform.lower() == 'win32':
 # rhubarb
 rub = RhubarbWrapper()
 # music info
-retriever = MusicInfoRetriever()
+ret = MusicInfoRetriever()
 # chataigne
 cha = chataigne.ChataigneWrapper()
 
@@ -1714,7 +1714,7 @@ async def main_page():
         song5_img.set_source('')
         song5_title.set_text('')
         # get info from ytmusicapi
-        info_from_yt = retriever.get_song_info_with_lyrics(title_tag, artist_tag)
+        info_from_yt = ret.get_song_info_with_lyrics(title_tag, artist_tag)
         logger.info(info_from_yt)
 
         try:
