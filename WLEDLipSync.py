@@ -691,7 +691,7 @@ async def main_page():
             logger.info('chataigne running')
             cha_status.props(add='color=green')
 
-        if not os.path.isdir(f'{utils.chataigne_modules_folder()}/SpleeterGUI-Chataigne-Module-main'):
+        if not os.path.isdir(f'{utils.chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main'):
             spleeter.disable()
 
         if wvs_activate.value is False and osc_activate.value is False and cha_activate is False:

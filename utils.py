@@ -25,6 +25,7 @@ import time
 import json
 import subprocess
 import sys
+import sysconfig
 
 import requests
 import zipfile
@@ -116,7 +117,7 @@ def extract_zip_with_7z(zip_file, destination):
         subprocess.CalledProcessError: If the extraction process fails.
     """
 
-    z_path = f"{chataigne_modules_folder()}/SpleeterGUI-Chataigne-Module-main/xtra/win/7-ZipPortable/App/7-Zip64/7z.exe"
+    z_path = f"{chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main/xtra/win/7-ZipPortable/App/7-Zip64/7z.exe"
     try:
         subprocess.run([z_path, 'x', zip_file, f'-o{destination}', '-y'], check=True)
     except Exception as e:
@@ -176,7 +177,10 @@ def download_spleeter():
     """
     # module
     logger.info('downloading data for Spleeter ...')
-    download_github_directory_as_zip('https://github.com/zak-45/SpleeterGUI-Chataigne-Module', chataigne_modules_folder())
+    download_github_directory_as_zip(
+        'https://github.com/zak-45/SpleeterGUI-Chataigne-Module',
+        f'{chataigne_data_folder()}/modules',
+    )
     logger.info('Chataigne Module Spleeter downloaded')
     # wait a few sec
     time.sleep(3)
@@ -185,7 +189,7 @@ def download_spleeter():
     try:
         extract_from_url(
             f'https://github.com/zak-45/SpleeterGUI-Chataigne-Module/releases/download/0.0.0.0/{python_portable_zip()}',
-            f'{chataigne_folder()}/xtra',
+            f'{chataigne_data_folder()}/xtra',
             'PySpleeter downloaded',
             seven_zip,
         )
@@ -212,8 +216,8 @@ def download_chataigne():
     logger.info('Downloading Portable Chataigne...')
     try:
         extract_from_url(
-            'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip',
-            './chataigne/win',
+            chataigne_portable_url(),
+            f'./{chataigne_folder()}',
             'chataigne downloaded',
         )
     except requests.RequestException as e:
@@ -252,7 +256,7 @@ def chataigne_settings(port=None):
 
             access_or_set_dict_value(data_dict=data,
                                      input_string='modules.items[0].params.containers.spleeterParams.parameters[0].value',
-                                     new_value=f'{app_folder}/chataigne/modules/SpleeterGUI-Chataigne-Module-main/spleeter.cmd')
+                                     new_value=f'{spleeter_cmd_file()}')
 
             access_or_set_dict_value(data_dict=data,
                                      input_string='modules.items[0].params.containers.spleeterParams.parameters[2].value',
@@ -268,6 +272,17 @@ def chataigne_settings(port=None):
         logger.info('Put chataigne settings')
 
 
+def spleeter_cmd_file():
+    if sys.platform.lower() == 'win32':
+        return f'{chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main/xtra/win/run_spleeter.cmd'
+    elif sys.platform.lower() == 'linux':
+        return f'{chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main/xtra/linux/run_spleeter.sh'
+    elif sys.platform.lower() == 'macos':
+        return f'{chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main/xtra/mac/run_spleeter.sh'
+    else:
+        return 'unknown'
+
+
 def chataigne_exe_file():
     """
     Determine the executable file path based on the operating system.
@@ -281,43 +296,46 @@ def chataigne_exe_file():
     """
 
     if sys.platform.lower() == 'win32':
-        return 'chataigne/win/Chataigne.exe'
+        return f'{chataigne_folder()}/Chataigne.exe'
     elif sys.platform.lower() == 'linux':
-        return 'chataigne/linux/chataigne'
+        return f'{chataigne_folder()}/chataigne.appimage'
     elif sys.platform.lower() == 'macos':
-        return 'chataigne/mac/chataigne'
+        return f'{chataigne_folder()}/chataigne'
+    else:
+        return 'unknown'
+
+def chataigne_portable_url():
+    if sys.platform.lower() == 'win32':
+        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip'
+    elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
+        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-linux-x64-1.9.24.AppImage'
+    elif sys.platform.lower() == 'macos' and 'x86_64' in sysconfig.get_platform():
+        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-osx-intel-1.9.24.pkg'
+    elif sys.platform.lower() == 'macos' and 'arm' in sysconfig.get_platform():
+        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-osx-silicon-1.9.24.pkg'
+    else:
+        return 'unknown'
+
+
+def chataigne_data_folder():
+    app_folder = os.getcwd()
+    if sys.platform.lower() == 'win32':
+        return f'{app_folder}/{chataigne_folder()}/Documents/Chataigne'
+    elif sys.platform.lower() == 'linux':
+        return f'{app_folder}/{chataigne_folder()}/Documents/Chataigne'
+    elif sys.platform.lower() == 'macos':
+        return f'{app_folder}/{chataigne_folder()}/Chataigne'
     else:
         return 'unknown'
 
 
 def chataigne_folder():
     if sys.platform.lower() == 'win32':
-        return 'chataigne/win/Documents/Chataigne'
+        return 'chataigne/win'
     elif sys.platform.lower() == 'linux':
-        return 'chataigne/linux/Chataigne'
+        return 'chataigne/linux'
     elif sys.platform.lower() == 'macos':
-        return 'chataigne/mac/Chataigne'
-    else:
-        return 'unknown'
-
-def rhubarb_folder():
-    if sys.platform.lower() == 'win32':
-        return 'rhubarb/win'
-    elif sys.platform.lower() == 'linux':
-        return 'rhubarb/linux'
-    elif sys.platform.lower() == 'macos':
-        return 'rhubarb/mac'
-    else:
-        return 'unknown'
-
-
-def rhubarb_url():
-    if sys.platform.lower() == 'win32':
-        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Windows.zip'
-    elif sys.platform.lower() == 'linux':
-        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Linux.zip'
-    elif sys.platform.lower() == 'macos':
-        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-macOS.zip'
+        return 'chataigne/mac'
     else:
         return 'unknown'
 
@@ -325,31 +343,10 @@ def rhubarb_url():
 def python_portable_zip():
     if sys.platform.lower() == 'win32':
         return 'spleeter-portable-windows-x86_64.zip'
-    elif sys.platform.lower() == 'linux':
+    elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
         return 'spleeter-portable-linux-x86_64.zip'
     elif sys.platform.lower() == 'macos':
         return 'spleeter-portable-darwin-universal2.zip'
-    else:
-        return 'unknown'
-
-
-def chataigne_modules_folder():
-    """
-    Determine the Spleeter module folder path based on the operating system.
-
-    This function checks the current platform and returns the appropriate
-    path to the Spleeter module folder for Windows, Linux, or macOS. If the
-    platform is not recognized, it returns 'unknown'.
-
-    Returns:
-        str: The path to the Spleeter module folder or 'unknown' if the platform is not supported.
-    """
-    if sys.platform.lower() == 'win32':
-        return 'chataigne/win/Documents/Chataigne/modules'
-    elif sys.platform.lower() == 'linux':
-        return 'chataigne/linux/Chataigne/modules'
-    elif sys.platform.lower() == 'macos':
-        return 'chataigne/mac/Chataigne/modules'
     else:
         return 'unknown'
 
@@ -394,6 +391,30 @@ async def run_install_chataigne(obj, dialog):
     obj.sender.set_text('RELOAD APP')
     obj.sender.on('click', lambda: ui.navigate.to('/'))
     ui.notify('Reload your APP to use Chataigne/Spleeter', position='center', type='warning')
+
+
+
+def rhubarb_folder():
+    if sys.platform.lower() == 'win32':
+        return 'rhubarb/win'
+    elif sys.platform.lower() == 'linux':
+        return 'rhubarb/linux'
+    elif sys.platform.lower() == 'macos':
+        return 'rhubarb/mac'
+    else:
+        return 'unknown'
+
+
+def rhubarb_url():
+    if sys.platform.lower() == 'win32':
+        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Windows.zip'
+    elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
+        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Linux.zip'
+    elif sys.platform.lower() == 'macos' and 'x86_64' in sysconfig.get_platform():
+        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-macOS.zip'
+    else:
+        return 'unknown'
+
 
 
 async def run_install_rhubarb():
