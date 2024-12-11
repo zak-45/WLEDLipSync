@@ -181,7 +181,7 @@ def download_spleeter():
         'https://github.com/zak-45/SpleeterGUI-Chataigne-Module',
         f'{chataigne_data_folder()}/modules',
     )
-    logger.info('Chataigne Module Spleeter downloaded')
+    logger.info(f'Chataigne Module Spleeter downloaded to {chataigne_data_folder()}/modules')
     # wait a few sec
     time.sleep(3)
     #  extract python portable spleeter
@@ -193,6 +193,7 @@ def download_spleeter():
             'PySpleeter downloaded',
             seven_zip,
         )
+        logger.info(f'Python portable {python_portable_zip()} downloaded to {chataigne_data_folder()}/xtra')
     except requests.RequestException as e:
         logger.info(f'Error downloading repository: {e}')
     except zipfile.BadZipFile:
@@ -220,6 +221,7 @@ def download_chataigne():
             f'./{chataigne_folder()}',
             'chataigne downloaded',
         )
+        logger.info(f'{chataigne_portable_url()} downloaded  to {chataigne_folder()}')
     except requests.RequestException as e:
         logger.info(f'Error downloading repository: {e}')
     except zipfile.BadZipFile:

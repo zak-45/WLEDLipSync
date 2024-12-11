@@ -15,13 +15,14 @@ import json
 import sys
 import threading
 import utils
+import sysconfig
 
 
 def exe_name():
     if sys.platform.lower() == 'win32':
         return './chataigne/win/chataigne.exe'
-    elif sys.platform.lower() == 'linux':
-        return './chataigne/linux/chataigne'
+    elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
+        return './chataigne/linux/chataigne.appImage'
     elif sys.platform.lower() == 'macos':
         return './chataigne/mac/chataigne'
     else:
