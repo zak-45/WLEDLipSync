@@ -58,8 +58,8 @@ class ChataigneWrapper:
         self.open_gl = open_gl
         self.callback = callback
         self.process = None  # Store the subprocess reference
-        self.working_directory = working_directory
-        self.chataigne_directory = utils.chataigne_folder()
+        self.working_directory = f'{working_directory}/{utils.chataigne_folder()}'
+        self.chataigne_directory = f'{working_directory}/{utils.chataigne_folder()}'
         self.load_file = f"{self.working_directory}/{load_file}"
         self.command = []
         self.return_code = 0
