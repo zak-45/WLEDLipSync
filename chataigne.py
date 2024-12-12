@@ -58,14 +58,8 @@ class ChataigneWrapper:
         self.open_gl = open_gl
         self.callback = callback
         self.process = None  # Store the subprocess reference
-        if sys.platform.lower() == 'win32':
-            self.working_directory = working_directory + '\chataigne\win'
-        elif sys.platform.lower() == 'linux':
-            self.working_directory = f'{working_directory}/chataigne/linux'
-        elif sys.platform.lower() == 'macos':
-            self.working_directory = f'{working_directory}/chataigne/mac'
-        else:
-            self.working_directory = working_directory
+        self.working_directory = working_directory
+        self.chataigne_directory = utils.chataigne_folder()
         self.load_file = f"{self.working_directory}/{load_file}"
         self.command = []
         self.return_code = 0
@@ -98,7 +92,7 @@ class ChataigneWrapper:
         self.command = command
         # Run the command in a separate process
         self.process = subprocess.Popen(command,
-                                   env=dict(os.environ, USERPROFILE=f"{self.working_directory}"),
+                                   env=dict(os.environ, USERPROFILE=f"{self.chataigne_directory}"),
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
                                    text=True,
