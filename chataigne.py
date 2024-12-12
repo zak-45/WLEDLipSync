@@ -15,18 +15,7 @@ import json
 import sys
 import threading
 import utils
-import sysconfig
 
-
-def exe_name():
-    if sys.platform.lower() == 'win32':
-        return './chataigne/win/chataigne.exe'
-    elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
-        return './chataigne/linux/chataigne.appImage'
-    elif sys.platform.lower() == 'macos':
-        return './chataigne/mac/chataigne'
-    else:
-        return None
 
 class ChataigneWrapper:
     """
@@ -41,7 +30,7 @@ class ChataigneWrapper:
     (forceNoGL can be handy when having problem with graphics drivers)
 
     """
-    _exe_name = exe_name()
+    _exe_name = utils.chataigne_exe_file()
     _instance_running = False
 
     def __init__(self,

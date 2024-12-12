@@ -374,6 +374,9 @@ async def run_install_chataigne(obj, dialog):
     ui.notify('Finalize Chataigne installation', position='center', type='info')
     await run.io_bound(chataigne_settings)
     #
+    # we will wait a few sec before continue
+    time.sleep(2)
+    #
     if sys.platform.lower() != "win32":
         await make_file_executable(chataigne_exe_file())
     #
@@ -454,6 +457,9 @@ async def run_install_rhubarb():
     #
     ui.notify('Download data for rhubarb', position='center', type='info')
     await run.io_bound(download_rhubarb)
+    #
+    # we will wait a few sec before continue
+    time.sleep(2)
     #
     if sys.platform.lower() != "win32":
         logger.info('set +x to rhubarb')
