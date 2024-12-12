@@ -1001,6 +1001,8 @@ async def main_page():
         if result is not None:
             if sys.platform.lower() == 'win32' and len(result) > 0:
                 result = str(result[0]).replace('\\', '/')
+            else:
+                result = str(result[0])
             if len(result) > 0:
                 result = './' + result
             if await validate_file(result):
@@ -1215,6 +1217,8 @@ async def main_page():
             if os.path.isdir(result[0]):
                 if sys.platform.lower() == 'win32' and len(result) > 0:
                     result = str(result[0]).replace('\\', '/')
+                else:
+                    result = str(result[0])
                 if len(result) > 0:
                     result = './' + result
                     # delete if exist
