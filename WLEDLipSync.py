@@ -622,7 +622,7 @@ async def main_page():
 
         """
         if action == 'run':
-            noisette = str(Path('./chataigne/WLEDLipSync.noisette').resolve())
+            noisette = str(Path('chataigne/WLEDLipSync.noisette').resolve())
             cha.run(headless=False, file_name=noisette)
             logger.info('start chataigne')
 
