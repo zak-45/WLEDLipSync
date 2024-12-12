@@ -195,9 +195,9 @@ def download_spleeter():
         )
         logger.info(f'Python portable {python_portable_zip()} downloaded to {chataigne_data_folder()}/xtra')
     except requests.RequestException as e:
-        logger.info(f'Error downloading repository: {e}')
+        logger.error(f'Error downloading repository: {e}')
     except zipfile.BadZipFile:
-        logger.info('Error: The downloaded file is not a valid ZIP file.')
+        logger.error('Error: The downloaded file is not a valid ZIP file.')
 
 
 def download_chataigne():
@@ -218,28 +218,14 @@ def download_chataigne():
     try:
         extract_from_url(
             chataigne_portable_url(),
-            f'./{chataigne_folder()}',
+            chataigne_folder(),
             'chataigne downloaded',
         )
-        logger.info(f'{chataigne_portable_url()} downloaded  to {chataigne_folder()}')
+        logger.info(f'{chataigne_portable_url()} downloaded to {chataigne_folder()}')
     except requests.RequestException as e:
-        logger.info(f'Error downloading repository: {e}')
+        logger.error(f'Error downloading repository: {e}')
     except zipfile.BadZipFile:
-        logger.info('Error: The downloaded file is not a valid ZIP file.')
-
-
-def download_rhubarb():
-    logger.info('Downloading Portable Rhubarb...')
-    try:
-        extract_from_url(
-            f'{rhubarb_url()}',
-            f'{rhubarb_folder()}',
-            'rhubarb downloaded',
-        )
-    except requests.RequestException as e:
-        logger.info(f'Error downloading repository: {e}')
-    except zipfile.BadZipFile:
-        logger.info('Error: The downloaded file is not a valid ZIP file.')
+        logger.error('Error: The downloaded file is not a valid ZIP file.')
 
 
 def chataigne_settings(port=None):
@@ -282,7 +268,7 @@ def spleeter_cmd_file():
     elif sys.platform.lower() == 'macos':
         return f'{chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main/xtra/mac/run_spleeter.sh'
     else:
-        return 'unknown'
+        return None
 
 
 def chataigne_exe_file():
@@ -304,31 +290,31 @@ def chataigne_exe_file():
     elif sys.platform.lower() == 'macos':
         return f'{chataigne_folder()}/chataigne'
     else:
-        return 'unknown'
+        return None
 
 def chataigne_portable_url():
     if sys.platform.lower() == 'win32':
         return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip'
     elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
-        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-linux-x64-1.9.24.AppImage'
+        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-linux-x64-1.9.24.zip'
     elif sys.platform.lower() == 'macos' and 'x86_64' in sysconfig.get_platform():
-        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-osx-intel-1.9.24.pkg'
+        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-osx-intel-1.9.24.zip'
     elif sys.platform.lower() == 'macos' and 'arm' in sysconfig.get_platform():
-        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-osx-silicon-1.9.24.pkg'
+        return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-osx-silicon-1.9.24.zip'
     else:
-        return 'unknown'
+        return None
 
 
 def chataigne_data_folder():
-    app_folder = os.getcwd()
+
     if sys.platform.lower() == 'win32':
-        return f'{app_folder}/{chataigne_folder()}/Documents/Chataigne'
+        return f'{chataigne_folder()}/Documents/Chataigne'
     elif sys.platform.lower() == 'linux':
-        return f'{app_folder}/{chataigne_folder()}/Documents/Chataigne'
+        return f'{chataigne_folder()}/Documents/Chataigne'
     elif sys.platform.lower() == 'macos':
-        return f'{app_folder}/{chataigne_folder()}/Chataigne'
+        return f'{chataigne_folder()}/Chataigne'
     else:
-        return 'unknown'
+        return None
 
 
 def chataigne_folder():
@@ -339,7 +325,7 @@ def chataigne_folder():
     elif sys.platform.lower() == 'macos':
         return 'chataigne/mac'
     else:
-        return 'unknown'
+        return None
 
 
 def python_portable_zip():
@@ -350,7 +336,7 @@ def python_portable_zip():
     elif sys.platform.lower() == 'macos':
         return 'spleeter-portable-darwin-universal2.zip'
     else:
-        return 'unknown'
+        return None
 
 
 async def run_install_chataigne(obj, dialog):
@@ -388,43 +374,14 @@ async def run_install_chataigne(obj, dialog):
     ui.notify('Finalize Chataigne installation', position='center', type='info')
     await run.io_bound(chataigne_settings)
     #
+    if sys.platform.lower() != "win32":
+        await make_file_executable(chataigne_exe_file())
+    #
     # set UI after installation
     obj.sender.props(remove='loading')
     obj.sender.set_text('RELOAD APP')
     obj.sender.on('click', lambda: ui.navigate.to('/'))
     ui.notify('Reload your APP to use Chataigne/Spleeter', position='center', type='warning')
-
-
-
-def rhubarb_folder():
-    if sys.platform.lower() == 'win32':
-        return 'rhubarb/win'
-    elif sys.platform.lower() == 'linux':
-        return 'rhubarb/linux'
-    elif sys.platform.lower() == 'macos':
-        return 'rhubarb/mac'
-    else:
-        return 'unknown'
-
-
-def rhubarb_url():
-    if sys.platform.lower() == 'win32':
-        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Windows.zip'
-    elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
-        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Linux.zip'
-    elif sys.platform.lower() == 'macos' and 'x86_64' in sysconfig.get_platform():
-        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-macOS.zip'
-    else:
-        return 'unknown'
-
-
-
-async def run_install_rhubarb():
-    logger.debug('run rhubarb installation')
-    #
-    ui.notify('Download data for rhubarb', position='center', type='info')
-    await run.io_bound(download_rhubarb)
-    #
 
 
 async def ask_install_chataigne(obj):
@@ -442,6 +399,86 @@ async def ask_install_chataigne(obj):
         with ui.row():
             ui.button('Yes', on_click=lambda: run_install_chataigne(obj, dialog))
             ui.button('No', on_click=stop)
+
+
+def download_rhubarb():
+    logger.info('Downloading Portable Rhubarb...')
+    try:
+        extract_from_url(
+            f'{rhubarb_url()}',
+            f'{rhubarb_folder()}',
+            'rhubarb downloaded',
+        )
+        logger.info(f'Rhubarb downloaded from {rhubarb_url()} to {rhubarb_folder()}')
+    except requests.RequestException as e:
+        logger.error(f'Error downloading repository: {e}')
+    except zipfile.BadZipFile:
+        logger.error('Error: The downloaded file is not a valid ZIP file.')
+
+
+def rhubarb_folder():
+    if sys.platform.lower() == 'win32':
+        return 'rhubarb/win'
+    elif sys.platform.lower() == 'linux':
+        return 'rhubarb/linux'
+    elif sys.platform.lower() == 'macos':
+        return 'rhubarb/mac'
+    else:
+        return None
+
+
+def rhubarb_url():
+    if sys.platform.lower() == 'win32':
+        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Windows.zip'
+    elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
+        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Linux.zip'
+    elif sys.platform.lower() == 'macos' and 'x86_64' in sysconfig.get_platform():
+        return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-macOS.zip'
+    else:
+        return None
+
+
+def rhubarb_exe_name():
+    if sys.platform.lower() == 'win32':
+        return f'{rhubarb_folder()}/Rhubarb-Lip-Sync-1.13.0-Windows/rhubarb.exe'
+    elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
+        return f'{rhubarb_folder()}/Rhubarb-Lip-Sync-1.13.0-Linux/rhubarb'
+    elif sys.platform.lower() == 'macos':
+        return f'{rhubarb_folder()}/Rhubarb-Lip-Sync-1.13.0-macOS/rhubarb'
+    else:
+        return None
+
+
+async def run_install_rhubarb():
+    logger.debug('run rhubarb installation')
+    #
+    ui.notify('Download data for rhubarb', position='center', type='info')
+    await run.io_bound(download_rhubarb)
+    #
+    if sys.platform.lower() != "win32":
+        logger.info('set +x to rhubarb')
+        await make_file_executable(rhubarb_exe_name())
+
+
+async def make_file_executable(file_name):
+    """Change the file permissions to make it executable for the user.
+
+    This function executes the 'chmod u+x' command on the specified file,
+    allowing the user to execute the file. It uses a subprocess to run the
+    command in the shell.
+
+    Args:
+        file_name (str): The path to the file to be made executable.
+
+    Raises:
+        subprocess.CalledProcessError: If the command fails to execute.
+    """
+    try:
+        # we need absolute path
+        absolute_file_name = Path(file_name).resolve()
+        subprocess.run(['chmod', 'u+x', absolute_file_name], check=True)
+    except Exception as e:
+        logger.error(f'Error to set {file_name} as executable : {e}')
 
 
 def find_tmp_folder():

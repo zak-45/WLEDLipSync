@@ -1053,7 +1053,8 @@ async def main_page():
         Initiates the Spleeter processing for the specified audio file.
 
         This function constructs a message to run Spleeter with the absolute path of the audio file and sends it to the
-        Chataigne client. It also notifies the user of the initiation and checks if Spleeter is running, closing the dialog afterward.
+        Chataigne client. It also notifies the user of the initiation and checks if Spleeter is running,
+        closing the dialog afterward.
 
         Args:
             dialog: The dialog to be closed once the Spleeter process is initiated.

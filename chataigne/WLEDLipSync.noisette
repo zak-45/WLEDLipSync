@@ -197,7 +197,7 @@
                         "spleeterParams": {
                             "parameters": [
                                 {
-                                    "value": "C:\\Users\\zak-4\\PycharmProjects\\WLEDLipSync/chataigne/win/Documents/Chataigne/modules/SpleeterGUI-Chataigne-Module-main/xtra/win/run_spleeter.cmd",
+                                    "value": "chataigne/win/Documents/Chataigne/modules/SpleeterGUI-Chataigne-Module-main/xtra/win/run_spleeter.cmd",
                                     "controlAddress": "/spleeterCommand"
                                 },
                                 {
