@@ -244,7 +244,7 @@ def chataigne_settings(port=None):
 
             access_or_set_dict_value(data_dict=data,
                                      input_string='modules.items[0].params.containers.spleeterParams.parameters[0].value',
-                                     new_value=f'{spleeter_cmd_file()}')
+                                     new_value=f'{app_folder}/{spleeter_cmd_file()}')
 
             access_or_set_dict_value(data_dict=data,
                                      input_string='modules.items[0].params.containers.spleeterParams.parameters[2].value',
