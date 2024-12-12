@@ -286,7 +286,7 @@ def chataigne_exe_file():
     if sys.platform.lower() == 'win32':
         return f'{chataigne_folder()}/Chataigne.exe'
     elif sys.platform.lower() == 'linux':
-        return f'{chataigne_folder()}/chataigne.appimage'
+        return f'{chataigne_folder()}/Chataigne-linux-x64-1.9.24.AppImage'
     elif sys.platform.lower() == 'macos':
         return f'{chataigne_folder()}/chataigne'
     else:
