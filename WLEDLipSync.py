@@ -1921,7 +1921,7 @@ async def main_page():
                     model_img = Image.fromarray(LipAPI.mouths_buffer_thumb[0])
                     model_thumb = ui.image(model_img).classes('w-6 self-center')
                 else:
-                    model_thumb = ui.image('./media/image/model/default/x.png').classes('w-6 self-center')
+                    model_thumb = ui.image('./media/image/model/default/X.png').classes('w-6 self-center')
 
             # players
             if do_animation:
