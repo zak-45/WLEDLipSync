@@ -72,7 +72,7 @@ class RhubarbWrapper:
         self.input_file = ''
         self.lyrics_file = ''
         self.callback = callback
-        self.working_directory = f'{working_directory}/{utils.rhubarb_folder()}'
+        self.working_directory = working_directory
         self.machineReadable = machineReadable
         self.export_format = export_format
         self._validate_export_format()
