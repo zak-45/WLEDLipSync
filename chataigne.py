@@ -92,7 +92,7 @@ class ChataigneWrapper:
         self.command = command
         # Run the command in a separate process
         self.process = subprocess.Popen(command,
-                                   env=dict(os.environ, USERPROFILE=f"{self.chataigne_directory}"),
+                                   env=dict(os.environ, USERPROFILE=f"{self.chataigne_directory}", HOME=f"{self.chataigne_directory}"),
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
                                    text=True,
