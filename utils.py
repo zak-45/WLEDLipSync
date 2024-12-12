@@ -271,7 +271,7 @@ def spleeter_cmd_file():
         return None
 
 
-def chataigne_exe_file():
+def chataigne_exe_name():
     """
     Determine the executable file path based on the operating system.
 
@@ -378,7 +378,7 @@ async def run_install_chataigne(obj, dialog):
     time.sleep(2)
     #
     if sys.platform.lower() != "win32":
-        await make_file_executable(chataigne_exe_file())
+        await make_file_executable(chataigne_exe_name())
     #
     # set UI after installation
     obj.sender.props(remove='loading')

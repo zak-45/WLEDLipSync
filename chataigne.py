@@ -30,7 +30,7 @@ class ChataigneWrapper:
     (forceNoGL can be handy when having problem with graphics drivers)
 
     """
-    _exe_name = utils.chataigne_exe_file()
+    _exe_name = utils.chataigne_exe_name()
     _instance_running = False
 
     def __init__(self,
