@@ -78,7 +78,6 @@ import concurrent_log_handler
 import taglib
 import niceutils
 import chataigne
-import subprocess
 
 from str2bool import str2bool
 from OSCClient import OSCClient
@@ -145,6 +144,55 @@ if "NUITKA_ONEFILE_PARENT" not in os.environ:
 
     # animate or not
     do_animation = str2bool(custom_config['animate-ui'])
+
+else:
+
+    def on_ok_click():
+        # Close the window when OK button is clicked
+        root.destroy()
+
+
+    # Create the main window
+    root = tk.Tk()
+    root.title("WLEDLipSync Information")
+    root.configure(bg='#0E7490')  # Set the background color
+
+    abs_pth = os.path.abspath(sys.argv[0])
+    work_dir = os.path.dirname(abs_pth).replace('\\', '/')
+
+    # Change the window icon
+    icon = PhotoImage(file=f'{work_dir}/favicon.png')
+    root.iconphoto(False, icon)
+
+    config_file = work_dir + "/WLEDLipSync/config/WLEDLipSync.ini"
+
+    # Define the window's contents
+    info_text = ("Extracted executable to WLEDLipSync folder.....\n\n \
+    You can safely delete this file after extraction finished to save some space.\n \
+    (the same for WLEDLipSync.out.txt and err.txt if there ...)\n\n \
+    Go to WLEDLipSync folder and run WLEDLipSync-{OS} file\n \
+    This is a portable version, nothing installed on your system and can be moved where wanted.\n\n \
+    Enjoy using WLEDLipSync\n\n \
+    -------------------------------------------------------------------------------------------------\n \
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,\n \
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n \
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n \
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,\n \
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n \
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n \
+    -------------------------------------------------------------------------------------------------\n ")
+
+    info_label = tk.Label(root, text=info_text, bg='#0E7490', fg='white', justify=tk.LEFT)
+    info_label.pack(padx=10, pady=10)
+
+    # Create the OK button
+    ok_button = tk.Button(root, text="Ok", command=on_ok_click, bg='gray', fg='white')
+    ok_button.pack(pady=10)
+
+    # Start the Tkinter event loop
+    root.mainloop()
+
+    sys.exit()
 
 
 class LipAPI:
@@ -215,7 +263,6 @@ class LipAPI:
         'H': 7,
         'X': 8
     }
-
 
 
 async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
@@ -509,7 +556,9 @@ def loop_mouth_cue(osc_address):
                                                "duration_number": 1}}}
 
                 LipAPI.wvs_client.send_message(ws_msg)
-            logger.info(str(player_2digit) + " " + str(value) + " " + str(round(time.time() * 1000)))
+            logger.info(
+                f"{str(player_2digit)} {str(value)} {str(round(time.time() * 1000))}"
+            )
             if str2bool(app_config['send_only_once']):
                 triggered_values.add(cue_to_test)
 
@@ -634,7 +683,6 @@ async def main_page():
             cha_status.props(remove='color=green')
             cha_status.props(add='color=black')
             logger.info('stop chataigne')
-
 
     async def check_status():
         """
@@ -1985,7 +2033,8 @@ async def main_page():
                         with ui.row():
                             sp_1 = ui.button(on_click=lambda: sync_player('play'), icon='play_circle').props('outline')
                             sp_1.tooltip('Play players')
-                            sp_2 = ui.button(on_click=lambda: sync_player('pause'), icon='pause_circle').props('outline')
+                            sp_2 = ui.button(on_click=lambda: sync_player('pause'), icon='pause_circle').props(
+                                'outline')
                             sp_2.tooltip('Pause players')
                         sync_player_button = ui.button(on_click=lambda: sync_player('sync'), icon='sync')
                         sync_player_button.tooltip('Sync accompaniment with vocals')
@@ -2191,7 +2240,8 @@ async def main_page():
                             cha_status = ui.icon('online_prediction', size='sm')
                         cha_ip = ui.input('Server IP', value='127.0.0.1')
                         with ui.row():
-                            cha_port = ui.number('Port', value=8080, on_change=lambda e:utils.chataigne_settings(e.value))
+                            cha_port = ui.number('Port', value=8080,
+                                                 on_change=lambda e: utils.chataigne_settings(e.value))
                             cha_path = ui.input('Path (opt)', value='')
                             cha_activate = ui.checkbox('activate', on_change=manage_cha_client)
             else:
@@ -2202,7 +2252,6 @@ async def main_page():
 
             ui.label(' ')
             ui.separator()
-
 
         ui.label(' ')
         ui.separator()
@@ -2272,12 +2321,14 @@ async def audio_editor():
     audiomass_file = audiomass_file.replace('./', '/')
     ui.navigate.to(f'/audiomass/src/index.html?WLEDLipSyncFilePath={audiomass_file}')
 
+
 async def startup_actions():
     logger.info('startup actions')
     utils.chataigne_settings()
     if not os.path.isfile(rub._exe_name):
         logger.info('rhubarb missing... proceed to installation')
         await utils.run_install_rhubarb()
+
 
 def shutdown_actions():
     """
@@ -2298,55 +2349,6 @@ def shutdown_actions():
         os.remove('tmp/Pysp310.zip')
 
     utils.inform_user_shutdown()
-
-
-if "NUITKA_ONEFILE_PARENT" in os.environ:
-
-    def on_ok_click():
-        # Close the window when OK button is clicked
-        root.destroy()
-
-    # Create the main window
-    root = tk.Tk()
-    root.title("WLEDLipSync Information")
-    root.configure(bg='#0E7490')  # Set the background color
-
-    abs_pth = os.path.abspath(sys.argv[0])
-    work_dir = os.path.dirname(abs_pth).replace('\\', '/')
-
-    # Change the window icon
-    icon = PhotoImage(file=f'{work_dir}/favicon.png')
-    root.iconphoto(False, icon)
-
-    config_file = work_dir + "/WLEDLipSync/config/WLEDLipSync.ini"
-
-    # Define the window's contents
-    info_text = ("Extracted executable to WLEDLipSync folder.....\n\n \
-    You can safely delete this file after extraction finished to save some space.\n \
-    (the same for WLEDLipSync.out.txt and err.txt if there ...)\n\n \
-    Go to WLEDLipSync folder and run WLEDLipSync-{OS} file\n \
-    This is a portable version, nothing installed on your system and can be moved where wanted.\n\n \
-    Enjoy using WLEDLipSync\n\n \
-    -------------------------------------------------------------------------------------------------\n \
-    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,\n \
-    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n \
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n \
-    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,\n \
-    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n \
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n \
-    -------------------------------------------------------------------------------------------------\n ")
-
-    info_label = tk.Label(root, text=info_text, bg='#0E7490', fg='white', justify=tk.LEFT)
-    info_label.pack(padx=10, pady=10)
-
-    # Create the OK button
-    ok_button = tk.Button(root, text="Ok", command=on_ok_click, bg='gray', fg='white')
-    ok_button.pack(pady=10)
-
-    # Start the Tkinter event loop
-    root.mainloop()
-
-    sys.exit()
 
 
 """

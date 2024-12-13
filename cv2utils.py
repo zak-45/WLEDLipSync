@@ -17,7 +17,27 @@ import os
 import utils
 import numpy as np
 
-# create logger
+"""
+When this env var exist, this mean run from the one-file compressed executable.
+Load of the config is not possible, folder config should not exist.
+This avoid FileNotFoundError.
+This env not exist when run from the extracted program.
+Expected way to work.
+"""
+if "NUITKA_ONEFILE_PARENT" not in os.environ:
+    # read config
+    # create logger
+    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.cv2utils')
+
+    lip_config = utils.read_config()
+
+    # config keys
+    server_config = lip_config[0]  # server key
+    app_config = lip_config[1]  # app key
+    color_config = lip_config[2]  # colors key
+    custom_config = lip_config[3]  # custom key
+
+
 
 class VideoThumbnailExtractor:
     """
@@ -134,3 +154,5 @@ class VideoThumbnailExtractor:
 
     def get_thumbnails(self):
         return [cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) for frame in self.thumbnail_frames]
+
+

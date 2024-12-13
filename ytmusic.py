@@ -167,7 +167,7 @@ Expected way to work.
 if "NUITKA_ONEFILE_PARENT" not in os.environ:
     # read config
     # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.ytmusic')
+    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.ytmusicapi')
 
     lip_config = utils.read_config()
 
