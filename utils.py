@@ -52,8 +52,6 @@ def inform_user_shutdown():
     label = tk.Label(root, text=message, bg='#0E7490', fg='white', justify=tk.LEFT, padx=20, pady=20)
     label.pack()
 
-    working_dir = os.getcwd()
-
     # Create an OK button to close the window
     ok_button = tk.Button(root, text="OK", command=root.destroy)
     ok_button.pack(pady=10)

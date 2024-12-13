@@ -154,7 +154,7 @@ else:
 
     # Create the main window
     root = tk.Tk()
-    root.title("WLEDLipSync Information")
+    root.title("WLEDLipSync Portable Extraction")
     root.configure(bg='#0E7490')  # Set the background color
 
     abs_pth = os.path.abspath(sys.argv[0])
