@@ -161,7 +161,7 @@ else:
     work_dir = os.path.dirname(abs_pth).replace('\\', '/')
 
     # Change the window icon
-    icon = PhotoImage(file=f'{work_dir}/favicon.png')
+    icon = PhotoImage(file=f'{work_dir}/WLEDLipSync/favicon.png')
     root.iconphoto(False, icon)
 
     config_file = work_dir + "/WLEDLipSync/config/WLEDLipSync.ini"
