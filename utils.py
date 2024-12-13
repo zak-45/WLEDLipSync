@@ -37,8 +37,6 @@ from PIL import Image
 from nicegui import ui, run
 from pathlib import Path
 
-from tkinter import PhotoImage
-
 def inform_user_shutdown():
     """Create a Tkinter window to inform the user they can close the browser.
 
@@ -48,21 +46,21 @@ def inform_user_shutdown():
     """
     root = tk.Tk()
     root.title("WLEDLipSync Information")
-    root.configure(bg='#657B83')  # Set the background color
+    root.configure(bg='#0E7490')  # Set the background color
     # Create a label with the message
     message = "WLEDLipSync -- You can close the browser now."
-    label = tk.Label(root, text=message, bg='#657B83', fg='white', justify=tk.LEFT, padx=20, pady=20)
+    label = tk.Label(root, text=message, bg='#0E7490', fg='white', justify=tk.LEFT, padx=20, pady=20)
     label.pack()
 
     working_dir = os.getcwd()
 
-    # Change the window icon
-    icon = PhotoImage(file=f'{working_dir}/favicon.png')
-    root.iconphoto(False, icon)
-
     # Create an OK button to close the window
     ok_button = tk.Button(root, text="OK", command=root.destroy)
     ok_button.pack(pady=10)
+
+    # Make the window stay on top of other windows
+    root.attributes('-topmost', True)
+    root.attributes('-toolwindow', True)
 
     # Start the Tkinter event loop
     root.mainloop()

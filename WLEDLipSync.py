@@ -2300,19 +2300,6 @@ def shutdown_actions():
     utils.inform_user_shutdown()
 
 
-"""
-app specific param
-"""
-
-app.add_media_files('/media', 'media')
-app.add_static_files('/output', 'output')
-app.add_static_files('/audiomass', 'audiomass')
-app.add_static_files('/assets', 'assets')
-app.add_static_files('/config', 'config')
-
-app.on_startup(startup_actions)
-app.on_shutdown(shutdown_actions)
-
 if "NUITKA_ONEFILE_PARENT" in os.environ:
 
     def on_ok_click():
@@ -2322,7 +2309,7 @@ if "NUITKA_ONEFILE_PARENT" in os.environ:
     # Create the main window
     root = tk.Tk()
     root.title("WLEDLipSync Information")
-    root.configure(bg='#657B83')  # Set the background color
+    root.configure(bg='#0E7490')  # Set the background color
 
     abs_pth = os.path.abspath(sys.argv[0])
     work_dir = os.path.dirname(abs_pth).replace('\\', '/')
@@ -2349,7 +2336,7 @@ if "NUITKA_ONEFILE_PARENT" in os.environ:
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n \
     -------------------------------------------------------------------------------------------------\n ")
 
-    info_label = tk.Label(root, text=info_text, bg='#657B83', fg='white', justify=tk.LEFT)
+    info_label = tk.Label(root, text=info_text, bg='#0E7490', fg='white', justify=tk.LEFT)
     info_label.pack(padx=10, pady=10)
 
     # Create the OK button
@@ -2360,6 +2347,20 @@ if "NUITKA_ONEFILE_PARENT" in os.environ:
     root.mainloop()
 
     sys.exit()
+
+
+"""
+app specific param
+"""
+
+app.add_media_files('/media', 'media')
+app.add_static_files('/output', 'output')
+app.add_static_files('/audiomass', 'audiomass')
+app.add_static_files('/assets', 'assets')
+app.add_static_files('/config', 'config')
+
+app.on_startup(startup_actions)
+app.on_shutdown(shutdown_actions)
 
 """
 run niceGUI
