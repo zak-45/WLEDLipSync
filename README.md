@@ -10,7 +10,8 @@ Cross-Platform (Win / Linux / macOS) Portable Application
 ```
 13/12/2024
 This is a BETA release. Tested on Win / Linux. All main features there. 
-No python installation required. Portable version give you flexibility and nothing installed into your OS.
+Portable version give you flexibility and nothing installed into your OS.
+No python installation required.
 ```
 
 ## WLEDLipSync
@@ -20,7 +21,7 @@ WLEDVideoSync is a tool designed to create singing face seen on 2D matrix e.g. W
 **Key Features:**
 - Audio separation into stems ( vocals / accompaniment )
 - Audio analysis with mouth cue creation
-- Integrated with Chataigne (include portable version)
+- Integrated with Chataigne (portable version included)
 - OSC message
 - Integrated with WLEDVideoSync (need to be installed separately)
 - Websocket message
