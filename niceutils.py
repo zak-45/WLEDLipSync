@@ -128,6 +128,14 @@ async def run_gencuedata():
     await ui.run_javascript('genCueData();', timeout=5)
 
 
+def close_app():
+    """
+    execute javascript function to generate
+    data when click on waveform for focus on the mouth card
+    """
+    ui.run_javascript('alert("You can close your browser now !");', timeout=5)
+
+
 def create_marker(position, value):
     """ run java to add marker on the waveform """
 
@@ -481,7 +489,7 @@ Expected way to work.
 if "NUITKA_ONEFILE_PARENT" not in os.environ:
     # read config
     # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.niceutils')
+    # logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.niceutils')
 
     lip_config = utils.read_config()
 

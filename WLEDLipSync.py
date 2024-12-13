@@ -69,6 +69,8 @@ import cv2
 import os
 import sys
 import asyncio
+import tkinter as tk
+from tkinter import PhotoImage
 
 import utils
 import logging
@@ -76,6 +78,7 @@ import concurrent_log_handler
 import taglib
 import niceutils
 import chataigne
+import subprocess
 
 from str2bool import str2bool
 from OSCClient import OSCClient
@@ -2150,7 +2153,7 @@ async def main_page():
 
         with ui.card().tight().classes('bg-cyan-400'):
             ui.label(' ')
-            wvs_exp = ui.expansion('WledVideoSync').classes('bg-cyan-600')
+            wvs_exp = ui.expansion('WLEDLipSync').classes('bg-cyan-600')
             with wvs_exp:
                 with ui.column():
                     wvs_ip = ui.input('Server IP', value='127.0.0.1')
@@ -2287,12 +2290,15 @@ def shutdown_actions():
 
     logger.info('shutdown actions')
     # stop Chataigne
-    cha.stop_process()
     logger.info('stop chataigne')
+    cha.stop_process()
     # remove python portable that has been downloaded during installation
     logger.info('clean tmp')
     if os.path.isfile('tmp/Pysp310.zip'):
         os.remove('tmp/Pysp310.zip')
+
+    utils.inform_user_shutdown()
+
 
 """
 app specific param
@@ -2306,6 +2312,54 @@ app.add_static_files('/config', 'config')
 
 app.on_startup(startup_actions)
 app.on_shutdown(shutdown_actions)
+
+if "NUITKA_ONEFILE_PARENT" in os.environ:
+
+    def on_ok_click():
+        # Close the window when OK button is clicked
+        root.destroy()
+
+    # Create the main window
+    root = tk.Tk()
+    root.title("WLEDLipSync Information")
+    root.configure(bg='#657B83')  # Set the background color
+
+    abs_pth = os.path.abspath(sys.argv[0])
+    work_dir = os.path.dirname(abs_pth).replace('\\', '/')
+
+    # Change the window icon
+    icon = PhotoImage(file=f'{work_dir}/favicon.png')
+    root.iconphoto(False, icon)
+
+    config_file = work_dir + "/WLEDLipSync/config/WLEDLipSync.ini"
+
+    # Define the window's contents
+    info_text = ("Extracted executable to WLEDLipSync folder.....\n\n \
+    You can safely delete this file after extraction finished to save some space.\n \
+    (the same for WLEDLipSync.out.txt and err.txt if there ...)\n\n \
+    Go to WLEDLipSync folder and run WLEDLipSync-{OS} file\n \
+    This is a portable version, nothing installed on your system and can be moved where wanted.\n\n \
+    Enjoy using WLEDLipSync\n\n \
+    -------------------------------------------------------------------------------------------------\n \
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,\n \
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n \
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n \
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,\n \
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n \
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n \
+    -------------------------------------------------------------------------------------------------\n ")
+
+    info_label = tk.Label(root, text=info_text, bg='#657B83', fg='white', justify=tk.LEFT)
+    info_label.pack(padx=10, pady=10)
+
+    # Create the OK button
+    ok_button = tk.Button(root, text="Ok", command=on_ok_click, bg='gray', fg='white')
+    ok_button.pack(pady=10)
+
+    # Start the Tkinter event loop
+    root.mainloop()
+
+    sys.exit()
 
 """
 run niceGUI

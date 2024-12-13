@@ -30,10 +30,42 @@ import sysconfig
 import requests
 import zipfile
 
+import tkinter as tk
+
 from str2bool import str2bool
 from PIL import Image
 from nicegui import ui, run
 from pathlib import Path
+
+from tkinter import PhotoImage
+
+def inform_user_shutdown():
+    """Create a Tkinter window to inform the user they can close the browser.
+
+    This function initializes a Tkinter window with a message informing the
+    user that they can safely close the browser. It includes an 'OK' button
+    to dismiss the message.
+    """
+    root = tk.Tk()
+    root.title("WLEDLipSync Information")
+    root.configure(bg='#657B83')  # Set the background color
+    # Create a label with the message
+    message = "WLEDLipSync -- You can close the browser now."
+    label = tk.Label(root, text=message, bg='#657B83', fg='white', justify=tk.LEFT, padx=20, pady=20)
+    label.pack()
+
+    working_dir = os.getcwd()
+
+    # Change the window icon
+    icon = PhotoImage(file=f'{working_dir}/favicon.png')
+    root.iconphoto(False, icon)
+
+    # Create an OK button to close the window
+    ok_button = tk.Button(root, text="OK", command=root.destroy)
+    ok_button.pack(pady=10)
+
+    # Start the Tkinter event loop
+    root.mainloop()
 
 
 def check_spleeter_is_running(obj, file_path, check_interval: float = 1.0):

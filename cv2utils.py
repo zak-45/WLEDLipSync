@@ -18,8 +18,6 @@ import utils
 import numpy as np
 
 # create logger
-logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.utils')
-
 
 class VideoThumbnailExtractor:
     """
