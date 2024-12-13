@@ -10,8 +10,8 @@ Cross-Platform (Win / Linux / macOS) Portable Application
 ```
 13/12/2024
 This is a BETA release. Tested on Win / Linux. All main features there. 
-Portable version give you flexibility and nothing installed into your OS.
 No python installation required.
+Portable version provide you flexibility with nothing installed into your OS.
 ```
 
 ## WLEDLipSync
