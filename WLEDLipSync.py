@@ -2153,7 +2153,7 @@ async def main_page():
 
         with ui.card().tight().classes('bg-cyan-400'):
             ui.label(' ')
-            wvs_exp = ui.expansion('WLEDLipSync').classes('bg-cyan-600')
+            wvs_exp = ui.expansion('WLEDVideoSync').classes('bg-cyan-600')
             with wvs_exp:
                 with ui.column():
                     wvs_ip = ui.input('Server IP', value='127.0.0.1')
