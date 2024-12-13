@@ -8,7 +8,7 @@
 #          CAST utilities
 #
 # Image utilities
-# cv2 preview
+# cv2 thumb
 #
 """
 
