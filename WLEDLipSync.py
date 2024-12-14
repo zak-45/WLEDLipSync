@@ -1064,6 +1064,23 @@ async def main_page():
                 await check_audio_input(result)
 
     async def run_analyse(dialog):
+        """
+        Initiates audio analysis based on the current state and user input.
+        It checks for various conditions before starting the analysis and updates the UI accordingly.
+
+        Args:
+            dialog: The dialog interface used for user interaction.
+
+        Returns:
+            None
+
+        Raises:
+            None
+
+        Examples:
+            await run_analyse(my_dialog)
+        """
+
         if rub._instance_running:
             ui.notification('Already running instance', type='negative', position='center')
         elif LipAPI.data_changed is True:
@@ -1809,8 +1826,6 @@ async def main_page():
             logger.info('Error to retrieve info from ytmusicapi')
         except Exception as e:
             logger.info(f'Error to retrieve info from ytmusicapi {e}')
-        finally:
-            pass
 
         # hide spinner when finished
         song_spinner.set_visibility(False)
@@ -2347,8 +2362,9 @@ def shutdown_actions():
     logger.info('clean tmp')
     if os.path.isfile('tmp/Pysp310.zip'):
         os.remove('tmp/Pysp310.zip')
-
-    utils.inform_user_shutdown()
+    #
+    message = "WLEDLipSync -- You can close the browser now."
+    utils.inform_user(message)
 
 
 """

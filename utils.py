@@ -37,18 +37,16 @@ from PIL import Image
 from nicegui import ui, run
 from pathlib import Path
 
-def inform_user_shutdown():
-    """Create a Tkinter window to inform the user they can close the browser.
+def inform_user(message):
+    """
+    Create a Tkinter window to inform the user.
 
-    This function initializes a Tkinter window with a message informing the
-    user that they can safely close the browser. It includes an 'OK' button
+    This function initializes a Tkinter window with a message informing the user. It includes an 'OK' button
     to dismiss the message.
     """
     root = tk.Tk()
     root.title("WLEDLipSync Information")
     root.configure(bg='#0E7490')  # Set the background color
-    # Create a label with the message
-    message = "WLEDLipSync -- You can close the browser now."
     label = tk.Label(root, text=message, bg='#0E7490', fg='white', justify=tk.LEFT, padx=20, pady=20)
     label.pack()
 
@@ -58,7 +56,8 @@ def inform_user_shutdown():
 
     # Make the window stay on top of other windows
     root.attributes('-topmost', True)
-    root.attributes('-toolwindow', True)
+    if sys.platform.lower() == 'win32':
+        root.attributes('-toolwindow', True)
 
     # Start the Tkinter event loop
     root.mainloop()
@@ -218,7 +217,7 @@ def download_spleeter():
         extract_from_url(
             f'https://github.com/zak-45/SpleeterGUI-Chataigne-Module/releases/download/0.0.0.0/{python_portable_zip()}',
             f'{chataigne_data_folder()}/xtra',
-            'PySpleeter downloaded',
+            'PySp3.10 downloaded',
             seven_zip,
         )
         logger.info(f'Python portable {python_portable_zip()} downloaded to {chataigne_data_folder()}/xtra')
@@ -340,7 +339,7 @@ def chataigne_data_folder():
     elif sys.platform.lower() == 'linux':
         return f'{chataigne_folder()}/Documents/Chataigne'
     elif sys.platform.lower() == 'macos':
-        return f'{chataigne_folder()}/Chataigne'
+        return f'{chataigne_folder()}/Documents/Chataigne'
     else:
         return None
 
@@ -391,19 +390,19 @@ async def run_install_chataigne(obj, dialog):
     await run.io_bound(download_chataigne)
     #
     # we will wait a few sec before continue
-    time.sleep(2)
+    await asyncio.sleep(2)
     #
     ui.notify('Download data for spleeter... this will take some time', position='center', type='info')
     await run.io_bound(download_spleeter)
     #
     # we will wait a few sec before continue
-    time.sleep(2)
+    await asyncio.sleep(2)
     #
     ui.notify('Finalize Chataigne installation', position='center', type='info')
     await run.io_bound(chataigne_settings)
     #
     # we will wait a few sec before continue
-    time.sleep(2)
+    await asyncio.sleep(2)
     #
     if sys.platform.lower() != "win32":
         await make_file_executable(chataigne_exe_name())
@@ -487,7 +486,7 @@ async def run_install_rhubarb():
     await run.io_bound(download_rhubarb)
     #
     # we will wait a few sec before continue
-    time.sleep(2)
+    await asyncio.sleep(2)
     #
     if sys.platform.lower() != "win32":
         logger.info('set +x to rhubarb')
