@@ -31,13 +31,60 @@ import requests
 import zipfile
 
 import tkinter as tk
+import threading
 
 from str2bool import str2bool
 from PIL import Image
 from nicegui import ui, run
 from pathlib import Path
 
-def inform_user(message):
+
+def display_custom_msg(msg, msg_type: str = ''):
+    # Call the separate script to show the error message in a Tkinter window
+    subprocess.Popen(['python', 'info_window.py', msg, msg_type])
+
+
+class CustomLogger(logging.Logger):
+    def error(self, msg, *args, **kwargs):
+        # Custom action before logging the error
+        display_custom_msg(msg, 'error')
+        super().error(msg, *args, **kwargs)
+
+
+def setup_logging(config_path='logging_config.ini', handler_name: str = None):
+    """
+    Sets up logging configuration based on a specified configuration file.
+    This function checks for the existence of a logging configuration file, applies the configuration if found,
+    and returns a logger instance configured according to the settings,
+    or falls back to a basic configuration if the file is not found.
+
+    Args:
+        config_path (str): The path to the logging configuration file. Defaults to 'logging_config.ini'.
+        handler_name (str, optional): The name of the logger handler to use. Defaults to None.
+
+    Returns:
+        logging.Logger: The configured logger instance.
+    """
+    # Set the custom logger class
+    logging.setLoggerClass(CustomLogger)
+
+    if os.path.exists(config_path):
+        logging.config.fileConfig(config_path, disable_existing_loggers=True)
+        config_data = read_config()
+        if str2bool(config_data[1]['log_to_main']):
+            v_logger = logging.getLogger('WLEDLogger')
+        else:
+            v_logger = logging.getLogger(handler_name)
+        v_logger.debug(f"Logging configured using {config_path} for {handler_name}")
+    else:
+        logging.basicConfig(level=logging.INFO)
+        v_logger = logging.getLogger(handler_name)
+        v_logger.warning(f"Logging config file {config_path} not found. Using basic configuration.")
+
+    return v_logger
+
+
+def inform_window(message):
     """
     Create a Tkinter window to inform the user.
 
@@ -124,9 +171,9 @@ def download_github_directory_as_zip(repo_url: str, destination: str, directory_
                 zip_file.extractall(destination)
             logger.info(f'Download {repo_url}, extract "{directory_path}" to {destination}')
     except requests.RequestException as e:
-        logger.info(f'Error downloading repository: {e}')
+        logger.error(f'Error downloading repository: {e}')
     except zipfile.BadZipFile:
-        logger.info('Error: The downloaded file is not a valid ZIP file.')
+        logger.error('Error: The downloaded file is not a valid ZIP file.')
 
 
 def extract_zip_with_7z(zip_file, destination):
@@ -292,7 +339,7 @@ def spleeter_cmd_file():
         return f'{chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main/xtra/win/run_spleeter.cmd'
     elif sys.platform.lower() == 'linux':
         return f'{chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main/xtra/linux/run_spleeter.sh'
-    elif sys.platform.lower() == 'macos':
+    elif sys.platform.lower() == 'darwin':
         return f'{chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main/xtra/mac/run_spleeter.sh'
     else:
         return None
@@ -314,31 +361,31 @@ def chataigne_exe_name():
         return f'{chataigne_folder()}/Chataigne.exe'
     elif sys.platform.lower() == 'linux':
         return f'{chataigne_folder()}/Chataigne-linux-x64-1.9.24.AppImage'
-    elif sys.platform.lower() == 'macos':
+    elif sys.platform.lower() == 'darwin':
         return f'{chataigne_folder()}/chataigne'
     else:
         return None
+
 
 def chataigne_portable_url():
     if sys.platform.lower() == 'win32':
         return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip'
     elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
         return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-linux-x64-1.9.24.zip'
-    elif sys.platform.lower() == 'macos' and 'x86_64' in sysconfig.get_platform():
+    elif sys.platform.lower() == 'darwin' and 'x86_64' in sysconfig.get_platform():
         return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-osx-intel-1.9.24.zip'
-    elif sys.platform.lower() == 'macos' and 'arm' in sysconfig.get_platform():
+    elif sys.platform.lower() == 'darwin' and 'arm' in sysconfig.get_platform():
         return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-osx-silicon-1.9.24.zip'
     else:
         return None
 
 
 def chataigne_data_folder():
-
     if sys.platform.lower() == 'win32':
         return f'{chataigne_folder()}/Documents/Chataigne'
     elif sys.platform.lower() == 'linux':
         return f'{chataigne_folder()}/Documents/Chataigne'
-    elif sys.platform.lower() == 'macos':
+    elif sys.platform.lower() == 'darwin':
         return f'{chataigne_folder()}/Documents/Chataigne'
     else:
         return None
@@ -349,7 +396,7 @@ def chataigne_folder():
         return 'chataigne/win'
     elif sys.platform.lower() == 'linux':
         return 'chataigne/linux'
-    elif sys.platform.lower() == 'macos':
+    elif sys.platform.lower() == 'darwin':
         return 'chataigne/mac'
     else:
         return None
@@ -360,7 +407,7 @@ def python_portable_zip():
         return 'spleeter-portable-windows-x86_64.zip'
     elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
         return 'spleeter-portable-linux-x86_64.zip'
-    elif sys.platform.lower() == 'macos':
+    elif sys.platform.lower() == 'darwin':
         return 'spleeter-portable-darwin-universal2.zip'
     else:
         return None
@@ -451,7 +498,7 @@ def rhubarb_folder():
         return 'rhubarb/win'
     elif sys.platform.lower() == 'linux':
         return 'rhubarb/linux'
-    elif sys.platform.lower() == 'macos':
+    elif sys.platform.lower() == 'darwin':
         return 'rhubarb/mac'
     else:
         return None
@@ -462,7 +509,7 @@ def rhubarb_url():
         return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Windows.zip'
     elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
         return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Linux.zip'
-    elif sys.platform.lower() == 'macos' and 'x86_64' in sysconfig.get_platform():
+    elif sys.platform.lower() == 'darwin' and 'x86_64' in sysconfig.get_platform():
         return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-macOS.zip'
     else:
         return None
@@ -473,7 +520,7 @@ def rhubarb_exe_name():
         return f'{rhubarb_folder()}/Rhubarb-Lip-Sync-1.13.0-Windows/rhubarb.exe'
     elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
         return f'{rhubarb_folder()}/Rhubarb-Lip-Sync-1.13.0-Linux/rhubarb'
-    elif sys.platform.lower() == 'macos':
+    elif sys.platform.lower() == 'darwin':
         return f'{rhubarb_folder()}/Rhubarb-Lip-Sync-1.13.0-macOS/rhubarb'
     else:
         return None
@@ -728,38 +775,6 @@ def read_config():
     custom_cfg = lip_cfg.get('custom')
 
     return server_cfg, app_cfg, colors_cfg, custom_cfg
-
-
-def setup_logging(config_path='logging_config.ini', handler_name: str = None):
-    """
-    Sets up logging configuration based on a specified configuration file. 
-    This function checks for the existence of a logging configuration file, applies the configuration if found, 
-    and returns a logger instance configured according to the settings, 
-    or falls back to a basic configuration if the file is not found.
-
-    Args:
-        config_path (str): The path to the logging configuration file. Defaults to 'logging_config.ini'.
-        handler_name (str, optional): The name of the logger handler to use. Defaults to None.
-
-    Returns:
-        logging.Logger: The configured logger instance.
-
-    """
-    if os.path.exists(config_path):
-        logging.config.fileConfig(config_path, disable_existing_loggers=True)
-        # trick: use the same name for all modules, ui.log will receive message from alls
-        config_data = read_config()
-        if str2bool(config_data[1]['log_to_main']):
-            v_logger = logging.getLogger('WLEDLogger')
-        else:
-            v_logger = logging.getLogger(handler_name)
-        v_logger.debug(f"Logging configured using {config_path} for {handler_name}")
-    else:
-        logging.basicConfig(level=logging.INFO)
-        v_logger = logging.getLogger(handler_name)
-        v_logger.warning(f"Logging config file {config_path} not found. Using basic configuration.")
-
-    return v_logger
 
 
 def convert_audio(input_file, output_file):

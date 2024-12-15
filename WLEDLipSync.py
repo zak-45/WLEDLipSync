@@ -460,6 +460,7 @@ def save_data(force: bool = False):
             ui.notify('Data saved successfully.')
         except Exception as e:
             ui.notify(f'Failed to save data: {e}')
+            logger.error(f'Failed to save data: {e}')
         dialog.close()
 
     if LipAPI.output_file and (LipAPI.data_changed or force):
@@ -902,13 +903,16 @@ async def main_page():
 
         # check some requirements
         if file_name == '':
-            ui.notify('Blank value not allowed')
+            ui.notify('Blank value not allowed', type='negative')
+            logger.error('Blank value not allowed')
             return False
         elif not file_name.lower().endswith('.mp3'):
-            ui.notify('Only MP3')
+            ui.notify('Only MP3', type='negative')
+            logger.error('Only MP3')
             return False
         elif not os.path.isfile(file_name):
-            ui.notify(f'File {file_name} does not exist')
+            ui.notify(f'File {file_name} does not exist', type='negative')
+            logger.error(f'File {file_name} does not exist')
             return False
 
         return True
@@ -978,7 +982,7 @@ async def main_page():
             # check if folder / file  not exist (not stems)
             if not os.path.isfile(file_folder + 'vocals.mp3'):
                 if not os.path.isdir(file_folder):
-                    ui.notify(f'folder {file_folder} does not exist, creating ...')
+                    ui.notify(f'folder {file_folder} does not exist, creating ...', type='info')
                     os.mkdir(file_folder)
                 # in this case, source file is supposed not been separated in stems
                 ui.notify(f'Analysis done from audio source file {file_name}.')
@@ -1685,6 +1689,7 @@ async def main_page():
                                 type='info')
             except Exception as e:
                 ui.notify(f'Failed to save lyrics: {e}', position='center', type='negative')
+                logger.error(f'Failed to save lyrics: {e}')
         else:
             ui.notification(f'Nothing to save ...', position='center', type='warning')
 
@@ -2364,7 +2369,7 @@ def shutdown_actions():
         os.remove('tmp/Pysp310.zip')
     #
     message = "WLEDLipSync -- You can close the browser now."
-    utils.inform_user(message)
+    utils.inform_window(message)
 
 
 """

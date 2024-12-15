@@ -38,7 +38,6 @@ if "NUITKA_ONEFILE_PARENT" not in os.environ:
     custom_config = lip_config[3]  # custom key
 
 
-
 class VideoThumbnailExtractor:
     """
     Extract thumbnails from a video or image file.
