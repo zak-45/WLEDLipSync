@@ -2294,6 +2294,7 @@ async def main_page():
 
     await niceutils.wavesurfer()
 
+    ui.button('test', on_click=lambda: utils.show_message('tt'))
 
 @ui.page('/edit')
 async def edit_cue_buffer():
