@@ -9,7 +9,6 @@ v: 1.0.0.0
 
 import tkinter as tk
 import sys
-import contextlib
 
 def show_message(message, msg_type: str = ''):
     """
@@ -43,6 +42,5 @@ def show_message(message, msg_type: str = ''):
 
 if __name__ == "__main__":
 
-    with contextlib.redirect_stdout(None):
-        if len(sys.argv) > 2:
-            show_message(sys.argv[1], sys.argv[2])
+    if len(sys.argv) > 2:
+        show_message(sys.argv[1], sys.argv[2])
