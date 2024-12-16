@@ -41,7 +41,7 @@ from pathlib import Path
 
 def display_custom_msg(msg, msg_type: str = ''):
     # Call the separate script to show the error message in a Tkinter window
-    subprocess.Popen(['python', 'info_window.py', msg, msg_type])
+    subprocess.Popen([f'{chataigne_data_folder()}/xtra/PySp3.10/bin/python', 'info_window.py', msg, msg_type])
 
 
 class CustomLogger(logging.Logger):
