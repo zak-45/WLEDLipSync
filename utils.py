@@ -453,6 +453,10 @@ async def run_install_chataigne(obj, dialog):
     #
     if sys.platform.lower() != "win32":
         await make_file_executable(chataigne_exe_name())
+        await make_file_executable(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/python')
+        await make_file_executable(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/python3')
+        await make_file_executable(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/spleeter')
+
     #
     # set UI after installation
     obj.sender.props(remove='loading')
