@@ -37,8 +37,6 @@ if "NUITKA_ONEFILE_PARENT" not in os.environ:
     color_config = lip_config[2]  # colors key
     custom_config = lip_config[3]  # custom key
 
-    logger.error('zla')
-
 
 class VideoThumbnailExtractor:
     """
