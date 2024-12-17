@@ -47,17 +47,6 @@ jobs:
       - name: Check-out repository
         uses: actions/checkout@v4
 
-      - name: Extract Portable Python
-        run: |
-          if [[ ${{ matrix.os_name }} == 'windows' ]]; then
-            powershell -command "Expand-Archive python-portable-${{ matrix.os_name }}-${{ matrix.os_arch }}.zip -DestinationPath sp-${{ matrix.os_name }}-${{ matrix.os_arch }}"
-            powershell -command "Move-Item -Path 'sp-${{ matrix.os_name }}-${{ matrix.os_arch }}\\python-headless-3.10.15-${{ matrix.os_name }}-${{ matrix.os_arch }}' -Destination 'PySp3.10'"
-          else
-            unzip python-portable-${{ matrix.os_name }}-${{ matrix.os_arch }}.zip -d sp-${{ matrix.os_name }}-${{ matrix.os_arch }}
-            mv sp-${{ matrix.os_name }}-${{ matrix.os_arch }}/python-headless-3.10.15-${{ matrix.os_name }}-${{ matrix.os_arch }} PySp3.10
-          fi
-        shell: bash
-
       - name: Windows specific
         if: matrix.os == 'windows-latest'
         run: |
