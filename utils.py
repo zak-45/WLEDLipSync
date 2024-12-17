@@ -38,8 +38,6 @@ from nicegui import ui, run
 from pathlib import Path
 
 
-
-
 def display_custom_msg(msg, msg_type: str = ''):
     # Call the separate script to show the error message in a Tkinter window
     subprocess.Popen([info_window_exe_name(), msg, msg_type])
