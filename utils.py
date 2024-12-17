@@ -77,7 +77,7 @@ def setup_logging(log_config_path='logging_config.ini', handler_name: str = None
     Args:
         log_config_path (str): The path to the logging configuration file. Defaults to 'logging_config.ini'.
         handler_name (str, optional): The name of the logger handler to use. Defaults to None.
-        config_path (str , optional): global config file path
+        config_path (str , optional): global config file path, default to config/WLEDLipSync.ini
 
     Returns:
         logging.Logger: The configured logger instance.
