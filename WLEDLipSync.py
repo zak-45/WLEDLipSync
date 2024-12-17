@@ -166,6 +166,8 @@ else:
     root.iconphoto(False, icon)
 
     config_file = work_dir + "/WLEDLipSync/config/WLEDLipSync.ini"
+    # create logger
+    logger = utils.setup_logging(work_dir + '/WLEDLipSync/config/logging.ini', 'WLEDLogger')
 
     if sys.platform.lower() != "win32":
         file_to_set = work_dir + '/WLEDLipSync/' + utils.info_window_exe_name()
