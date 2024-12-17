@@ -67,7 +67,7 @@ class CustomLogger(logging.Logger):
         super().error(msg, *args, **kwargs)
 
 
-def setup_logging(config_path='logging_config.ini', handler_name: str = None):
+def setup_logging(log_config_path='logging_config.ini', handler_name: str = None, config_path: str = 'config/WLEDLipSync.ini'):
     """
     Sets up logging configuration based on a specified configuration file.
     This function checks for the existence of a logging configuration file, applies the configuration if found,
@@ -75,8 +75,9 @@ def setup_logging(config_path='logging_config.ini', handler_name: str = None):
     or falls back to a basic configuration if the file is not found.
 
     Args:
-        config_path (str): The path to the logging configuration file. Defaults to 'logging_config.ini'.
+        log_config_path (str): The path to the logging configuration file. Defaults to 'logging_config.ini'.
         handler_name (str, optional): The name of the logger handler to use. Defaults to None.
+        config_path (str , optional): global config file path
 
     Returns:
         logging.Logger: The configured logger instance.
@@ -84,18 +85,18 @@ def setup_logging(config_path='logging_config.ini', handler_name: str = None):
     # Set the custom logger class
     logging.setLoggerClass(CustomLogger)
 
-    if os.path.exists(config_path):
-        logging.config.fileConfig(config_path, disable_existing_loggers=True)
-        config_data = read_config()
+    if os.path.exists(log_config_path):
+        logging.config.fileConfig(log_config_path, disable_existing_loggers=True)
+        config_data = read_config(config_path)
         if str2bool(config_data[1]['log_to_main']):
             v_logger = logging.getLogger('WLEDLogger')
         else:
             v_logger = logging.getLogger(handler_name)
-        v_logger.debug(f"Logging configured using {config_path} for {handler_name}")
+        v_logger.debug(f"Logging configured using {log_config_path} for {handler_name}")
     else:
         logging.basicConfig(level=logging.INFO)
         v_logger = logging.getLogger(handler_name)
-        v_logger.warning(f"Logging config file {config_path} not found. Using basic configuration.")
+        v_logger.warning(f"Logging config file {log_config_path} not found. Using basic configuration.")
 
     return v_logger
 
@@ -798,7 +799,7 @@ def validate_ip_address(ip_string):
     return False
 
 
-def read_config():
+def read_config(config_file:str = 'config/WLEDLipSync.ini'):
     """
     Reads the configuration settings from a specified INI file.
     This function loads the configuration file, retrieves various configuration sections,
@@ -810,7 +811,7 @@ def read_config():
 
     """
     # load config file
-    lip_cfg = cfg.load('config/WLEDLipSync.ini')
+    lip_cfg = cfg.load(config_file)
     # config keys
     server_cfg = lip_cfg.get('server')
     app_cfg = lip_cfg.get('app')
