@@ -22,6 +22,8 @@
 # nuitka-project: --include-raw-dir=audiomass=audiomass
 # nuitka-project: --include-raw-dir=output=output
 # nuitka-project: --include-raw-dir=chataigne=chataigne
+# nuitka-project: --include-raw-dir=xtra=xtra
+#
 
 """
 a: zak-45
