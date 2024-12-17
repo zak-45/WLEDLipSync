@@ -170,7 +170,6 @@ else:
     if sys.platform.lower() != "win32":
         file_to_set = work_dir + '/WLEDLipSync/' + utils.info_window_exe_name()
         utils.make_file_executable(file_to_set)
-        print(f'set u+x to file : {file_to_set}')
 
     # Define the window's contents
     info_text = ("Extracted executable to WLEDLipSync folder.....\n\n \
