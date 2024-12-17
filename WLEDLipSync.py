@@ -162,6 +162,7 @@ else:
                                  handler_name='WLEDLogger',
                                  config_path=config_file)
 
+    # set info_window executable
     if sys.platform.lower() != "win32":
         file_to_set = work_dir + '/WLEDLipSync/' + utils.info_window_exe_name()
         utils.make_file_executable(file_to_set)
