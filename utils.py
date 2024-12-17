@@ -600,7 +600,6 @@ def make_file_executable(file_name):
         # we need absolute path
         absolute_file_name = Path(file_name).resolve()
         subprocess.run(['chmod', 'u+x', absolute_file_name], check=True)
-        logger.debug(f'set u+x to {absolute_file_name}')
     except Exception as e:
         logger.error(f'Error to set {file_name} as executable : {e}')
 
