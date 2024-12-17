@@ -38,9 +38,10 @@ from nicegui import ui, run
 from pathlib import Path
 
 
-def display_custom_msg(msg, msg_type: str = ''):
-    # Call the separate script to show the error message in a Tkinter window
-    subprocess.Popen([info_window_exe_name(), msg, msg_type])
+def display_custom_msg(msg, msg_type: str = 'info'):
+    # Call the separate script to show the error/info message in a Tkinter window
+    absolute_file_name = Path(info_window_exe_name()).resolve()
+    subprocess.Popen([absolute_file_name, msg, msg_type])
 
 
 def info_window_exe_name():
@@ -461,8 +462,8 @@ async def run_install_chataigne(obj, dialog):
     #
     # we will wait a few sec before continue
     i = 0
-    while not os.path.isfile(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/spleeter'):
-        logger.info(f"Waiting for {chataigne_data_folder()}/xtra/PySp3.10/bin/spleeter to be created...")
+    while not os.path.isdir(f'{chataigne_data_folder()}/xtra/PySp3.10/share'):
+        logger.info(f"Waiting for {chataigne_data_folder()}/xtra/PySp3.10/share to be created...")
         await asyncio.sleep(2)
         i += 1
         if i > 10:
@@ -473,7 +474,7 @@ async def run_install_chataigne(obj, dialog):
     await run.io_bound(chataigne_settings)
     #
     # we will wait a few sec before continue
-    await asyncio.sleep(1)
+    await asyncio.sleep(2)
     #
     if sys.platform.lower() != "win32":
         make_file_executable(chataigne_exe_name())
@@ -487,6 +488,7 @@ async def run_install_chataigne(obj, dialog):
     obj.sender.set_text('RELOAD APP')
     obj.sender.on('click', lambda: ui.navigate.to('/'))
     ui.notify('Reload your APP to use Chataigne/Spleeter', position='center', type='warning')
+    display_custom_msg('Reload the application to use Chataigne','info')
 
 
 async def ask_install_chataigne(obj):
