@@ -168,6 +168,9 @@ else:
 
     config_file = work_dir + "/WLEDLipSync/config/WLEDLipSync.ini"
 
+    if sys.platform.lower() != "win32":
+        utils.make_file_executable(work_dir + '/' + utils.info_window_exe_name())
+
     # Define the window's contents
     info_text = ("Extracted executable to WLEDLipSync folder.....\n\n \
     You can safely delete this file after extraction finished to save some space.\n \

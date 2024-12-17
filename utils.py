@@ -36,12 +36,24 @@ from str2bool import str2bool
 from PIL import Image
 from nicegui import ui, run
 from pathlib import Path
-from async_tkinter_loop import async_handler, async_mainloop
+
+
+
 
 def display_custom_msg(msg, msg_type: str = ''):
     # Call the separate script to show the error message in a Tkinter window
-    python_name = 'python' if sys.platform.lower() =='win32' else 'python3'
-    subprocess.Popen([python_name, 'info_window.py', msg, msg_type])
+    subprocess.Popen([info_window_exe_name(), msg, msg_type])
+
+
+def info_window_exe_name():
+    if sys.platform.lower() == 'win32':
+        return 'xtra/info_window.exe'
+    elif sys.platform.lower() == 'linux':
+        return 'xtra/info_window.bin'
+    elif sys.platform.lower() == 'darwin':
+        return 'xtra/info_window.app'
+    else:
+        return 'unknown'
 
 
 class CustomLogger(logging.Logger):
