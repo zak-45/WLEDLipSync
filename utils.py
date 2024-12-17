@@ -41,7 +41,12 @@ from pathlib import Path
 def display_custom_msg(msg, msg_type: str = 'info'):
     # Call the separate script to show the error/info message in a Tkinter window
     absolute_file_name = Path(info_window_exe_name()).resolve()
-    subprocess.Popen([absolute_file_name, msg, msg_type])
+    if sys.platform.lower() == "win32":
+        command = [absolute_file_name, msg, msg_type]
+    else:
+        command = ['nohup', absolute_file_name, msg, msg_type, '&']
+
+    subprocess.Popen(command)
 
 
 def info_window_exe_name():
