@@ -462,10 +462,10 @@ async def run_install_chataigne(obj, dialog):
     await asyncio.sleep(2)
     #
     if sys.platform.lower() != "win32":
-        await make_file_executable(chataigne_exe_name())
-        await make_file_executable(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/python')
-        await make_file_executable(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/python3')
-        await make_file_executable(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/spleeter')
+        make_file_executable(chataigne_exe_name())
+        make_file_executable(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/python')
+        make_file_executable(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/python3')
+        make_file_executable(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/spleeter')
 
     #
     # set UI after installation
@@ -551,10 +551,10 @@ async def run_install_rhubarb():
     #
     if sys.platform.lower() != "win32":
         logger.info('set +x to rhubarb')
-        await make_file_executable(rhubarb_exe_name())
+        make_file_executable(rhubarb_exe_name())
 
 
-async def make_file_executable(file_name):
+def make_file_executable(file_name):
     """Change the file permissions to make it executable for the user.
 
     This function executes the 'chmod u+x' command on the specified file,
