@@ -447,19 +447,33 @@ async def run_install_chataigne(obj, dialog):
     await run.io_bound(download_chataigne)
     #
     # we will wait a few sec before continue
-    await asyncio.sleep(2)
+    i = 0
+    while not os.path.isfile(chataigne_exe_name()):
+        logger.info(f"Waiting for {chataigne_exe_name()} to be created...")
+        await asyncio.sleep(2)
+        i += 1
+        if i > 10:
+            logger.error('Chataigne extraction take too long....')
+            break
     #
     ui.notify('Download data for spleeter... this will take some time', position='center', type='info')
     await run.io_bound(download_spleeter)
     #
     # we will wait a few sec before continue
-    await asyncio.sleep(2)
+    i = 0
+    while not os.path.isfile(f'{chataigne_data_folder()}/xtra/PySp3.10/bin/spleeter'):
+        logger.info(f"Waiting for {chataigne_data_folder()}/xtra/PySp3.10/bin/spleeter to be created...")
+        await asyncio.sleep(2)
+        i += 1
+        if i > 10:
+            logger.error('Spleeter extraction take too long....')
+            break
     #
     ui.notify('Finalize Chataigne installation', position='center', type='info')
     await run.io_bound(chataigne_settings)
     #
     # we will wait a few sec before continue
-    await asyncio.sleep(2)
+    await asyncio.sleep(1)
     #
     if sys.platform.lower() != "win32":
         make_file_executable(chataigne_exe_name())
@@ -547,10 +561,17 @@ async def run_install_rhubarb():
     await run.io_bound(download_rhubarb)
     #
     # we will wait a few sec before continue
-    await asyncio.sleep(2)
+    i = 0
+    while not os.path.isfile(rhubarb_exe_name()):
+        logger.info(f"Waiting for {rhubarb_exe_name()} to be created...")
+        await asyncio.sleep(2)
+        i += 1
+        if i > 10:
+            logger.error('rhubarb extraction take too long....')
+            break
     #
     if sys.platform.lower() != "win32":
-        logger.info('set +x to rhubarb')
+        logger.info(f'set u+x to {rhubarb_exe_name()}')
         make_file_executable(rhubarb_exe_name())
 
 
