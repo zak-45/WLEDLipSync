@@ -679,6 +679,7 @@ async def main_page():
             noisette = str(Path('chataigne/WLEDLipSync.noisette').resolve())
             cha.run(headless=False, file_name=noisette)
             cfg_mgr.logger.info('start chataigne')
+            utils.display_custom_msg('Chataigne running ...')
 
         elif action == 'stop':
             cha.stop_process()
