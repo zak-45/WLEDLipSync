@@ -5,29 +5,10 @@ import threading
 import queue
 import time
 import json  # Import json for serialization
-import utils
-import os
 
-"""
-When this env var exist, this mean run from the one-file compressed executable.
-Load of the config is not possible, folder config should not exist.
-This avoid FileNotFoundError.
-This env not exist when run from the extracted program.
-Expected way to work.
-"""
-if "NUITKA_ONEFILE_PARENT" not in os.environ:
-    # read config
-    # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.wvs')
+from configmanager import ConfigManager
 
-    lip_config = utils.read_config()
-
-    # config keys
-    server_config = lip_config[0]  # server key
-    app_config = lip_config[1]  # app key
-    color_config = lip_config[2]  # colors key
-    custom_config = lip_config[3]  # custom key
-
+cfg_mgr = ConfigManager(logger_name='WLEDLogger.wvs')
 
 class WebSocketClient:
     """
@@ -88,7 +69,7 @@ class WebSocketClient:
                 with self._lock:
                     self.status = "connecting"
                 self._ws = websocket.create_connection(self.ws_address)
-                logger.info(f"Connected to {self.ws_address}")
+                cfg_mgr.logger.info(f"Connected to {self.ws_address}")
                 with self._lock:
                     self.status = "connected"
 
@@ -111,19 +92,19 @@ class WebSocketClient:
             except (websocket.WebSocketConnectionClosedException, ConnectionError) as e:
                 with self._lock:
                     self.status = "retrying"
-                logger.warning(f"WebSocket connection closed: {e}")
-                logger.info(f"Retrying connection in {self.retry_interval} seconds...")
+                cfg_mgr.logger.warning(f"WebSocket connection closed: {e}")
+                cfg_mgr.logger.info(f"Retrying connection in {self.retry_interval} seconds...")
                 time.sleep(self.retry_interval)
             except Exception as e:
                 with self._lock:
                     self.status = "error"
-                logger.error(f"Unexpected error: {e}")
+                cfg_mgr.logger.error(f"Unexpected error: {e}")
                 break
 
         # Final cleanup
         with self._lock:
             self.status = "disconnected" if self._running else "stopped"
-        logger.info("Max retry time reached or stopped. Exiting connection loop.")
+        cfg_mgr.logger.info("Max retry time reached or stopped. Exiting connection loop.")
 
     def _receive(self):
         """
@@ -138,12 +119,12 @@ class WebSocketClient:
         while self._running:
             try:
                 message = self._ws.recv()
-                logger.info(f"Received: {message}")
+                cfg_mgr.logger.info(f"Received: {message}")
             except websocket.WebSocketConnectionClosedException:
-                logger.warning("Connection closed while receiving.")
+                cfg_mgr.logger.warning("Connection closed while receiving.")
                 break
             except Exception as e:
-                logger.error(f"Error in receive: {e}")
+                cfg_mgr.logger.error(f"Error in receive: {e}")
                 break
 
     def _send(self):
@@ -166,18 +147,18 @@ class WebSocketClient:
                         if isinstance(message, dict):
                             message = json.dumps(message)
                         self._ws.send(message)
-                        logger.info(f"Sent: {message}")
+                        cfg_mgr.logger.info(f"Sent: {message}")
                     else:
-                        logger.warning("Message not sent, client not connected.")
+                        cfg_mgr.logger.warning("Message not sent, client not connected.")
                         # self._message_queue.put(message)  # Re-enqueue the message
             except queue.Empty:
                 continue  # No message to send, keep checking
             except websocket.WebSocketConnectionClosedException:
-                logger.warning("Connection closed while sending.")
+                cfg_mgr.logger.warning("Connection closed while sending.")
                 # self._message_queue.put(message)  # Re-enqueue the message
                 break
             except Exception as e:
-                logger.error(f"Error in send: {e}")
+                cfg_mgr.logger.error(f"Error in send: {e}")
                 # self._message_queue.put(message)  # Re-enqueue the message
                 break
 
@@ -195,7 +176,7 @@ class WebSocketClient:
             time.sleep(self.queue_check_interval)
             queue_length = self._message_queue.qsize()
             if queue_length > 0:
-                logger.warning(f"Message queue length is {queue_length}. Messages are not being sent.")
+                cfg_mgr.logger.warning(f"Message queue length is {queue_length}. Messages are not being sent.")
 
     def run(self):
         """
@@ -212,7 +193,7 @@ class WebSocketClient:
             self._connect_thread = threading.Thread(target=self._connect)
             self._connect_thread.daemon = True  # Set as daemon
             self._connect_thread.start()
-            logger.info("WebSocket client started")
+            cfg_mgr.logger.info("WebSocket client started")
 
     def stop(self):
         """
@@ -245,7 +226,7 @@ class WebSocketClient:
             self._send_thread.join(timeout=2)
         if self._queue_monitor_thread:
             self._queue_monitor_thread.join(timeout=2)
-        logger.info("WebSocket client stopped")
+        cfg_mgr.logger.info("WebSocket client stopped")
 
     def send_message(self, message):
         """
@@ -263,9 +244,9 @@ class WebSocketClient:
         with self._lock:
             if self.status == "connected":
                 self._message_queue.put(message)
-                logger.info(f"Message queued: {message}")
+                cfg_mgr.logger.info(f"Message queued: {message}")
             else:
-                logger.warning("Cannot send message: WebSocket client is not connected.")
+                cfg_mgr.logger.warning("Cannot send message: WebSocket client is not connected.")
 
     def get_status(self):
         """

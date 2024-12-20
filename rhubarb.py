@@ -5,29 +5,10 @@ import subprocess
 import json
 import threading
 import utils
-
 from typing import Literal
 
-"""
-When this env var exist, this mean run from the one-file compressed executable.
-Load of the config is not possible, folder config should not exist.
-This avoid FileNotFoundError.
-This env not exist when run from the extracted program.
-Expected way to work.
-"""
-if "NUITKA_ONEFILE_PARENT" not in os.environ:
-    # read config
-    # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.rhubarb')
-
-    lip_config = utils.read_config()
-
-    # config keys
-    server_config = lip_config[0]  # server key
-    app_config = lip_config[1]  # app key
-    color_config = lip_config[2]  # colors key
-    custom_config = lip_config[3]  # custom key
-
+from configmanager import ConfigManager
+cfg_mgr = ConfigManager(logger_name='WLEDLogger.rhubarb')
 
 class RhubarbWrapper:
     """
@@ -220,7 +201,7 @@ class RhubarbWrapper:
             if self.callback is not None:
                 self.callback(data, is_stderr)
         except json.JSONDecodeError:
-            logger.info(f"msg: {line}")
+            cfg_mgr.logger.info(f"msg: {line}")
 
     def _wait_for_process(self, process):
         """
@@ -239,7 +220,7 @@ class RhubarbWrapper:
         process.wait()
         self._instance_running = False
         self.return_code = process.returncode
-        logger.info(f"Return code: {self.return_code} {self.command}")
+        cfg_mgr.logger.info(f"Return code: {self.return_code} {self.command}")
 
     def run(self, file_name, dialog_file, output):
         """

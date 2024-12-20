@@ -15,29 +15,9 @@ import subprocess
 import json
 import threading
 import utils
+from configmanager import ConfigManager
 
-
-"""
-When this env var exist, this mean run from the one-file compressed executable.
-Load of the config is not possible, folder config should not exist.
-This avoid FileNotFoundError.
-This env not exist when run from the extracted program.
-Expected way to work.
-"""
-if "NUITKA_ONEFILE_PARENT" not in os.environ:
-    # read config
-    # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.chataigne')
-
-    lip_config = utils.read_config()
-
-    # config keys
-    server_config = lip_config[0]  # server key
-    app_config = lip_config[1]  # app key
-    color_config = lip_config[2]  # colors key
-    custom_config = lip_config[3]  # custom key
-
-
+cfg_mgr = ConfigManager(logger_name='WLEDLogger.chataigne')
 
 class ChataigneWrapper:
     """
@@ -98,7 +78,7 @@ class ChataigneWrapper:
             None
 
         """
-        logger.info(self.load_file)
+        cfg_mgr.logger.info(self.load_file)
         command = [ChataigneWrapper._exe_name, self.load_file]
 
         # Add arguments to the command
@@ -152,7 +132,7 @@ class ChataigneWrapper:
             self.process.terminate()  # Terminate the process
             self.process = None  # Clear the process reference
             self._instance_running = False  # Update the instance state
-            logger.info("Chataigne process has been stopped.")
+            cfg_mgr.logger.info("Chataigne process has been stopped.")
 
     def _read_output(self, pipe, is_error):
         """
@@ -191,7 +171,7 @@ class ChataigneWrapper:
             if self.callback is not None:
                 self.callback(data, is_stderr)
         except json.JSONDecodeError:
-            logger.info(f"msg: {line}")
+            cfg_mgr.logger.info(f"msg: {line}")
 
     def _wait_for_process(self, process):
         """
@@ -209,7 +189,7 @@ class ChataigneWrapper:
         process.wait()
         self._instance_running = False
         self.return_code = process.returncode
-        logger.info(f"Return code : {self.return_code} {self.command}")
+        cfg_mgr.logger.info(f"Return code : {self.return_code} {self.command}")
 
     def run(self, reset=False, file_name='', headless=True, open_gl=True):
         """

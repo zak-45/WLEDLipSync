@@ -19,28 +19,9 @@ from nicegui import ui, events
 from PIL import Image
 from pathlib import Path
 from typing import Optional
+from configmanager import ConfigManager
 
-
-"""
-When this env var exist, this mean run from the one-file compressed executable.
-Load of the config is not possible, folder config should not exist.
-This avoid FileNotFoundError.
-This env not exist when run from the extracted program.
-Expected way to work.
-"""
-if "NUITKA_ONEFILE_PARENT" not in os.environ:
-    # read config
-    # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.niceutils')
-
-    lip_config = utils.read_config()
-
-    # config keys
-    server_config = lip_config[0]  # server key
-    app_config = lip_config[1]  # app key
-    color_config = lip_config[2]  # colors key
-    custom_config = lip_config[3]  # custom key
-
+cfg_mgr = ConfigManager(logger_name='WLEDLogger.niceutils')
 
 async def show_tags(file):
     """
@@ -67,17 +48,17 @@ def apply_custom():
     bg image can be customized
     :return:
     """
-    ui.colors(primary=color_config['primary'],
-              secondary=color_config['secondary'],
-              accent=color_config['accent'],
-              dark=color_config['dark'],
-              positive=color_config['positive'],
-              negative=color_config['negative'],
-              info=color_config['info'],
-              warning=color_config['warning']
+    ui.colors(primary=cfg_mgr.color_config['primary'],
+              secondary=cfg_mgr.color_config['secondary'],
+              accent=cfg_mgr.color_config['accent'],
+              dark=cfg_mgr.color_config['dark'],
+              positive=cfg_mgr.color_config['positive'],
+              negative=cfg_mgr.color_config['negative'],
+              info=cfg_mgr.color_config['info'],
+              warning=cfg_mgr.color_config['warning']
               )
 
-    ui.query('body').style(f'background-image: url({custom_config["bg-image"]}); '
+    ui.query('body').style(f'background-image: url({cfg_mgr.custom_config["bg-image"]}); '
                            'background-size: cover;'
                            'background-repeat: no-repeat;'
                            'background-position: center;')

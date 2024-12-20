@@ -93,6 +93,7 @@ from typing import List, Union
 from math import trunc
 from ytmusic import MusicInfoRetriever
 from niceutils import AnimatedElement as Animate
+from configmanager import ConfigManager
 
 if sys.platform.lower() == 'win32':
     from asyncio import WindowsSelectorEventLoopPolicy, set_event_loop_policy
@@ -105,47 +106,37 @@ rub = RhubarbWrapper()
 ret = MusicInfoRetriever()
 # chataigne
 cha = chataigne.ChataigneWrapper()
+# config
+cfg_mgr = ConfigManager(logger_name='WLEDLogger')
 
 """
-When this env var exist, this mean run from the one-file executable (compressed file).
-Load of the config is not possible, folder config should not exist.
-This avoid FileNotFoundError.
-This env not exist when running from the decompressed program.
+When this env var exists, this means running from the one-file compressed executable.
+Working folder come from executable location retrieved from sys.argv[0]
+This env does not exist when running from the extracted program.
 Expected way to work.
 """
 if "NUITKA_ONEFILE_PARENT" not in os.environ:
     # read config
-    # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger')
-
-    # load config file
-    lip_config = utils.read_config()
-
-    # config keys
-    server_config = lip_config[0]  # server key
-    app_config = lip_config[1]  # app key
-    color_config = lip_config[2]  # colors key
-    custom_config = lip_config[3]  # custom key
 
     #  validate network config
-    server_ip = server_config['server_ip']
+    server_ip = cfg_mgr.server_config['server_ip']
     if not utils.validate_ip_address(server_ip):
-        logger.error(f'Bad server IP: {server_ip}')
+        cfg_mgr.logger.error(f'Bad server IP: {server_ip}')
         sys.exit(1)
 
-    server_port = server_config['server_port']
+    server_port = cfg_mgr.server_config['server_port']
 
     if server_port == 'auto':
         server_port = native.find_open_port()
     else:
-        server_port = int(server_config['server_port'])
+        server_port = int(cfg_mgr.server_config['server_port'])
 
     if server_port not in range(1, 65536):
-        logger.error(f'Bad server Port: {server_port}')
+        cfg_mgr.logger.error(f'Bad server Port: {server_port}')
         sys.exit(2)
 
     # animate or not
-    do_animation = str2bool(custom_config['animate-ui'])
+    do_animation = str2bool(cfg_mgr.custom_config['animate-ui'])
 
 else:
 
@@ -290,7 +281,7 @@ async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
     LipAPI.mouth_images_buffer = []
     LipAPI.mouths_buffer_thumb = []
 
-    logger.debug(mouth_folder)
+    cfg_mgr.logger.debug(mouth_folder)
     folder_path = Path(mouth_folder)
     supported_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff')
 
@@ -306,12 +297,12 @@ async def create_mouth_model(mouth_folder: str = './media/image/model/default'):
         if img is not None:
             LipAPI.mouth_images_buffer.append(img)
         else:
-            logger.debug(f"Could not open image {img_path.name}: Image is None")
+            cfg_mgr.logger.debug(f"Could not open image {img_path.name}: Image is None")
 
     if len(LipAPI.mouth_images_buffer) < 9:
-        logger.debug(f'ERROR not enough images loaded into buffer: {len(LipAPI.mouth_images_buffer)}')
+        cfg_mgr.logger.debug(f'ERROR not enough images loaded into buffer: {len(LipAPI.mouth_images_buffer)}')
     else:
-        logger.debug(f'Images loaded into buffer: {len(LipAPI.mouth_images_buffer)}')
+        cfg_mgr.logger.debug(f'Images loaded into buffer: {len(LipAPI.mouth_images_buffer)}')
         await create_carousel()
 
 
@@ -470,7 +461,7 @@ def save_data(force: bool = False):
             ui.notify('Data saved successfully.')
         except Exception as e:
             ui.notify(f'Failed to save data: {e}')
-            logger.error(f'Failed to save data: {e}')
+            cfg_mgr.logger.error(f'Failed to save data: {e}')
         dialog.close()
 
     if LipAPI.output_file and (LipAPI.data_changed or force):
@@ -567,10 +558,10 @@ def loop_mouth_cue(osc_address):
                                                "duration_number": 1}}}
 
                 LipAPI.wvs_client.send_message(ws_msg)
-            logger.info(
+            cfg_mgr.logger.info(
                 f"{str(player_2digit)} {str(value)} {str(round(time.time() * 1000))}"
             )
-            if str2bool(app_config['send_only_once']):
+            if str2bool(cfg_mgr.app_config['send_only_once']):
                 triggered_values.add(cue_to_test)
 
         time.sleep(0.01)
@@ -580,7 +571,7 @@ def loop_mouth_cue(osc_address):
     while LipAPI.player_status == 'play':
         to_do()
 
-    if LipAPI.player_status == 'end' and str2bool(app_config['send_end']):
+    if LipAPI.player_status == 'end' and str2bool(cfg_mgr.app_config['send_end']):
         to_do()
 
 
@@ -639,7 +630,7 @@ async def modify_letter(start_time, letter_lbl):
                 i_cue['value'] = new_letter
                 letter_lbl.style(add='color:orange')
                 LipAPI.data_changed = True
-                logger.debug(f'new letter set {new_letter}')
+                cfg_mgr.logger.debug(f'new letter set {new_letter}')
                 break
 
         letter_lbl.text = new_letter
@@ -687,13 +678,13 @@ async def main_page():
         if action == 'run':
             noisette = str(Path('chataigne/WLEDLipSync.noisette').resolve())
             cha.run(headless=False, file_name=noisette)
-            logger.info('start chataigne')
+            cfg_mgr.logger.info('start chataigne')
 
         elif action == 'stop':
             cha.stop_process()
             cha_status.props(remove='color=green')
             cha_status.props(add='color=black')
-            logger.info('stop chataigne')
+            cfg_mgr.logger.info('stop chataigne')
 
     async def check_status():
         """
@@ -708,7 +699,7 @@ async def main_page():
             None
         """
 
-        logger.info('check status')
+        cfg_mgr.logger.info('check status')
 
         if LipAPI.osc_client is not None:
             # check net status UDP port, can provide false positive
@@ -750,7 +741,7 @@ async def main_page():
                 spleeter.disable()
 
         if cha.is_running():
-            logger.info('chataigne running')
+            cfg_mgr.logger.info('chataigne running')
             cha_status.props(add='color=green')
 
         if not os.path.isdir(f'{utils.chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main'):
@@ -795,7 +786,7 @@ async def main_page():
             None
         """
 
-        logger.debug('CHA activation')
+        cfg_mgr.logger.debug('CHA activation')
 
         await manage_status_timer()
 
@@ -821,7 +812,7 @@ async def main_page():
             link_cha.props(remove="color=yellow")
             # if timer is active, stop it or not
             if LipAPI.status_timer.active is True and osc_activate.value is False and wvs_activate.value is False:
-                logger.debug('stop timer')
+                cfg_mgr.logger.debug('stop timer')
                 LipAPI.status_timer.active = False
 
     async def manage_wvs_client():
@@ -837,7 +828,7 @@ async def main_page():
             None
         """
 
-        logger.debug('WVS activation')
+        cfg_mgr.logger.debug('WVS activation')
 
         await manage_status_timer()
 
@@ -865,7 +856,7 @@ async def main_page():
             link_wvs.props(remove="color=yellow")
             # if timer is active, stop it or not
             if LipAPI.status_timer.active is True and osc_activate.value is False and cha_activate.value is False:
-                logger.debug('stop timer')
+                cfg_mgr.logger.debug('stop timer')
                 LipAPI.status_timer.active = False
 
     async def manage_osc_client():
@@ -881,7 +872,7 @@ async def main_page():
             None
         """
 
-        logger.debug('OSC activation')
+        cfg_mgr.logger.debug('OSC activation')
 
         await manage_status_timer()
 
@@ -905,7 +896,7 @@ async def main_page():
             link_osc.props(remove="color=yellow")
             # if timer is active, stop it or not
             if LipAPI.status_timer.active is True and wvs_activate.value is False and cha_activate.value is False:
-                logger.debug('stop timer')
+                cfg_mgr.logger.debug('stop timer')
                 LipAPI.status_timer.active = False
 
     async def validate_file(file_name):
@@ -914,15 +905,15 @@ async def main_page():
         # check some requirements
         if file_name == '':
             ui.notify('Blank value not allowed', type='negative')
-            logger.error('Blank value not allowed')
+            cfg_mgr.logger.error('Blank value not allowed')
             return False
         elif not file_name.lower().endswith('.mp3'):
             ui.notify('Only MP3', type='negative')
-            logger.error('Only MP3')
+            cfg_mgr.logger.error('Only MP3')
             return False
         elif not os.path.isfile(file_name):
             ui.notify(f'File {file_name} does not exist', type='negative')
-            logger.error(f'File {file_name} does not exist')
+            cfg_mgr.logger.error(f'File {file_name} does not exist')
             return False
 
         return True
@@ -987,7 +978,7 @@ async def main_page():
             file_name = os.path.basename(file_path)
             file_info = os.path.splitext(file_name)
             file = file_info[0]
-            file_folder = app_config['audio_folder'] + file + '/'
+            file_folder = cfg_mgr.app_config['audio_folder'] + file + '/'
 
             # check if folder / file  not exist (not stems)
             if not os.path.isfile(file_folder + 'vocals.mp3'):
@@ -996,7 +987,7 @@ async def main_page():
                     os.mkdir(file_folder)
                 # in this case, source file is supposed not been separated in stems
                 ui.notify(f'Analysis done from audio source file {file_name}.')
-                out = app_config['output_folder'] + file + '/' + 'rhubarb.json'
+                out = cfg_mgr.app_config['output_folder'] + file + '/' + 'rhubarb.json'
                 if os.path.isfile(out):
                     ui.notify(f'Found an existing analysis file ...  {out}.')
                 # convert mp3 to wav
@@ -1046,7 +1037,7 @@ async def main_page():
 
             # set params
             LipAPI.source_file = audio_input.value
-            LipAPI.output_file = app_config['output_folder'] + file + '/' + 'rhubarb.json'
+            LipAPI.output_file = cfg_mgr.app_config['output_folder'] + file + '/' + 'rhubarb.json'
             if os.path.isfile(LipAPI.output_file):
                 analyse_file.set_visibility(True)
             edit_mouth_buffer.enable()
@@ -1151,7 +1142,7 @@ async def main_page():
         """
         # Get the absolute path of the current file
         audio_absolute_path = Path(audio_input.value).resolve()
-        logger.debug(audio_absolute_path)
+        cfg_mgr.logger.debug(audio_absolute_path)
         # send action message
         cha_msg = {"action": {"type": "runSpleeter", "param": {"fileName": str(audio_absolute_path)}}}
         if LipAPI.cha_client is not None:
@@ -1318,7 +1309,7 @@ async def main_page():
                     model_thumb.update()
 
             else:
-                logger.debug('you need to select folder')
+                cfg_mgr.logger.debug('you need to select folder')
 
     async def generate_mouth_cue():
         """
@@ -1352,7 +1343,7 @@ async def main_page():
             Raises:
                 None
             """
-            logger.debug(str(start_time) + " " + str(letter_lbl))
+            cfg_mgr.logger.debug(str(start_time) + " " + str(letter_lbl))
             await modify_letter(start_time, letter_lbl)
 
         def position_player(seek_time: float, card: ui.card, rem: ui.icon, marker: str = 'X'):
@@ -1418,7 +1409,7 @@ async def main_page():
                 await asyncio.sleep(0.001)
 
             player_vocals.pause()
-            logger.debug('End of play_until loop.')
+            cfg_mgr.logger.debug('End of play_until loop.')
 
         def set_default(seek_time: float, card: ui.card, rem: ui.icon):
             """
@@ -1443,7 +1434,7 @@ async def main_page():
             card.classes(remove='bg-red-400')
             card.classes(add='bg-cyan-700')
             rem.set_visibility(False)
-            logger.debug(LipAPI.mouth_times_selected)
+            cfg_mgr.logger.debug(LipAPI.mouth_times_selected)
 
         # Scroll area with timeline/images
         if do_animation:
@@ -1581,7 +1572,7 @@ async def main_page():
                 edit_mouth_buffer.enable()
                 load_mouth_button.enable()
                 ok_button.enable()
-                logger.debug('Analysis Finished')
+                cfg_mgr.logger.debug('Analysis Finished')
 
     async def sync_player(action):
         """
@@ -1682,12 +1673,12 @@ async def main_page():
 
         if lyrics_data.value:
             try:
-                logger.info('save lyrics')
+                cfg_mgr.logger.info('save lyrics')
                 # extract file name only
                 file_name = os.path.basename(audio_input.value)
                 file_info = os.path.splitext(file_name)
                 file = file_info[0]
-                file_folder = str(os.path.join(app_config['audio_folder'], file))
+                file_folder = str(os.path.join(cfg_mgr.app_config['audio_folder'], file))
                 # check if folder not exist
                 if not os.path.isdir(file_folder):
                     ui.notify(f'folder {file_folder} does not exist, creating ...')
@@ -1699,7 +1690,7 @@ async def main_page():
                                 type='info')
             except Exception as e:
                 ui.notify(f'Failed to save lyrics: {e}', position='center', type='negative')
-                logger.error(f'Failed to save lyrics: {e}')
+                cfg_mgr.logger.error(f'Failed to save lyrics: {e}')
         else:
             ui.notification(f'Nothing to save ...', position='center', type='warning')
 
@@ -1722,7 +1713,7 @@ async def main_page():
                     lyrics.props(add='autogrow bg-color=blue-grey-4')
                     lyrics.style(add='text-align:center;')
             except Exception as e:
-                logger.error(f"Not able to open file : {e}")
+                cfg_mgr.logger.error(f"Not able to open file : {e}")
             ui.button('close', on_click=lyrics_dialog.close)
 
     def show_song_lyrics():
@@ -1765,7 +1756,7 @@ async def main_page():
 
         # read tag data of the mp3 file
         with taglib.File(file_name) as song:
-            logger.info(song.tags)
+            cfg_mgr.logger.info(song.tags)
             # set info from tags
             artist_tag = 'None'
             title_tag = 'None'
@@ -1803,7 +1794,7 @@ async def main_page():
         song5_title.set_text('')
         # get info from ytmusicapi
         info_from_yt = ret.get_song_info_with_lyrics(title_tag, artist_tag)
-        logger.info(info_from_yt)
+        cfg_mgr.logger.info(info_from_yt)
 
         try:
             if info_from_yt is not None:
@@ -1832,15 +1823,15 @@ async def main_page():
                     song5_title.set_text(info_from_yt['artistInfo']['top_5'][4]['title'])
 
                 except IndexError:
-                    logger.info('Error to retrieve top5 from ytmusicapi')
+                    cfg_mgr.logger.info('Error to retrieve top5 from ytmusicapi')
 
             else:
-                logger.info('nothing from ytmusicapi')
+                cfg_mgr.logger.info('nothing from ytmusicapi')
 
         except IndexError:
-            logger.info('Error to retrieve info from ytmusicapi')
+            cfg_mgr.logger.info('Error to retrieve info from ytmusicapi')
         except Exception as e:
-            logger.info(f'Error to retrieve info from ytmusicapi {e}')
+            cfg_mgr.logger.info(f'Error to retrieve info from ytmusicapi {e}')
 
         # hide spinner when finished
         song_spinner.set_visibility(False)
@@ -2353,10 +2344,10 @@ async def audio_editor():
 
 
 async def startup_actions():
-    logger.info('startup actions')
+    cfg_mgr.logger.info('startup actions')
     utils.chataigne_settings()
     if not os.path.isfile(rub._exe_name):
-        logger.info('rhubarb missing... proceed to installation')
+        cfg_mgr.logger.info('rhubarb missing... proceed to installation')
         await utils.run_install_rhubarb()
 
 
@@ -2369,12 +2360,12 @@ def shutdown_actions():
         None
     """
 
-    logger.info('shutdown actions')
+    cfg_mgr.logger.info('shutdown actions')
     # stop Chataigne
-    logger.info('stop chataigne')
+    cfg_mgr.logger.info('stop chataigne')
     cha.stop_process()
     # remove python portable that has been downloaded during installation
-    logger.info('clean tmp')
+    cfg_mgr.logger.info('clean tmp')
     if os.path.isfile('tmp/Pysp310.zip'):
         os.remove('tmp/Pysp310.zip')
     #

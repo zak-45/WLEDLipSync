@@ -12,28 +12,9 @@ import os
 import utils
 
 from ytmusicapi import YTMusic
+from configmanager import ConfigManager
 
-
-"""
-When this env var exist, this mean run from the one-file compressed executable.
-Load of the config is not possible, folder config should not exist.
-This avoid FileNotFoundError.
-This env not exist when run from the extracted program.
-Expected way to work.
-"""
-if "NUITKA_ONEFILE_PARENT" not in os.environ:
-    # read config
-    # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.ytmusicapi')
-
-    lip_config = utils.read_config()
-
-    # config keys
-    server_config = lip_config[0]  # server key
-    app_config = lip_config[1]  # app key
-    color_config = lip_config[2]  # colors key
-    custom_config = lip_config[3]  # custom key
-
+cfg_mgr = ConfigManager(logger_name='WLEDLogger.ytmusicapi')
 
 class MusicInfoRetriever:
     """
@@ -86,7 +67,7 @@ class MusicInfoRetriever:
 
         artists = self.yt.search(artist_name, filter='artists')
         if not artists:
-            logger.debug(f"No artists found for '{artist_name}'.")
+            cfg_mgr.logger.debug(f"No artists found for '{artist_name}'.")
             return None
         # we take the first record as this is the most probable one
         artist = artists[0]

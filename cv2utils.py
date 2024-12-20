@@ -14,29 +14,11 @@
 
 import cv2
 import os
-import utils
 import numpy as np
 
-"""
-When this env var exist, this mean run from the one-file compressed executable.
-Load of the config is not possible, folder config should not exist.
-This avoid FileNotFoundError.
-This env not exist when run from the extracted program.
-Expected way to work.
-"""
-if "NUITKA_ONEFILE_PARENT" not in os.environ:
-    # read config
-    # create logger
-    logger = utils.setup_logging('config/logging.ini', 'WLEDLogger.cv2utils')
+from configmanager import ConfigManager
 
-    lip_config = utils.read_config()
-
-    # config keys
-    server_config = lip_config[0]  # server key
-    app_config = lip_config[1]  # app key
-    color_config = lip_config[2]  # colors key
-    custom_config = lip_config[3]  # custom key
-
+cfg_mgr = ConfigManager(logger_name='WLEDLogger.cv2utils')
 
 class VideoThumbnailExtractor:
     """
@@ -92,7 +74,7 @@ class VideoThumbnailExtractor:
         else:
             # Provide blank frames if the file is not a valid media file
             self.thumbnail_frames = [self.create_blank_frame() for _ in times_in_seconds]
-            logger.warning(f"{self.media_path} is not a valid media file. Generated blank frames.")
+            cfg_mgr.logger.warning(f"{self.media_path} is not a valid media file. Generated blank frames.")
 
     def extract_thumbnails_from_image(self):
         image = cv2.imread(self.media_path)
@@ -103,15 +85,15 @@ class VideoThumbnailExtractor:
             new_height = int(self.thumbnail_width * aspect_ratio)
             resized_image = cv2.resize(image, (self.thumbnail_width, new_height))
             self.thumbnail_frames = [resized_image]  # Single thumbnail for images
-            logger.debug(f"Thumbnail extracted from image: {self.media_path}")
+            cfg_mgr.logger.debug(f"Thumbnail extracted from image: {self.media_path}")
         else:
             self.thumbnail_frames = [self.create_blank_frame()]
-            logger.error("Failed to read image. Generated a blank frame.")
+            cfg_mgr.logger.error("Failed to read image. Generated a blank frame.")
 
     async def extract_thumbnails_from_video(self, times_in_seconds):
         cap = cv2.VideoCapture(self.media_path)
         if not cap.isOpened():
-            logger.error(f"Failed to open video file: {self.media_path}")
+            cfg_mgr.logger.error(f"Failed to open video file: {self.media_path}")
             self.thumbnail_frames = [self.create_blank_frame() for _ in times_in_seconds]
             return
 
@@ -120,7 +102,7 @@ class VideoThumbnailExtractor:
 
         for time_in_seconds in times_in_seconds:
             if time_in_seconds > video_length:
-                logger.warning(f"Specified time {time_in_seconds}s is greater than video length {video_length}s. "
+                cfg_mgr.logger.warning(f"Specified time {time_in_seconds}s is greater than video length {video_length}s. "
                                f"Setting time to {video_length}s.")
                 time_in_seconds = video_length
 
@@ -136,9 +118,9 @@ class VideoThumbnailExtractor:
                 resized_frame = cv2.resize(frame, (self.thumbnail_width, new_height))
 
                 self.thumbnail_frames.append(resized_frame)
-                logger.debug(f"Thumbnail extracted at {time_in_seconds}s.")
+                cfg_mgr.logger.debug(f"Thumbnail extracted at {time_in_seconds}s.")
             else:
-                logger.error("Failed to extract frame.")
+                cfg_mgr.logger.error("Failed to extract frame.")
                 self.thumbnail_frames.append(self.create_blank_frame())
 
         cap.release()
