@@ -6,15 +6,10 @@ v: 1.0.0.0
 Nice Utilities for WLEDLipSync
 
 """
-
-import logging
-import concurrent_log_handler
 import sys
-import os
-import cv2utils
-import utils
 import taglib
 
+from cv2utils import VideoThumbnailExtractor
 from nicegui import ui, events
 from PIL import Image
 from pathlib import Path
@@ -473,7 +468,7 @@ class LocalFilePicker(ui.dialog):
                 with ui.card().classes('w-full'):
                     row = await self.grid.get_selected_row()
                     if row is not None:
-                        extractor = cv2utils.VideoThumbnailExtractor(row['path'])
+                        extractor = VideoThumbnailExtractor(row['path'])
                         await extractor.extract_thumbnails(times_in_seconds=[5])  # Extract thumbnail at 5 seconds
                         thumbnails_frame = extractor.get_thumbnails()
                         img = Image.fromarray(thumbnails_frame[0])

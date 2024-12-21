@@ -1,8 +1,6 @@
-import logging
-import concurrent_log_handler
 import threading
-import time
 
+from time import sleep
 from pythonosc import udp_client
 from configmanager import ConfigManager
 
@@ -63,7 +61,7 @@ class OSCClient:
                     self.lock.release()
                 self.client.send_message(msg[0], msg[1])
             # small delay (see if necessary)
-            time.sleep(0.01)
+            sleep(0.01)
 
     def send_message(self, address: str, value):
         """

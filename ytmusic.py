@@ -6,11 +6,6 @@ v: 1.0.0.0
 A class to retrieve music artist information and song lyrics using the YTMusic API.
 
 """
-import logging
-import concurrent_log_handler
-import os
-import utils
-
 from ytmusicapi import YTMusic
 from configmanager import ConfigManager
 

@@ -37,7 +37,6 @@ from PIL import Image
 from nicegui import ui, run
 from pathlib import Path
 
-
 def display_custom_msg(msg, msg_type: str = 'info'):
     # Call the separate script to show the error/info message in a Tkinter window
     absolute_file_name = Path(info_window_exe_name()).resolve()

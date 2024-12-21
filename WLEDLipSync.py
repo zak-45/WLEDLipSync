@@ -75,8 +75,6 @@ import tkinter as tk
 from tkinter import PhotoImage
 
 import utils
-import logging
-import concurrent_log_handler
 import taglib
 import niceutils
 import chataigne
@@ -2370,7 +2368,7 @@ def shutdown_actions():
     if os.path.isfile('tmp/Pysp310.zip'):
         os.remove('tmp/Pysp310.zip')
     #
-    message = "WLEDLipSync -- You can close the browser now."
+    message = "WLEDLipSync -- Application terminated. You can close browser if any"
     utils.inform_window(message)
 
 
@@ -2391,4 +2389,4 @@ app.on_shutdown(shutdown_actions)
 run niceGUI
 reconnect_timeout: need big value if load thumbs
 """
-ui.run(native=False, reload=False, reconnect_timeout=3, port=8081)
+ui.run(native=True, reload=False, reconnect_timeout=3, port=8081)

@@ -9,12 +9,11 @@ A class to run chataigne as portable version.
     For Linux/Mac , we use the 'HOME' env.
 
 """
-
-import os
 import subprocess
 import json
-import threading
-import utils
+from os import getcwd, environ
+from threading import Thread
+from utils import chataigne_folder, chataigne_exe_name
 from configmanager import ConfigManager
 
 cfg_mgr = ConfigManager(logger_name='WLEDLogger.chataigne')
@@ -32,7 +31,7 @@ class ChataigneWrapper:
     (forceNoGL can be handy when having problem with graphics drivers)
 
     """
-    _exe_name = utils.chataigne_exe_name()
+    _exe_name = chataigne_exe_name()
     _instance_running = False
 
     def __init__(self,
@@ -41,7 +40,7 @@ class ChataigneWrapper:
                  headless: bool = True,
                  open_gl: bool = True,
                  callback=None,
-                 working_directory: str = os.getcwd()):
+                 working_directory: str = getcwd()):
         """
         Initializes a new instance of the class with specified configuration options.
         This constructor sets up the working environment and parameters for the instance.
@@ -61,7 +60,7 @@ class ChataigneWrapper:
         self.callback = callback
         self.process = None  # Store the subprocess reference
         self.working_directory = working_directory
-        self.chataigne_directory = f'{working_directory}/{utils.chataigne_folder()}'
+        self.chataigne_directory = f'{working_directory}/{chataigne_folder()}'
         self.load_file = f"{self.working_directory}/{load_file}"
         self.command = []
         self.return_code = 0
@@ -94,18 +93,18 @@ class ChataigneWrapper:
         self.command = command
         # Run the command in a separate process
         self.process = subprocess.Popen(command,
-                                   env=dict(os.environ, USERPROFILE=f"{self.chataigne_directory}", HOME=f"{self.chataigne_directory}"),
+                                   env=dict(environ, USERPROFILE=f"{self.chataigne_directory}", HOME=f"{self.chataigne_directory}"),
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
                                    text=True,
                                    cwd=self.working_directory)
 
         # Start threads to read stdout and stderr
-        threading.Thread(target=self._read_output, args=(self.process.stdout, False)).start()
-        threading.Thread(target=self._read_output, args=(self.process.stderr, True)).start()
+        Thread(target=self._read_output, args=(self.process.stdout, False)).start()
+        Thread(target=self._read_output, args=(self.process.stderr, True)).start()
 
         # Wait for the process to complete in a separate thread
-        threading.Thread(target=self._wait_for_process, args=(self.process,)).start()
+        Thread(target=self._wait_for_process, args=(self.process,)).start()
 
     def is_running(self):
         """Determine if the instance is currently active.
@@ -219,7 +218,7 @@ class ChataigneWrapper:
         self.open_gl = open_gl
         self._instance_running = True  # Set the instance as running
         self.return_code = 999  # set default return code, if all Ok will be set to 0 after process finished
-        run_thread = threading.Thread(target=self.run_command_in_subprocess)
+        run_thread = Thread(target=self.run_command_in_subprocess)
         run_thread.daemon = True
         #
         run_thread.start()

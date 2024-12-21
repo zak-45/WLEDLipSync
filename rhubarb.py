@@ -1,13 +1,13 @@
-import logging
-import concurrent_log_handler
-import os
+
 import subprocess
 import json
-import threading
-import utils
-from typing import Literal
 
+from threading import Thread
+from utils import rhubarb_exe_name
+from typing import Literal
+from os import getcwd, path
 from configmanager import ConfigManager
+
 cfg_mgr = ConfigManager(logger_name='WLEDLogger.rhubarb')
 
 class RhubarbWrapper:
@@ -43,7 +43,7 @@ class RhubarbWrapper:
 
     """
 
-    _exe_name = utils.rhubarb_exe_name()
+    _exe_name = rhubarb_exe_name()
     _instance_running = False
 
     def __init__(self,
@@ -52,7 +52,7 @@ class RhubarbWrapper:
                  recognizer: Literal['pocketSphinx', 'phonetic'] = 'pocketSphinx',
                  machineReadable: bool = True,
                  callback=None,
-                 working_directory: str = os.getcwd()):
+                 working_directory: str = getcwd()):
         """
         Initializes a new instance of the RhubarbWrapper class with specified configuration options.
         This constructor sets up the necessary parameters for processing audio files and managing output formats.
@@ -133,7 +133,7 @@ class RhubarbWrapper:
         if self.machineReadable:
             command.extend(['--machineReadable'])
         command.extend([f'-r {self.recognizer}', f'-f {self.export_format}'])
-        if os.path.isfile(self.lyrics_file):
+        if path.isfile(self.lyrics_file):
             command.extend([f'-d {self.lyrics_file}'])
         command.extend(
             [f'--consoleLevel {self.consoleLevel}', f'-o {self.output_file}']
@@ -144,11 +144,11 @@ class RhubarbWrapper:
                                    cwd=self.working_directory)
 
         # Start threads to read stdout and stderr
-        threading.Thread(target=self._read_output, args=(process.stdout, False)).start()
-        threading.Thread(target=self._read_output, args=(process.stderr, True)).start()
+        Thread(target=self._read_output, args=(process.stdout, False)).start()
+        Thread(target=self._read_output, args=(process.stderr, True)).start()
 
         # Wait for the process to complete in a separate thread
-        threading.Thread(target=self._wait_for_process, args=(process,)).start()
+        Thread(target=self._wait_for_process, args=(process,)).start()
 
     def is_running(self):
         """Check if the instance is currently running.
@@ -248,6 +248,6 @@ class RhubarbWrapper:
         self.output_file = output + self.file_extension
         self._instance_running = True  # Set the instance as running
         self.return_code = 999  # set default return code, if all Ok will be set to 0 after process finished
-        run_thread = threading.Thread(target=self.run_command_in_subprocess)
+        run_thread = Thread(target=self.run_command_in_subprocess)
         run_thread.daemon = True
         run_thread.start()

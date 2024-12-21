@@ -1,5 +1,3 @@
-import logging
-import concurrent_log_handler
 import websocket
 import threading
 import queue
