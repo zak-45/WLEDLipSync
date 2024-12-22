@@ -38,6 +38,20 @@ from nicegui import ui, run
 from pathlib import Path
 
 def display_custom_msg(msg, msg_type: str = 'info'):
+    """
+    Displays a custom message using an external info window executable across different platforms.
+    Launches a separate process to show an error or informational message in a platform-specific manner.
+
+    Args:
+        msg (str): The message text to be displayed.
+        msg_type (str, optional): The type of message, defaults to 'info'.
+        Can specify message type like 'info' or 'error'.
+
+    Examples:
+        >> display_custom_msg("Operation completed successfully")
+        >> display_custom_msg("Error occurred", msg_type='error')
+
+    """
     # Call the separate script to show the error/info message in a Tkinter window
     absolute_file_name = Path(info_window_exe_name()).resolve()
     if sys.platform.lower() == "win32":
@@ -49,6 +63,21 @@ def display_custom_msg(msg, msg_type: str = 'info'):
 
 
 def info_window_exe_name():
+    """
+    Determines the appropriate executable name for displaying information windows based on the current operating system.
+    Returns the platform-specific executable path for the info window utility.
+
+    Returns:
+        str: The filename of the info window executable for the current platform.
+        Returns None if the platform is not recognized.
+
+    Examples:
+        >> info_window_exe_name()
+        'xtra/info_window.exe'  # On Windows
+        >> info_window_exe_name()
+        'xtra/info_window.bin'  # On Linux
+
+    """
     if sys.platform.lower() == 'win32':
         return 'xtra/info_window.exe'
     elif sys.platform.lower() == 'linux':
@@ -56,10 +85,26 @@ def info_window_exe_name():
     elif sys.platform.lower() == 'darwin':
         return 'xtra/info_window.app'
     else:
-        return 'unknown'
+        return None
 
 
 class CustomLogger(logging.Logger):
+    """
+    A custom logging class that extends the standard Python Logger to display error messages
+    in a custom window before logging. Enhances standard error logging by adding a visual notification mechanism.
+
+    The CustomLogger overrides the standard error logging method to first display an error message
+    in a separate window using display_custom_msg(), and then proceeds with standard error logging.
+    This provides an additional layer of user notification for critical log events.
+
+    Methods:
+        error: Overrides the standard error logging method to display a custom error message before logging.
+
+    Examples:
+        >> logger = CustomLogger('my_logger')
+        >> logger.error('Critical system failure')  # Displays error in custom window and logs
+
+    """
     def error(self, msg, *args, **kwargs):
         # Custom action before logging the error
         display_custom_msg(msg, 'error')
@@ -319,6 +364,22 @@ def download_chataigne():
 
 
 def chataigne_settings(port=None):
+    """
+    Configures and updates Chataigne settings for the WLEDLipSync application dynamically.
+    Modifies the Chataigne configuration file with specific paths and parameters for Spleeter and LipSync modules.
+
+    The function updates the Chataigne configuration file by setting paths for Spleeter command,
+    audio folder, and LipSync script. If a port is provided, it can also update the port settings.
+    The changes are written back to the configuration file to ensure the latest settings are used.
+
+    Args:
+        port (int, optional): The port number to set in the Chataigne configuration. Defaults to None.
+
+    Examples:
+        >> chataigne_settings()  # Updates Spleeter and LipSync paths
+        >> chataigne_settings(port=8080)  # Updates port settings
+
+    """
     audio_folder = str(Path(app_config['audio_folder']).resolve())
     app_folder = os.getcwd()
 
@@ -351,6 +412,22 @@ def chataigne_settings(port=None):
 
 
 def spleeter_cmd_file():
+    """
+    Determines the appropriate Spleeter command file path based on the current operating system.
+    Returns the platform-specific script for running Spleeter in the Chataigne environment.
+
+    The function provides the correct script file (CMD, SH) for executing Spleeter across different platforms,
+    using the Chataigne data folder as the base path. If the platform is not recognized, it returns None.
+
+    Returns:
+        str or None: The full path to the Spleeter command file for the current platform,
+        or None if the platform is unsupported.
+
+    Examples:
+        >> spleeter_cmd_file()
+        '/path/to/chataigne/modules/SpleeterGUI-Chataigne-Module-main/xtra/win/run_spleeter.cmd'  # On Windows
+
+    """
     if sys.platform.lower() == 'win32':
         return f'{chataigne_data_folder()}/modules/SpleeterGUI-Chataigne-Module-main/xtra/win/run_spleeter.cmd'
     elif sys.platform.lower() == 'linux':
@@ -384,6 +461,23 @@ def chataigne_exe_name():
 
 
 def chataigne_portable_url():
+    """
+    Determines the appropriate download URL for the Chataigne portable application based on the current operating system
+     and platform architecture. Returns the platform-specific download link for the Chataigne application.
+
+    The function provides the correct download URL for Chataigne across different platforms and architectures,
+    supporting Windows, Linux (x86_64), and macOS (Intel and Silicon).
+    If the platform is not recognized or supported, it returns None.
+
+    Returns:
+        str or None: The download URL for the Chataigne portable application for the current platform,
+        or None if the platform is unsupported.
+
+    Examples:
+        >> chataigne_portable_url()
+        'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip'  # On Windows
+
+    """
     if sys.platform.lower() == 'win32':
         return 'https://github.com/zak-45/WLEDLipSync/releases/download/0.0.0.0/Chataigne-1.9.24-win.zip'
     elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
@@ -397,6 +491,22 @@ def chataigne_portable_url():
 
 
 def chataigne_data_folder():
+    """
+    Determines the appropriate data folder path for the Chataigne application based on the current operating system.
+    Returns the platform-specific path to the Chataigne documents folder.
+
+    The function provides a consistent path to the Chataigne data folder across different platforms,
+    using the chataigne_folder() as a base. If the platform is not recognized, it returns None.
+
+    Returns:
+        str or None: The full path to the Chataigne documents folder for the current platform,
+        or None if the platform is unsupported.
+
+    Examples:
+        >> chataigne_data_folder()
+        'chataigne/win/Documents/Chataigne'  # On Windows
+
+    """
     if sys.platform.lower() == 'win32':
         return f'{chataigne_folder()}/Documents/Chataigne'
     elif sys.platform.lower() == 'linux':
@@ -408,6 +518,23 @@ def chataigne_data_folder():
 
 
 def chataigne_folder():
+    """
+    Determines the appropriate base folder path for the Chataigne application based on the current operating system.
+    Returns the platform-specific directory for Chataigne installation.
+
+    The function provides a consistent path to the Chataigne base folder across different platforms,
+    selecting the correct subdirectory for Windows, Linux, or macOS. If the platform is not recognized, it returns None.
+
+    Returns:
+        str or None: The base folder path for Chataigne for the current platform, or None if the platform is unsupported.
+
+    Examples:
+        >> chataigne_folder()
+        'chataigne/win'  # On Windows
+        >> chataigne_folder()
+        'chataigne/linux'  # On Linux
+
+    """
     if sys.platform.lower() == 'win32':
         return 'chataigne/win'
     elif sys.platform.lower() == 'linux':
@@ -419,6 +546,24 @@ def chataigne_folder():
 
 
 def python_portable_zip():
+    """
+    Determines the appropriate portable Python ZIP filename for Spleeter based on the current operating system
+    and platform architecture. Returns the platform-specific portable Python package for Spleeter installation.
+
+    The function provides the correct ZIP filename for portable Python across different platforms and architectures,
+     supporting Windows, Linux (x86_64), and macOS. If the platform is not recognized or supported, it returns None.
+
+    Returns:
+        str or None: The filename of the portable Python ZIP for Spleeter for the current platform,
+        or None if the platform is unsupported.
+
+    Examples:
+        >> python_portable_zip()
+        'spleeter-portable-windows-x86_64.zip'  # On Windows
+        >> python_portable_zip()
+        'spleeter-portable-linux-x86_64.zip'  # On Linux x86_64
+
+    """
     if sys.platform.lower() == 'win32':
         return 'spleeter-portable-windows-x86_64.zip'
     elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
@@ -497,6 +642,20 @@ async def run_install_chataigne(obj, dialog):
 
 
 async def ask_install_chataigne(obj):
+    """
+    Presents an interactive dialog to confirm the installation of portable Chataigne and Spleeter.
+    Provides a user-friendly interface for initiating the installation process with confirmation and cancellation options.
+
+    The function creates a modal dialog that warns the user about the installation, requiring explicit confirmation.
+    It manages the UI state by adding a loading indicator and provides buttons to proceed with or cancel the installation.
+
+    Args:
+        obj: The UI object containing the sender element for managing loading state.
+
+    Examples:
+        >> await ask_install_chataigne(ui_object)  # Triggers installation confirmation dialog
+
+    """
     def stop():
         obj.sender.props(remove='loading')
         dialog.close()
@@ -514,6 +673,22 @@ async def ask_install_chataigne(obj):
 
 
 def download_rhubarb():
+    """
+    Downloads and extracts the portable Rhubarb Lip-Sync application from a specified URL.
+    Manages the download process, handling potential network and file extraction errors.
+
+    The function retrieves the Rhubarb application from a platform-specific URL, extracts it to the appropriate folder,
+    and logs the download status. It includes error handling for download and extraction issues,
+     ensuring robust installation.
+
+    Raises:
+        requests.RequestException: If there is an error during the download process.
+        zipfile.BadZipFile: If the downloaded file is not a valid ZIP archive.
+
+    Examples:
+        >> download_rhubarb()  # Downloads Rhubarb for the current platform
+
+    """
     logger.info('Downloading Portable Rhubarb...')
     try:
         extract_from_url(
@@ -529,6 +704,23 @@ def download_rhubarb():
 
 
 def rhubarb_folder():
+    """
+    Determines the appropriate base folder path for the Rhubarb Lip-Sync application based on the current operating system.
+    Returns the platform-specific directory for Rhubarb installation.
+
+    The function provides a consistent path to the Rhubarb base folder across different platforms,
+    selecting the correct subdirectory for Windows, Linux, or macOS. If the platform is not recognized, it returns None.
+
+    Returns:
+        str or None: The base folder path for Rhubarb for the current platform, or None if the platform is unsupported.
+
+    Examples:
+        >> rhubarb_folder()
+        'rhubarb/win'  # On Windows
+        >> rhubarb_folder()
+        'rhubarb/linux'  # On Linux
+
+    """
     if sys.platform.lower() == 'win32':
         return 'rhubarb/win'
     elif sys.platform.lower() == 'linux':
@@ -540,6 +732,24 @@ def rhubarb_folder():
 
 
 def rhubarb_url():
+    """
+    Determines the appropriate download URL for the Rhubarb Lip-Sync application based on the current operating system
+    and platform architecture. Returns the platform-specific download link for the Rhubarb application.
+
+    The function provides the correct download URL for Rhubarb across different platforms and architectures,
+    supporting Windows, Linux (x86_64), and macOS (x86_64). If the platform is not recognized or supported,
+     it returns None.
+
+    Returns:
+        str or None: The download URL for the Rhubarb Lip-Sync application for the current platform,
+        or None if the platform is unsupported.
+
+    Examples:
+        >> rhubarb_url()
+        'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Windows.zip'
+         # On Windows
+
+    """
     if sys.platform.lower() == 'win32':
         return 'https://github.com/DanielSWolf/rhubarb-lip-sync/releases/download/v1.13.0/Rhubarb-Lip-Sync-1.13.0-Windows.zip'
     elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
@@ -551,6 +761,25 @@ def rhubarb_url():
 
 
 def rhubarb_exe_name():
+    """
+    Determines the appropriate executable path for the Rhubarb Lip-Sync application based on the current operating
+    system and platform architecture.
+    Returns the platform-specific executable file for the Rhubarb application.
+
+    The function provides the correct executable path for Rhubarb across different platforms, supporting Windows,
+    Linux (x86_64), and macOS. If the platform is not recognized or supported, it returns None.
+
+    Returns:
+        str or None: The full path to the Rhubarb executable for the current platform,
+        or None if the platform is unsupported.
+
+    Examples:
+        >> rhubarb_exe_name()
+        'rhubarb/win/Rhubarb-Lip-Sync-1.13.0-Windows/rhubarb.exe'  # On Windows
+        >> rhubarb_exe_name()
+        'rhubarb/linux/Rhubarb-Lip-Sync-1.13.0-Linux/rhubarb'  # On Linux
+
+    """
     if sys.platform.lower() == 'win32':
         return f'{rhubarb_folder()}/Rhubarb-Lip-Sync-1.13.0-Windows/rhubarb.exe'
     elif sys.platform.lower() == 'linux' and 'x86_64' in sysconfig.get_platform():
@@ -562,6 +791,22 @@ def rhubarb_exe_name():
 
 
 async def run_install_rhubarb():
+    """
+    Manages the asynchronous installation process for the Rhubarb Lip-Sync application.
+    Orchestrates the download, extraction, and platform-specific executable configuration for Rhubarb.
+
+    The function downloads Rhubarb using an IO-bound operation, waits for the executable to be created,
+    and sets executable permissions on non-Windows platforms.
+    It includes timeout handling to prevent indefinite waiting and provides user notifications during the
+    installation process.
+
+    Returns:
+        None
+
+    Examples:
+        >> await run_install_rhubarb()  # Initiates Rhubarb installation process
+
+    """
     logger.debug('run rhubarb installation')
     #
     ui.notify('Download data for rhubarb', position='center', type='info')
