@@ -451,10 +451,10 @@ def save_data(force: bool = False):
         None
     """
 
-    def run_it():
+    def save_it():
         try:
-            with open(LipAPI.output_file, 'w', encoding='utf-8') as file:
-                json.dump(LipAPI.mouth_times_buffer, file, ensure_ascii=False, indent=4)
+            with open(LipAPI.output_file, 'w', encoding='utf-8') as out_file:
+                json.dump(LipAPI.mouth_times_buffer, out_file, ensure_ascii=False, indent=4)
                 LipAPI.data_changed = False
             ui.notify('Data saved successfully.')
         except Exception as e:
@@ -466,7 +466,7 @@ def save_data(force: bool = False):
         with ui.dialog() as dialog, ui.card():
             dialog.open()
             with ui.row():
-                ui.button('Save changes to file', on_click=run_it)
+                ui.button('Save changes to file', on_click=save_it)
                 ui.button('Exit without saving', on_click=dialog.close)
     else:
         ui.notify('Nothing to save.')
@@ -2368,7 +2368,7 @@ def shutdown_actions():
     if os.path.isfile('tmp/Pysp310.zip'):
         os.remove('tmp/Pysp310.zip')
     #
-    message = "WLEDLipSync -- Application terminated. You can close browser if any"
+    message = "WLEDLipSync -- Application terminated. You can close browser if any."
     utils.inform_window(message)
 
 

@@ -4,7 +4,7 @@ d: 09/10/2024
 v: 1.0.0.0
 
 A class to run chataigne as portable version.
-    This will execute a 'pseudo' portable version by redirecting USERPROFILE to the working directory (env)
+    This will execute a 'portable' version by redirecting USERPROFILE to the working directory (env)
     Desktop & Documents folder need to exist to have it running on this way (Win OS)
     For Linux/Mac , we use the 'HOME' env.
 
