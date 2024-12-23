@@ -130,7 +130,7 @@ def setup_logging(log_config_path='logging_config.ini', handler_name: str = None
     logging.setLoggerClass(CustomLogger)
 
     if os.path.exists(log_config_path):
-        logging.config.fileConfig(log_config_path, disable_existing_loggers=True)
+        logging.config.fileConfig(log_config_path, encoding='utf-8', disable_existing_loggers=True)
         config_data = read_config(config_path)
         if str2bool(config_data[1]['log_to_main']):
             v_logger = logging.getLogger('WLEDLogger')
@@ -138,7 +138,7 @@ def setup_logging(log_config_path='logging_config.ini', handler_name: str = None
             v_logger = logging.getLogger(handler_name)
         v_logger.debug(f"Logging configured using {log_config_path} for {handler_name}")
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, encoding='utf-8')
         v_logger = logging.getLogger(handler_name)
         v_logger.warning(f"Logging config file {log_config_path} not found. Using basic configuration.")
 

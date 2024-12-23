@@ -107,92 +107,6 @@ cha = chataigne.ChataigneWrapper()
 # config
 cfg = ConfigManager(logger_name='WLEDLogger')
 
-"""
-When this env var exists, this means running from the one-file compressed executable.
-Working folder come from executable location retrieved from sys.argv[0]
-This env does not exist when running from the extracted program.
-Expected way to work.
-"""
-if "NUITKA_ONEFILE_PARENT" not in os.environ:
-    # read config
-
-    #  validate network config
-    server_ip = cfg.server_config['server_ip']
-    if not utils.validate_ip_address(server_ip):
-        cfg.logger.error(f'Bad server IP: {server_ip}')
-        sys.exit(1)
-
-    server_port = cfg.server_config['server_port']
-
-    if server_port == 'auto':
-        server_port = native.find_open_port()
-    else:
-        server_port = int(cfg.server_config['server_port'])
-
-    if server_port not in range(1, 65536):
-        cfg.logger.error(f'Bad server Port: {server_port}')
-        sys.exit(2)
-
-    # animate or not
-    do_animation = str2bool(cfg.custom_config['animate-ui'])
-
-else:
-
-    def on_ok_click():
-        # Close the window when OK button is clicked
-        root.destroy()
-
-    abs_pth = os.path.abspath(sys.argv[0])
-    work_dir = os.path.dirname(abs_pth).replace('\\', '/')
-
-    config_file = work_dir + "/WLEDLipSync/config/WLEDLipSync.ini"
-    # create logger
-    logger = utils.setup_logging(log_config_path=work_dir + '/WLEDLipSync/config/logging.ini',
-                                 handler_name='WLEDLogger',
-                                 config_path=config_file)
-
-    # set info_window executable
-    if sys.platform.lower() != "win32":
-        file_to_set = work_dir + '/WLEDLipSync/' + utils.info_window_exe_name()
-        utils.make_file_executable(file_to_set)
-
-    # Create the main window
-    root = tk.Tk()
-    root.title("WLEDLipSync Portable Extraction")
-    root.configure(bg='#0E7490')  # Set the background color
-
-    # Change the window icon
-    icon = PhotoImage(file=f'{work_dir}/WLEDLipSync/favicon.png')
-    root.iconphoto(False, icon)
-
-    # Define the window's contents
-    info_text = ("Extracted executable to WLEDLipSync folder.....\n\n \
-    You can safely delete this file after extraction finished to save some space.\n \
-    (the same for WLEDLipSync.out.txt and err.txt if there ...)\n\n \
-    Go to WLEDLipSync folder and run WLEDLipSync-{OS} file\n \
-    This is a portable version, nothing installed on your system and can be moved where wanted.\n\n \
-    Enjoy using WLEDLipSync\n\n \
-    -------------------------------------------------------------------------------------------------\n \
-    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,\n \
-    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n \
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n \
-    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,\n \
-    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n \
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n \
-    -------------------------------------------------------------------------------------------------\n ")
-
-    info_label = tk.Label(root, text=info_text, bg='#0E7490', fg='white', justify=tk.LEFT)
-    info_label.pack(padx=10, pady=10)
-
-    # Create the OK button
-    ok_button = tk.Button(root, text="Ok", command=on_ok_click, bg='gray', fg='white')
-    ok_button.pack(pady=10)
-
-    # Start the Tkinter event loop
-    root.mainloop()
-
-    sys.exit()
-
 
 class LipAPI:
     """
@@ -523,7 +437,7 @@ async def mouth_cue_action(osc_address):
 
 
 def loop_mouth_cue(osc_address):
-    def to_do():
+    def set_cue():
         actual_cue_record, next_cue_record = utils.find_cue_point(LipAPI.player_time, LipAPI.mouth_times_buffer)
         start = str(actual_cue_record['start'])
         value = actual_cue_record['value']
@@ -567,10 +481,10 @@ def loop_mouth_cue(osc_address):
 
     triggered_values = set()  # Track triggered values
     while LipAPI.player_status == 'play':
-        to_do()
+        set_cue()
 
     if LipAPI.player_status == 'end' and str2bool(cfg.app_config['send_end']):
-        to_do()
+        set_cue()
 
 
 async def audio_edit():
@@ -2371,6 +2285,92 @@ def shutdown_actions():
     message = "WLEDLipSync -- Application terminated. You can close browser if any."
     utils.inform_window(message)
 
+
+"""
+When this env var exists, this means running from the one-file compressed executable.
+Working folder come from executable location retrieved from sys.argv[0]
+This env does not exist when running from the extracted program.
+Expected way to work.
+"""
+if "NUITKA_ONEFILE_PARENT" not in os.environ:
+    # read config
+
+    #  validate network config
+    server_ip = cfg.server_config['server_ip']
+    if not utils.validate_ip_address(server_ip):
+        cfg.logger.error(f'Bad server IP: {server_ip}')
+        sys.exit(1)
+
+    server_port = cfg.server_config['server_port']
+
+    if server_port == 'auto':
+        server_port = native.find_open_port()
+    else:
+        server_port = int(cfg.server_config['server_port'])
+
+    if server_port not in range(1, 65536):
+        cfg.logger.error(f'Bad server Port: {server_port}')
+        sys.exit(2)
+
+    # animate or not
+    do_animation = str2bool(cfg.custom_config['animate-ui'])
+
+else:
+
+    def on_ok_click():
+        # Close the window when OK button is clicked
+        root.destroy()
+
+    abs_pth = os.path.abspath(sys.argv[0])
+    work_dir = os.path.dirname(abs_pth).replace('\\', '/')
+
+    config_file = work_dir + "/WLEDLipSync/config/WLEDLipSync.ini"
+    # create logger
+    logger = utils.setup_logging(log_config_path=work_dir + '/WLEDLipSync/config/logging.ini',
+                                 handler_name='WLEDLogger',
+                                 config_path=config_file)
+
+    # set info_window executable
+    if sys.platform.lower() != "win32":
+        file_to_set = work_dir + '/WLEDLipSync/' + utils.info_window_exe_name()
+        utils.make_file_executable(file_to_set)
+
+    # Create the main window
+    root = tk.Tk()
+    root.title("WLEDLipSync Portable Extraction")
+    root.configure(bg='#0E7490')  # Set the background color
+
+    # Change the window icon
+    icon = PhotoImage(file=f'{work_dir}/WLEDLipSync/favicon.png')
+    root.iconphoto(False, icon)
+
+    # Define the window's contents
+    info_text = ("Extracted executable to WLEDLipSync folder.....\n\n \
+    You can safely delete this file after extraction finished to save some space.\n \
+    (the same for WLEDLipSync.out.txt and err.txt if there ...)\n\n \
+    Go to WLEDLipSync folder and run WLEDLipSync-{OS} file\n \
+    This is a portable version, nothing installed on your system and can be moved where wanted.\n\n \
+    Enjoy using WLEDLipSync\n\n \
+    -------------------------------------------------------------------------------------------------\n \
+    THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,\n \
+    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n \
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.\n \
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,\n \
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n \
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n \
+    -------------------------------------------------------------------------------------------------\n ")
+
+    info_label = tk.Label(root, text=info_text, bg='#0E7490', fg='white', justify=tk.LEFT)
+    info_label.pack(padx=10, pady=10)
+
+    # Create the OK button
+    ok_button = tk.Button(root, text="Ok", command=on_ok_click, bg='gray', fg='white')
+    ok_button.pack(pady=10)
+
+    # Start the Tkinter event loop
+    root.mainloop()
+
+    sys.exit()
 
 """
 app specific param
